@@ -391,7 +391,7 @@ def block_in(dum):
     return blockl[0:len(blockl)]
 
 
-def th2count(block, block_indicator = '_2THETACPS'): #block_indicator = '_2THETACOUNTS'):
+def th2count(block, block_indicator = '_2THETACOUNTS'):
     """
     RETURNS data block's 2th and intensity respectively.
     """
