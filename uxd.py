@@ -390,11 +390,25 @@ def block_in(dum):
         blockl[i]=dum[i].split('\n')
     return blockl[0:len(blockl)]
 
+def determine_block_indicator(block):
+    block_indicator = 'unknown'
+    i=0
+    while True:
+        try: 
+            dat = map(float,block[i].split())
+            if len(dat)!=2: raise IOError
+        except:
+            i = i + 1
+        return block[i-1]
 
 def th2count(block, block_indicator = '_2THETACOUNTS'):
     """
     RETURNS data block's 2th and intensity respectively.
     """
+
+    # find the suitable block_indicator
+    block_indicator = determine_block_indicator(block)
+
     intensities,phi2 =[],[]
     i = 0
     while True:
@@ -497,26 +511,39 @@ class pf:
            
         print '** Total number of data blocks: ', len(self.data_block)
 
+
+        self.th2s = []
         set_2thet = set()
         for i in range(len(self.data_block)):
             cb = self.data_block[i] #cb : current block
             info = self.block_info(block=cb, echo=echo)
             # _2theta, _khi, _steptime, _stepsize
             set_2thet.add(round(float(info[0]), 3))
-        th2 = set_2thet.copy()
+
+            _2th_ = round(float(info[0]),3)
+            if _2th_ in self.th2s: pass
+            else: self.th2s.append(_2th_)
+
+        # th2 = set_2thet.copy()
+        th2 = self.th2s
+        self.listh2= self.th2s
+
         #print th2"
         #if raw_input()=='q': raise IOError"
 
         print 'Kinds of _2theta are printed out'
-        while True:
-            try:
-                print set_2thet.pop(),' ',
-            except: break
+        for i in range(len(th2)):
+            print th2[i], '',
 
-        self.listh2 = []
-        while True:
-            try: self.listh2.append(th2.pop())
-            except: break
+        # while True:
+        #     try:
+        #         print set_2thet.pop(),' ',
+        #     except: break
+
+        # self.listh2 = []
+        # while True:
+        #     try: self.listh2.append(th2.pop())
+        #     except: break
 
         self.pfs = []
         for i in range(len(self.listh2)):
@@ -894,7 +921,6 @@ class pf:
         print "**********************************"
         print "*     list of pole figures       *"
         print "**********************************\n"
-
 
         print "%8s %7s\n"%('PF id', '2theta')
         pf_slc = []
