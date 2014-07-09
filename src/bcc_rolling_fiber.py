@@ -55,7 +55,7 @@ def main(ngrains=100,sigma=5.,iopt=1,ifig=1):
 
 def gen_gamma_gr(th=0.,sigma=5.,iopt=1):
     """
-    grain generator
+    grain generator for gamma fiber
 
     =========
     Arguments
@@ -64,14 +64,15 @@ def gen_gamma_gr(th=0.,sigma=5.,iopt=1):
     sigma    = 5.0
     iopt     = 1
     """
-    import text
-    hkl = [ 1, 1, 1]
-    uvw = [-1, 1, 0] # auxilary vector that is perpedicular to hkl
+    from text import miller2mat
 
-    g_casa = text.miller2mat(hkl, uvw)
-    g_sasa = in_plane_rot(th)
+    ## gamma fiber: axisymmetry about ND
+    hkl, uvw = hkl_gamma()
+    g_casa = miller2mat(hkl, uvw)
+    g_sasa = nd_rot(th)
+    ##
+
     g = np.dot(g_casa,g_sasa)
-
     if iopt==1: dth=gauss(mu=0., sigma=sigma)
     if iopt==2: dth=expov(sigma)
     if iopt==3: dth=logno(mu=0., sigma=sigma)
@@ -79,22 +80,23 @@ def gen_gamma_gr(th=0.,sigma=5.,iopt=1):
 
     return rot_vectang(th=dth, r=g)
 
-def in_plane_rot(thet=0.):
+def rd_rot(thet):
+    return vector_ang(u=[1,0,0],th=thet)
+def td_rot(thet):
+    return vector_ang(u=[0,1,0],th=thet)
+def nd_rot(thet):
+    return vector_ang(u=[0,0,1],th=thet)
 
-    thet * np.pi / 180.
-    amat = [[np.cos(thet), - np.sin(thet), 0.],
-            [np.sin(thet),   np.cos(thet), 0.],
-            [          0.,             0., 1.]]
-    return amat
 
 def rot_vectang(th,r):
     """ Rotate the given rotation matrix r
     [ca<-sa] by a random axis with th degree.
     """
-    import cs
+    #import cs
     delta, phi = rot_rand_axis()
     v = polar2vect(delta,phi)
-    rot = cs.vector_ang(u=v, th=th)
+    #rot = cs.vector_ang(u=v, th=th)
+    rot = vector_ang(u=v, th=th)
     newr = np.dot(rot,r)
     return newr
 
@@ -112,3 +114,78 @@ def polar2vect(delta, phi):
     vector = np.array([x,y,z])
     vector = vector / np.linalg.norm(vector)
     return vector
+
+def vector_ang(u,th):
+    """
+    implementation of subroutine vector_ang in cs.f
+
+    arguments
+    =========
+    u[3] = vector axis about whic the rotation occurs
+    th   = radian angle (degree of the rotation)
+    """
+    u = np.array(u)
+    u = u/np.sqrt((u**2).sum()) # normalize
+
+    idx = np.identity(3)
+
+    ct = np.cos(th*np.pi/180.)
+    st = np.sin(th*np.pi/180.)
+    cm = crossop(u) # cross product operator
+
+    # print th
+    # print ct, st
+    # print cm
+    # raw_input()
+
+    r = np.zeros((3,3))
+
+    for i in range(3):
+        for j in range(3):
+            r[i,j] = idx[i,j] * ct + st * cm[i,j] + \
+                     (1. - ct ) * u[i] * u[j]
+
+    return r
+
+def crossop(u):
+    """
+    Cross operator can be used to obtain the cross
+    product as a matrix-vector product
+
+    a x b  = [a_x]_ij [b]_j
+    """
+    m=np.zeros((3,3))
+    m[0][1] = -u[2]
+    m[0][2] =  u[1]
+    m[1][0] =  u[2]
+    m[1][2] = -u[0]
+    m[2][0] = -u[1]
+    m[2][1] =  u[0]
+
+    return m
+
+# hkl // ND
+# uvw // RD
+# xyz // TD
+
+""" 
+Only major diection is relevant
+Any auxilary vector that is perpendicular to the
+major will work it out.
+ """
+def hkl_gamma():
+    hkl = [ 1, 1, 1] # major // ND
+    uvw = [-1, 1, 0] # minor // RD
+    return hkl, uvw
+
+def hkl_alpha():
+    uvw = [ 1, 1, 0] # major // RD
+    hkl = [ 0, 0, 1] # minor // ND
+
+def hkl_eta():
+    uvw = [0,0,1] # major // RD
+    hkl = [1,0,0] # minor // ND
+
+def hkl_epsilon():
+    xyz = [1,1,0] # major // TD
+    uvw = [0,0,1] # minor // RD

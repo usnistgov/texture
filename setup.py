@@ -1,8 +1,9 @@
 from distutils.core import setup
-setup(name='upf',
-      version='1.0',
-      py_modules=['cmb','upf','sym','randomEuler','epf2dfc','epf_khi_trimmer'],
-      description='The ultimate pole figure plotting system on python',
-      author ='Youngung Jeong',
+setup(name='TEXTURE_personal_lib',
+      version='0.0',
+      description='collection of texture related modules',
+      author='Youngung Jeong',
       author_email='youngung.jeong@gmail.com',
+      packages=['TX'],
+      package_dir={'TX':'src'}
       )
