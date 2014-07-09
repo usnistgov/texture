@@ -1,0 +1,12 @@
+archive
+*~
+*.pyc
+*.eps
+*.pdf
+*.COD
+*.cod
+*.epf
+*.tex
+*.UXD
+*.uxd
+build
