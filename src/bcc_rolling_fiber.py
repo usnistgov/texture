@@ -18,7 +18,7 @@ logno = random.lognormvariate
 norma = random.normalvariate
 from sym import __mmm__ as mmm
 
-def rolling(fibers=['gamma','alpha','eta','epsilon'],
+def rolling(fibers=['gamma','alpha','eta','epsilon','sigma'],
             wgts=[0.7,0.1,0.1,0.1],ifig=3,
             ngr=100):
 
@@ -70,7 +70,7 @@ def main(ngrains=100,sigma=5.,iopt=1,ifig=1,fiber='gamma',
     sigma   = 5.
     iopt    = 1 (1: gauss (recommended); 2: expov; 3: logno; 4: norma)
     ifig    = 1
-    fiber   = 'gamma', 'alpha', 'eta', 'epsilon'
+    fiber   = 'gamma', 'alpha', 'eta', 'epsilon', 'sigma'
     """
     import upf
     import matplotlib.pyplot as plt
@@ -125,6 +125,10 @@ def gen_gr_fiber(th,sigma,iopt,fiber='gamma'):
         xyz, uvw = hkl_epsilon()
         g_casa = miller2mat_RT(uvw=uvw,xyz=xyz)
         g_sasa = td_rot(th)
+    elif fiber=='sigma':
+        hkl, uvw = hkl_sigma()
+        g_casa = miller2mat(hkl,uvw)
+        g_sasa = nd_rot(th)
 
     g = np.dot(g_casa,g_sasa)
     if iopt==1: dth=gauss(mu=0., sigma=sigma)
@@ -271,3 +275,8 @@ def hkl_epsilon():
     xyz = [1,1,0] # major // TD
     uvw = [0,0,1] # minor // RD
     return xyz, uvw
+
+def hkl_sigma():
+    hkl = [1, 0, 0] # major // ND
+    uvw = [0, 0, 1] # minor // RD
+    return hkl, uvw
