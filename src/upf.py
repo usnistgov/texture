@@ -146,9 +146,9 @@ def cub(filename=None,gr=None,ifig=3, pole=[[1,0,0],[1,1,0],[1,1,1]],
     elif gr!=None: mypf = polefigure(grains=gr, csym='cubic')
     mypf.pf(pole=pole,mode='contourf',ifig=ifig,cmode=cmode)
 
-def cubgr(gr=None,ifig=3):
+def cubgr(gr=None,ifig=3,mode='contourf'):
     mypf = polefigure(grains=gr, csym='cubic')
-    mypf.pf(pole=[[1,0,0],[1,1,0],[1,1,1]],mode='contourf',ifig=ifig)
+    mypf.pf(pole=[[1,0,0],[1,1,0],[1,1,1]],mode=mode,ifig=ifig)
 
 
 def pfnorm(data):
@@ -1226,7 +1226,7 @@ class polefigure:
 
     def pf(self, pole=[[1,0,0],[1,1,0],[1,1,1]], mode='contour',
            ifig=1, dm=7.5, dn=7.5, ssym=None, levels=None,
-           axes=None, cmode=None,rot=0.,proj='pf', pole_mode='sys',
+           axes=None, cmode='gray_r',rot=0.,proj='pf', pole_mode='sys',
            poles_gr=None):
         """
         Plots pole figures, either experimental pole figure or
@@ -2143,7 +2143,7 @@ class polefigure:
                 xxx = XY.copy().transpose()[0]
                 yyy = XY.copy().transpose()[1]
                 ax.plot(xxx,yyy,ls='None', marker=marker,color=color,
-                        ms=10)
+                        ms=1)
                 if proj=='pf':
                     ax.set_xlim(-1.1,1.1)
                     ax.set_ylim(-1.1,1.1)

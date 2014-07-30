@@ -85,7 +85,6 @@ def main(ngrains=100,sigma=5.,iopt=1,ifig=1,fiber='gamma',
             gr.append([phi1,phi,phi2,1./ngrains])
 
     if iexit: return np.array(gr)
-        
 
     fn = '%s_fib_ngr%s_sigma%s.cmb'%(fiber,str(len(gr)).zfill(5),str(sigma).zfill(3))
     f = open(fn,'w')
@@ -102,8 +101,10 @@ def main(ngrains=100,sigma=5.,iopt=1,ifig=1,fiber='gamma',
         f.writelines('%+7.3f %+7.3f %+7.3f %+13.4e\n'%(
             gr[i][0], gr[i][1], gr[i][2], 1./len(gr)))
 
-    upf.cubgr(gr=gr,ifig=ifig)
-    plt.figure(ifig).savefig('%s.pdf'%(fn.split('.cmb')[0]))
+    upf.cubgr(gr=gr,ifig=2*ifig,mode='contourf')
+    plt.figure(2*ifig).savefig('%s_contf.pdf'%(fn.split('.cmb')[0]))
+    upf.cubgr(gr=gr,ifig=2*ifig+1,mode='dot')
+    plt.figure(2*ifig+1).savefig('%s_dot.pdf'%(fn.split('.cmb')[0]))
 
     return np.array(gr)
 
