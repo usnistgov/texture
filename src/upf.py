@@ -361,6 +361,9 @@ def epfformat(mode=None, filename=None):
         """
         print 'You are now reading %s'%filename
         blocks = open(filename, 'rU').read().split('(')[1:]
+        if len(blocks)==0:
+            print 'Consider looking at %s as no paranthesis that'%filename
+            print ' embraces hkl was found'
 
         npf = len(blocks)
         datasets = []
@@ -888,7 +891,8 @@ class polefigure:
         # if none of them is given, a 500-grains file is generated #
         # and returns its grains to the global gr variable.        #
 
-        if grains==None and filename==None and epf==None:
+        if type(grains)==type(None) and type(filename)==type(None)\
+           and type(epf)==type(None):
             print " ****************************** "
             print " Since no argument is passed,"
             print " 100 random grains are created"
@@ -903,9 +907,9 @@ class polefigure:
 
         self.epf = epf # global
 
-        if grains!=None:
+        if type(grains)!=type(None):
             self.gr = np.array(grains)
-        elif filename!=None:
+        elif type(filename)!=type(None):
             self.gr = np.genfromtxt(fname=filename,skiprows=4)
         elif epf!=None: # None is the default for epf
             """
@@ -1042,7 +1046,14 @@ class polefigure:
         nrow = len(self.grid)
 
         figs = []
-        for i in range(nrow): figs.append(plt.figure(ifig+21+i))
+        for i in range(nrow):
+            figs.append(
+                plt.figure(ifig+21+i,figsize=(4,4)))
+            
+
+        fig_all = plt.figure(ifig+21+i+1,figsize=(3.5*nrow,4))
+        for i in range(nrow):
+            fig_all.add_subplot(1,nrow,i+1,polar=True)
 
         ## loop over each of pole figures
         for ip in range(len(self.grid)): #upon each of self.eps_fn
@@ -1109,7 +1120,10 @@ class polefigure:
             x = R * np.cos(PHI); y = R*np.sin(PHI) #convert the polar coord
 
             each_ax = figs[ip].add_subplot(111, polar=True)
+            each_all_ax = fig_all.axes[ip]
+
             each_ax.set_axis_off()
+            each_all_ax.set_axis_off()
             ## ------------------------------------- ##
 
             ########################################
@@ -1119,6 +1133,7 @@ class polefigure:
             r0 = np.ones(100)
             t0 = np.linspace(0., np.pi*2, 100)
             each_ax.plot(t0, r0, color='gray', alpha=0.5)
+            each_all_ax.plot(t0, r0, color='gray', alpha=0.5)
 
             max_khi = (90 - max_khi) + 90
             max_khi = max_khi * np.pi/180.
@@ -1126,6 +1141,7 @@ class polefigure:
             r0 = np.sin(max_khi)/(1-np.cos(max_khi))
             r0 = np.ones(100) * r0
             each_ax.plot( t0, r0, 'k')
+            each_all_ax.plot( t0, r0, 'k')
             ########################################
 
             # Trim out the unmeasured rims.
@@ -1133,12 +1149,15 @@ class polefigure:
             if iidk==0: pass
             else: pfr = pfr[0:-iidk]
 
-            cnt_each = each_ax.contour(
+            cnt_each = each_ax.contourf(
                 phi.copy(), rr.copy(), pfr,
-                linewidth=1.)
+                linewidth=1.,cmap=plt.cm.cmap_d[cmode])
+            cnt_all_each = each_all_ax.contourf(
+                phi.copy(), rr.copy(), pfr,
+                linewidth=1.,cmap=plt.cm.cmap_d[cmode])
 
-            pcmr_each = each_ax.pcolormesh(
-                phi.copy(), rr.copy(), pfr)
+            # pcmr_each = each_ax.pcolormesh(
+            #     phi.copy(), rr.copy(), pfr)
 
             ## add pole indices or pole figure file name
             x0, y0 = 0.4, -1.18
@@ -1156,6 +1175,8 @@ class polefigure:
                 index = index + ')'
                 each_ax.text(
                     x=t0, y=r0, s=index, fontsize=8.*fact)
+                each_all_ax.text(
+                    x=t0, y=r0, s=index, fontsize=8.*fact)
             else:
                 if self.hkl[ip]==None:
                     hkl = raw_input(
@@ -1170,6 +1191,10 @@ class polefigure:
                     x=t0, y=r0, s='%s %s'%(
                         index, self.epf_fn[ip]),
                     fontsize=8.*fact)
+                each_all_ax.text(
+                    x=t0, y=r0, s='%s %s'%(
+                        index, self.epf_fn[ip]),
+                    fontsize=8.*fact)
 
             tcolors = cnt_each.tcolors
             clev = cnt_each._levels
@@ -1180,11 +1205,15 @@ class polefigure:
                     ## Colored marker
                     x0, y0 = 1.3, 0.8 - i * 0.2
                     r0, t0 = cart2polar(x0,y0)
+                    r1, t1 = cart2polar(x0-0.07, y0)
 
                     each_ax.plot(
-                        t0, r0, marker='o', mfc=cc, ms=7.,
-                        ls='None', mec='black',
-                        markeredgewidth=0.01)
+                        [t1,t0], [r1,r0],color=cc)
+                    each_all_ax.plot(
+                        [t1,t0], [r1,r0],color=cc)
+
+                        # marker='-', mfc=cc, ms=7.,
+                        # ls='None', mec='None',lc=cc)
 
                     ## Contour level
                     x2, y2 = 1.35, 0.8 - i *0.2 - 0.05
@@ -1192,19 +1221,26 @@ class polefigure:
                     each_ax.text(
                         x=t2, y=r2,s='%4.2f'%(clev[i]),
                         fontsize=4.*fact)
+                    each_all_ax.text(
+                        x=t2, y=r2,s='%4.2f'%(clev[i]),
+                        fontsize=4.*fact)
 
                 ## RD and TD indication
                 x4, y4 = -0.05, 1.05
                 r4, t4 = cart2polar(x4, y4)
                 each_ax.text(x=t4, y=r4, s='RD', fontsize = 6.*fact)
-                x5, y5 = 1.05, 0.
+                each_all_ax.text(x=t4, y=r4, s='RD', fontsize = 6.*fact)
+                x5, y5 = 1.02, 0.
                 r5, t5 = cart2polar(x5, y5)
-                each_ax.text(x=t5, y=r5, s='TD', fontsize = 6.*fact)
+                each_all_ax.text(x=t5, y=r5, s='TD', fontsize = 6.*fact)
 
             # Save individual pole figure
+            
             figs[ip].savefig('figs_%s.pdf'%str(ip).zfill(2))
-            figs[ip].savefig('figs_%s.eps'%str(ip).zfill(2))
-            figs[ip].clf()
+            #figs[ip].savefig('figs_%s.eps'%str(ip).zfill(2))
+            # figs[ip].clf()
+
+        fig_all.savefig('figs_pfs.pdf')
         return
 
     def pf_axis(self, pole=[[1,0,0]], ifig=1):
@@ -1224,6 +1260,47 @@ class polefigure:
                                   csym=self.csym, mode=None,
                                   color=cl)
 
+    def pf2xyw(self,pole=[1,0,0],csym='cubic',cdim=[1.,1.,1.],
+               cang=[90.,90.,90.],fn='dat.xyz'):
+        """
+        Read pole and write xyw to a file
+
+        Arguments
+        =========
+        pole
+        """
+        f = open(fn,'w')
+        xyzw= []
+        for i in range(len(self.gr)):
+            gr = self.gr[i][::]
+            phi1, phi, phi2 = gr[:3:]
+            phi1 = phi1 - 90.
+
+            npeq = self.__equiv__(
+                miller=pole, csym=csym, cdim=cdim, cang=cang)
+                
+            xy, POLE = self.core(
+                pole=pole, proj='pf',csym=csym,
+                agrain=gr,isym=True,
+                cdim=cdim,cang=cang, equivp=npeq)
+
+            w = gr[-1]
+            # for j in range(len(xy)):
+            #     x,y = xy[j]
+            #     z = 0
+            #     f.write('%4.2f %4.2f %4.2f %11.4e\n'%(x,y,z,w))
+            #     xyzw.append([x,y,z,w])
+
+
+            for j in range(len(POLE)):
+                xyz=POLE[j]
+                x,y,z = xyz
+                f.write('%4.2f %4.2f %4.2f %11.4e\n'%(x,y,z,w))
+                xyzw.append([x,y,z,w])
+                
+        f.close()
+        return np.array(xyzw).T
+                
     def pf(self, pole=[[1,0,0],[1,1,0],[1,1,1]], mode='contour',
            ifig=1, dm=7.5, dn=7.5, ssym=None, levels=None,
            axes=None, cmode='gray_r',rot=0.,proj='pf', pole_mode='sys',
@@ -1716,7 +1793,7 @@ class polefigure:
             print "Other modes of projection than pf and "\
                 "ipf is not prepared yet"
             raise IOError
-        if agrain==None:
+        if type(agrain)==type(None):
             print "A grains must be given to the method"
             raise IOError
         if pole==None:
@@ -2027,7 +2104,7 @@ class polefigure:
                 ssym='tric', agrain=None,
                 isym=True, irdc=True,
                 cdim=[1.,1.,1.],
-                cang=[90.,90.,90.], mode='trace' # or None
+                cang=[90.,90.,90.], mode='trace', # or None
                 ):
         """
         Plots the individual poles. No contour.

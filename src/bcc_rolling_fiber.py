@@ -19,7 +19,7 @@ norma = random.normalvariate
 from sym import __mmm__ as mmm
 
 def rolling(fibers=['gamma','alpha','eta','epsilon','sigma'],
-            wgts=[0.7,0.1,0.1,0.1],ifig=3,
+            wgts=[0.7,0.1,0.1,0.1],ifig=3,sigma=15,
             ngr=100):
 
     fn='rolling_texture_%s.cmb'%str(ngr).zfill(5)
@@ -43,7 +43,7 @@ def rolling(fibers=['gamma','alpha','eta','epsilon','sigma'],
     total_pop = []
 
     for i in range(len(fibers)):
-        gr = main(ngrains=ngr/len(fibers),sigma=15.,
+        gr = main(ngrains=ngr/len(fibers),sigma=sigma,
                   iopt=1,iexit=True,fiber=fibers[i])
         grt=gr.T
         grt[-1] = grt[-1] * wgts[i]
@@ -104,7 +104,7 @@ def main(ngrains=100,sigma=5.,iopt=1,ifig=1,fiber='gamma',
     upf.cubgr(gr=gr,ifig=2*ifig,mode='contourf')
     plt.figure(2*ifig).savefig('%s_contf.pdf'%(fn.split('.cmb')[0]))
     upf.cubgr(gr=gr,ifig=2*ifig+1,mode='dot')
-    plt.figure(2*ifig+1).savefig('%s_dot.pdf'%(fn.split('.cmb')[0]))
+    plt.figure(2*ifig+1).savefig('%s_dot.png'%(fn.split('.cmb')[0]))
 
     return np.array(gr)
 
