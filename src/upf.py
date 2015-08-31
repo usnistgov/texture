@@ -363,7 +363,8 @@ def epfformat(mode=None, filename=None):
         blocks = open(filename, 'rU').read().split('(')[1:]
         if len(blocks)==0:
             print 'Consider looking at %s as no paranthesis that'%filename
-            print ' embraces hkl was found'
+            raise IOError, ' embraces hkl was found'
+
 
         npf = len(blocks)
         datasets = []
@@ -654,10 +655,6 @@ def crossop(u):
     m[2,1] =  u[0]
     return m
 
-
-
-
-
 def __isunique__(a, b):
     """
     Is a(3) in b(m, 3)
@@ -857,7 +854,6 @@ def ipfline(center=[0,0],csym='cubic'):
 Sample symmetry application is performed over RVE calculation
 refer to the RVE class in cmb.py module.
 """
-
 class polefigure:
     # decides if the given set is in the texture file form or array
     def __init__(self, grains=None, filename=None, csym=None,
@@ -1047,11 +1043,13 @@ class polefigure:
 
         figs = []
         for i in range(nrow):
-            figs.append(
-                plt.figure(ifig+21+i,figsize=(4,4)))
-            
+            fig=plt.figure(ifig+21+i,figsize=(4,4))
+            fig.clf()
+            figs.append(fig)
 
-        fig_all = plt.figure(ifig+21+i+1,figsize=(3.5*nrow,4))
+        fig = plt.figure(ifig+21+i+1,figsize=(3.5*nrow,4))
+        fig.clf()
+        fig_all = fig
         for i in range(nrow):
             fig_all.add_subplot(1,nrow,i+1,polar=True)
 
@@ -1074,7 +1072,6 @@ class polefigure:
             #print self.grid.shape
             try: max_khi = self.max_khi[ip] # if popLA
             except:
-                #upto 80 degree is convetional to me...
                 max_khi = 80.
 
             ## trimmed out the unmeasured khi rims ---- ##
@@ -1112,11 +1109,11 @@ class polefigure:
             ##
             ## prescribed rotation
             phi = phi + rot * np.pi/180.
-            R, PHI = np.meshgrid(r, phi)    #meshing radius and rotation angle
-            RR, PHIR= np.meshgrid(rr,phi)
-            PHI = PHI + np.pi/2. # rotation the pole figure up.
+            R,  PHI  = np.meshgrid(r, phi)    #meshing radius and rotation angle
+            RR, PHIR = np.meshgrid(rr,phi)
+            PHI  = PHI  + np.pi/2. # rotation the pole figure up.
             PHIR = PHIR + np.pi/2. # rotation the pole figure up.
-            phi = phi + np.pi/2. # rotation the pole figure up.
+            phi  = phi  + np.pi/2. # rotation the pole figure up.
             x = R * np.cos(PHI); y = R*np.sin(PHI) #convert the polar coord
 
             each_ax = figs[ip].add_subplot(111, polar=True)
@@ -1160,8 +1157,9 @@ class polefigure:
             #     phi.copy(), rr.copy(), pfr)
 
             ## add pole indices or pole figure file name
-            x0, y0 = 0.4, -1.18
+            x0, y0 = 0.45, -1.18
             r0, t0 = cart2polar(x0, y0)
+            print 'print self.epf_mode:', self.epf_mode
             if self.epf_mode=='epf':
                 #if self.hkl[ip]==None:
                 hkl = raw_input(
@@ -1181,7 +1179,7 @@ class polefigure:
                 if self.hkl[ip]==None:
                     hkl = raw_input(
                         "Type the indices delimiter"+\
-                            " as a space (e.g. 1 1 1)>>>")
+                        " as a space (e.g. 1 1 1)>>>")
                     hkl = map(int, hkl.split())
                 # (hkl)
                 index = '('
@@ -1203,7 +1201,7 @@ class polefigure:
                 cc = tcolors[i][0][0:3]
                 if levels==None or ip==len(pole)-1:
                     ## Colored marker
-                    x0, y0 = 1.3, 0.8 - i * 0.2
+                    x0, y0 = 1.45, 0.8 - i * 0.2
                     r0, t0 = cart2polar(x0,y0)
                     r1, t1 = cart2polar(x0-0.07, y0)
 
@@ -1212,11 +1210,11 @@ class polefigure:
                     each_all_ax.plot(
                         [t1,t0], [r1,r0],color=cc)
 
-                        # marker='-', mfc=cc, ms=7.,
-                        # ls='None', mec='None',lc=cc)
+                    # marker='-', mfc=cc, ms=7.,
+                    # ls='None', mec='None',lc=cc)
 
                     ## Contour level
-                    x2, y2 = 1.35, 0.8 - i *0.2 - 0.05
+                    x2, y2 = 1.45, 0.8 - i *0.2 - 0.05
                     r2, t2 = cart2polar(x2, y2)
                     each_ax.text(
                         x=t2, y=r2,s='%4.2f'%(clev[i]),
@@ -1226,21 +1224,18 @@ class polefigure:
                         fontsize=4.*fact)
 
                 ## RD and TD indication
-                x4, y4 = -0.05, 1.05
-                r4, t4 = cart2polar(x4, y4)
-                each_ax.text(x=t4, y=r4, s='RD', fontsize = 6.*fact)
-                each_all_ax.text(x=t4, y=r4, s='RD', fontsize = 6.*fact)
-                x5, y5 = 1.02, 0.
-                r5, t5 = cart2polar(x5, y5)
-                each_all_ax.text(x=t5, y=r5, s='TD', fontsize = 6.*fact)
+            x4, y4 = -0.05, 1.05
+            r4, t4 = cart2polar(x4, y4)
+            each_ax.text(x=t4, y=r4, s='RD', fontsize = 6.*fact)
+            each_all_ax.text(x=t4, y=r4, s='RD', fontsize = 6.*fact)
+            x5, y5 = 1.02, 0.
+            r5, t5 = cart2polar(x5, y5)
+            each_all_ax.text(x=t5, y=r5, s='TD', fontsize = 6.*fact)
 
             # Save individual pole figure
-            
-            figs[ip].savefig('figs_%s.pdf'%str(ip).zfill(2))
-            #figs[ip].savefig('figs_%s.eps'%str(ip).zfill(2))
-            # figs[ip].clf()
+            figs[ip].savefig('figs_%s.pdf'%str(ip).zfill(2), bbox_inches='tight')
 
-        fig_all.savefig('figs_pfs.pdf')
+        fig_all.savefig('figs_pfs.pdf',bbox_inches='tight')
         return
 
     def pf_axis(self, pole=[[1,0,0]], ifig=1):
@@ -1278,7 +1273,7 @@ class polefigure:
 
             npeq = self.__equiv__(
                 miller=pole, csym=csym, cdim=cdim, cang=cang)
-                
+
             xy, POLE = self.core(
                 pole=pole, proj='pf',csym=csym,
                 agrain=gr,isym=True,
@@ -1297,10 +1292,10 @@ class polefigure:
                 x,y,z = xyz
                 f.write('%4.2f %4.2f %4.2f %11.4e\n'%(x,y,z,w))
                 xyzw.append([x,y,z,w])
-                
+
         f.close()
         return np.array(xyzw).T
-                
+
     def pf(self, pole=[[1,0,0],[1,1,0],[1,1,1]], mode='contour',
            ifig=1, dm=7.5, dn=7.5, ssym=None, levels=None,
            axes=None, cmode='gray_r',rot=0.,proj='pf', pole_mode='sys',
@@ -2358,4 +2353,3 @@ if __name__ == "__main__":
     main(filename=inputfile, csym=csym, pfmode=mode)
     plt.gcf().savefig(outputfile)
     if ishow==True: plt.show()
-
