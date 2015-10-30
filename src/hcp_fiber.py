@@ -135,7 +135,7 @@ def gen_file(lab='',ngr=None):
 def write_gr(f,gr):
     f.write('B %i\n'%len(gr))
     for i in xrange(len(gr)):
-        f.writelines('%+7.3f %+7.3f %+7.3f %+13.4e\n'%(
+        f.writelines('%9.3f %9.3f %9.3f %13.4e\n'%(
             gr[i][0],gr[i][1],gr[i][2],gr[i][3]))
     f.close()
 
