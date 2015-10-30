@@ -860,6 +860,8 @@ class polefigure:
                  ngrain=100, cdim=[1.,1.,1.], cang=[90.,90.,90.],
                  ssym=False, epf=None):
         """
+        cdim=[1.,1.,1.6235] ## AZ31
+
         ----------------
         class polefigure
         ----------------

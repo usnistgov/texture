@@ -21,7 +21,6 @@ from sym import __mmm__ as mmm
 def rolling(fibers=['gamma','alpha','eta','epsilon','sigma'],
             wgts=[0.7,0.1,0.1,0.1],ifig=3,sigma=15,
             ngr=100):
-
     fn='rolling_texture_%s.cmb'%str(ngr).zfill(5)
     f = open(fn,'w')
     f.writelines('Artifical rolling texture for bcc\n')
@@ -33,7 +32,6 @@ def rolling(fibers=['gamma','alpha','eta','epsilon','sigma'],
     for i in range(len(fibers)):
         f.writelines('%3.1f;  '%wgts[i])
     f.writelines('\n')
-
 
     import upf
     import matplotlib.pyplot as plt
@@ -59,7 +57,6 @@ def rolling(fibers=['gamma','alpha','eta','epsilon','sigma'],
 
     upf.cubgr(gr=total_pop,ifig=ifig)
     return total_pop
-    
 
 def main(ngrains=100,sigma=5.,iopt=1,ifig=1,fiber='gamma',
          iexit=False):
@@ -138,33 +135,6 @@ def gen_gr_fiber(th,sigma,iopt,fiber='gamma'):
     if iopt==4: dth=norma(mu=0., sigma=sigma)
     return rot_vectang(th=dth, r=g)
 
-# def gen_gamma_gr(th=0.,sigma=5.,iopt=1):
-#     """
-#     grain generator for gamma fiber
-
-#     =========
-#     Arguments
-
-#     th       = 0.0
-#     sigma    = 5.0
-#     iopt     = 1
-#     """
-#     from text import miller2mat
-
-#     ## gamma fiber: axisymmetry about ND
-#     hkl, uvw = hkl_gamma()
-#     g_casa = miller2mat(hkl, uvw)
-#     g_sasa = nd_rot(th)
-#     ##
-
-#     g = np.dot(g_casa,g_sasa)
-#     if iopt==1: dth=gauss(mu=0., sigma=sigma)
-#     if iopt==2: dth=expov(sigma)
-#     if iopt==3: dth=logno(mu=0., sigma=sigma)
-#     if iopt==4: dth=norma(mu=0., sigma=sigma)
-
-#     return rot_vectang(th=dth, r=g)
-
 def rd_rot(thet):
     return vector_ang(u=[1,0,0],th=thet)
 def td_rot(thet):
@@ -210,25 +180,15 @@ def vector_ang(u,th):
     """
     u = np.array(u)
     u = u/np.sqrt((u**2).sum()) # normalize
-
     idx = np.identity(3)
-
     ct = np.cos(th*np.pi/180.)
     st = np.sin(th*np.pi/180.)
     cm = crossop(u) # cross product operator
-
-    # print th
-    # print ct, st
-    # print cm
-    # raw_input()
-
     r = np.zeros((3,3))
-
     for i in range(3):
         for j in range(3):
             r[i,j] = idx[i,j] * ct + st * cm[i,j] + \
                      (1. - ct ) * u[i] * u[j]
-
     return r
 
 def crossop(u):
@@ -237,6 +197,10 @@ def crossop(u):
     product as a matrix-vector product
 
     a x b  = [a_x]_ij [b]_j
+
+    Argument
+    ========
+    u
     """
     m=np.zeros((3,3))
     m[0][1] = -u[2]
@@ -252,7 +216,7 @@ def crossop(u):
 # uvw // RD
 # xyz // TD
 
-""" 
+"""
 Only major diection is relevant
 Any auxilary vector that is perpendicular to the
 major will work it out.
@@ -273,8 +237,8 @@ def hkl_eta():
     return hkl, uvw
 
 def hkl_epsilon():
-    xyz = [1,1,0] # major // TD
-    uvw = [0,0,1] # minor // RD
+    uvw = [0,0,1] # major // RD
+    xyz = [1,1,0] # minor // TD
     return xyz, uvw
 
 def hkl_sigma():

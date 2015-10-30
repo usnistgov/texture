@@ -23,7 +23,7 @@ def euler(ph=None, th=None, tm=None, a=None, echo=True):
           th = phi
           tm = phi2
     """
-    if a==None:  a=np.resize(np.array(()),(3,3));iopt=2
+    if type(a).__name__=='NoneType':  a=np.resize(np.array(()),(3,3));iopt=2
     else:
         if type(a).__name__=='ndarray': 
             iopt = 1
