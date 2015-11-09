@@ -908,7 +908,7 @@ class polefigure:
         if type(grains)!=type(None):
             self.gr = np.array(grains)
         elif type(filename)!=type(None):
-            self.gr = np.genfromtxt(fname=filename,skiprows=4)
+            self.gr = np.loadtxt(fname=filename,skiprows=4)
         elif epf!=None: # None is the default for epf
             """
             experimental pole figures..
