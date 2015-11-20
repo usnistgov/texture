@@ -152,7 +152,7 @@ def app(ngr=100,c2a=1.6235):
     write_gr(f,grs)
 
     ## Big donuts
-    main(mu=0,ngrains=ngr,tilt_1=50.,sigma=15)
+    grs = main(mu=0,ngrains=ngr,tilt_1=50.,sigma=15)
     plt.gcf().savefig('big_doughnut.pdf',bbox_inches='tight')
     plt.gcf().clf()
     f = gen_file(lab='big_donut',ngr=ngr)
@@ -189,4 +189,4 @@ def app(ngr=100,c2a=1.6235):
     plt.gcf().savefig('t50.pdf',bbox_inches='tight')
     plt.gcf().clf()
     f = gen_file(lab='dbl_lets_50',ngr=ngr)
-    write_gr(f,grs)
+    write_gr(f,gr)
