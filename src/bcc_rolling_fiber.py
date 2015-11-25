@@ -175,7 +175,7 @@ def vector_ang(u,th):
 
     arguments
     =========
-    u[3] = vector axis about whic the rotation occurs
+    u[3] = vector axis about which the rotation occurs
     th   = radian angle (degree of the rotation)
     """
     u = np.array(u)
