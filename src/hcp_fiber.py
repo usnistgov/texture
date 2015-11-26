@@ -205,4 +205,4 @@ def app(ngr=100,c2a=1.6235):
     plt.gcf().savefig('t50.pdf',bbox_inches='tight')
     plt.gcf().clf()
     f = gen_file(lab='dbl_lets_50',ngr=ngr)
-    write_gr(f,grs)
+    write_gr(f,gr)
