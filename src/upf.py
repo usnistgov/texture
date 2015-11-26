@@ -150,7 +150,6 @@ def cubgr(gr=None,ifig=3,mode='contourf'):
     mypf = polefigure(grains=gr, csym='cubic')
     mypf.pf(pole=[[1,0,0],[1,1,0],[1,1,1]],mode=mode,ifig=ifig)
 
-
 def pfnorm(data):
     """
     experimental incomplete pole figure preliminary normalization
@@ -909,7 +908,7 @@ class polefigure:
             self.gr = np.array(grains)
         elif type(filename)!=type(None):
             self.gr = np.loadtxt(fname=filename,skiprows=4)
-        elif epf!=None: # None is the default for epf
+        elif type(epf)!=type(None): # None is the default for epf
             """
             experimental pole figures..
              # available format:
@@ -920,7 +919,7 @@ class polefigure:
             """
             if type(epf).__name__=='list': self.epf_fn = epf
             elif type(epf).__name__=='str': self.epf_fn = [epf]
-            elif epf==True:
+            elif type(epf)==type(True):
                 fn = [] # list of file names
                 print 'type the experimental pole figure file names'
                 print "To finish input, press enter"
@@ -1228,11 +1227,11 @@ class polefigure:
                 ## RD and TD indication
             x4, y4 = -0.05, 1.05
             r4, t4 = cart2polar(x4, y4)
-            each_ax.text(x=t4, y=r4, s='RD', fontsize = 6.*fact)
-            each_all_ax.text(x=t4, y=r4, s='RD', fontsize = 6.*fact)
+            each_ax.text(x=t4, y=r4, s='1', fontsize = 6.*fact)
+            each_all_ax.text(x=t4, y=r4, s='2', fontsize = 6.*fact)
             x5, y5 = 1.02, 0.
             r5, t5 = cart2polar(x5, y5)
-            each_all_ax.text(x=t5, y=r5, s='TD', fontsize = 6.*fact)
+            each_all_ax.text(x=t5, y=r5, s='2', fontsize = 6.*fact)
 
             # Save individual pole figure
             figs[ip].savefig('figs_%s.pdf'%str(ip).zfill(2), bbox_inches='tight')
@@ -1306,6 +1305,11 @@ class polefigure:
         Plots pole figures, either experimental pole figure or
         polycrystalline aggregate.
 
+        ** Exemplary cmodes:
+        'gray_r, gray, pink_r, pink, summer_r, summer, winter_r, winter,
+        Blues, Blues_r, Set1_r, Set1 .... '
+
+        ---------
         Arguments
         ---------
           pole = [[1,0,0,], [1,1,1], [1,1,0]]
@@ -1326,10 +1330,11 @@ class polefigure:
         Blues, Blues_r, Set1_r, Set1 .... '
         """
         ## PF ploting directly from experimental pole figure
-        if self.epf!=None:
+        if type(self.epf)!=type(None):
             # mode is fixed to be 'im'
             self.epfplot(ifig=ifig, mode=mode,
-                         cmode=cmode, levels=levels, rot=rot)
+                         cmode=cmode, levels=levels,
+                         rot=rot)
             return
         ## end of experimental polefigure plotting
 
@@ -1462,13 +1467,13 @@ class polefigure:
                 ax.set_frame_on(False)
                 # contour plotting
                 if mode=='contour':
-                    if levels==None:
-                        if cmode!=None: cnt = ax.contour(
-                            x, y, nodes, cmap=plt.cm.cmap_d[cmode])
+                    if type(levels)==type(None):
+                        if type(cmode)!=type(None): cnt = ax.contour(
+                                x, y, nodes, cmap=plt.cm.cmap_d[cmode])
                         else: cnt = ax.contour(x, y, nodes)
-                    elif levels!=None:
-                        if cmode!=None: cnt = ax.contour(
-                            x, y, nodes, cmap=plt.cm.cmap_d[cmode])
+                    elif type(levels)!=type(None):
+                        if type(cmode)!=type(None): cnt = ax.contour(
+                                x, y, nodes, levels=levels, cmap=plt.cm.cmap_d[cmode])
                         else: cnt = ax.contour(x, y, nodes, levels)
 
                     if proj=='ipf':
@@ -1494,15 +1499,15 @@ class polefigure:
                         ax.plot(X3, Y3, 'k-')#, alpha=0.5)
 
                 elif mode=='contourf':
-                    if levels==None:
-                        if cmode!=None: cnt = ax.contourf(
-                            x, y, nodes, cmap=plt.cm.cmap_d[cmode])
+                    if type(levels)==type(None):
+                        if type(cmode)!=None: cnt = ax.contourf(
+                                x,y,nodes,cmap=plt.cm.cmap_d[cmode])
                         else: cnt = ax.contourf(x, y, nodes);pass
-                    elif levels!=None:
-                        if cmode!=None:cnt = ax.contourf(
-                            x,y,nodes, cmap=plt.cm.cmap_d[cmode])
+                    elif type(levels)!=type(None):
+                        if type(cmode)!=None:cnt = ax.contourf(
+                                x,y,nodes,levels,cmap=plt.cm.cmap_d[cmode])
                         else: cnt = ax.contourf(
-                            x, y, nodes, levels)#, cmap=plt.cm.bone)
+                                x,y,nodes,levels)#, cmap=plt.cm.bone)
 
                 cnts.append(cnt)
                 clev = cnt._levels
@@ -1519,7 +1524,7 @@ class polefigure:
                 for i in xrange(len(tcolors)):
                     cc = tcolors[i][0][0:3]
                     #if levels==None:
-                    if levels==None or ip==len(pole)-1:
+                    if type(levels)==type(None) or ip==len(pole)-1:
                         ## level line
                         ax.plot([1.28, 1.35],
                                 [1. - i * 0.2, 1. - i * 0.2],
@@ -1548,9 +1553,9 @@ class polefigure:
                     if proj=='pf':
                     ## RD and TD indication
                         ax.text(x=-0.05, y = 1.05,
-                                s='RD', fontsize = 4.*fact)
+                                s='1', fontsize = 4.*fact)
                         ax.text(x= 1.05, y = 0.,
-                                s='TD', fontsize = 4.*fact)
+                                s='2', fontsize = 4.*fact)
                 # Fixes the frame
                 #if proj!='ipf':
                 ax.set_xlim(-1.2, 1.5); ax.set_ylim(-1.2, 1.5)
@@ -1655,11 +1660,11 @@ class polefigure:
                     ## RD and TD indication
                     x4, y4 = -0.05, 1.05
                     r4, t4 = cart2polar(x4, y4)
-                    axp.text(x=t4, y=r4, s='RD',
+                    axp.text(x=t4, y=r4, s='1',
                              fontsize = 6.*fact/len(pole))
                     x5, y5 = 1.05, 0.
                     r5, t5 = cart2polar(x5, y5)
-                    axp.text(x=t5, y=r5, s='TD',
+                    axp.text(x=t5, y=r5, s='2',
                              fontsize = 6.*fact/len(pole))
                     axp.set_axis_off()
 
@@ -2112,8 +2117,8 @@ class polefigure:
             fig = plt.figure(ifig, figsize=figsize)
             ax = fig.add_subplot(1,npole,ipole)
             ax.set_axis_off(); ax.set_aspect('equal')
-            ax.text(x=-0.05, y= 1.05, s='RD', fontsize=4.*fact)
-            ax.text(x= 1.05, y= 0.  , s='TD', fontsize=4.*fact)
+            ax.text(x=-0.05, y= 1.05, s='1', fontsize=4.*fact)
+            ax.text(x= 1.05, y= 0.  , s='2', fontsize=4.*fact)
             ax.text(x=0.5, y=-1.05, s='(%i%i%i)'%
                     (pole[0],pole[1],pole[2]), fontsize=3. * fact)
             if proj=='pf':
