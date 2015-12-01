@@ -1500,11 +1500,11 @@ class polefigure:
 
                 elif mode=='contourf':
                     if type(levels)==type(None):
-                        if type(cmode)!=None: cnt = ax.contourf(
+                        if type(cmode)!=type(None): cnt = ax.contourf(
                                 x,y,nodes,cmap=plt.cm.cmap_d[cmode])
                         else: cnt = ax.contourf(x, y, nodes);pass
                     elif type(levels)!=type(None):
-                        if type(cmode)!=None:cnt = ax.contourf(
+                        if type(cmode)!=type(None):cnt = ax.contourf(
                                 x,y,nodes,levels,cmap=plt.cm.cmap_d[cmode])
                         else: cnt = ax.contourf(
                                 x,y,nodes,levels)#, cmap=plt.cm.bone)
