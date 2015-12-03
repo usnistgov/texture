@@ -1300,7 +1300,7 @@ class polefigure:
     def pf(self, pole=[[1,0,0],[1,1,0],[1,1,1]], mode='contour',
            ifig=1, dm=7.5, dn=7.5, ssym=None, levels=None,
            axes=None, cmode='gray_r',rot=0.,proj='pf', pole_mode='sys',
-           poles_gr=None):
+           poles_gr=None,ix='2',iy='1'):
         """
         Plots pole figures, either experimental pole figure or
         polycrystalline aggregate.
@@ -1324,6 +1324,8 @@ class polefigure:
           rot = 0.
           proj = 'pf'
           pole_mode='sys'
+          ix = '2'  (label for horinzontal axis)
+          iy = '1'  (label for vertical axis)
 
         ** Exemplary cmodes:
         gray_r, gray, pink_r, pink, summer_r, summer, winter_r, winter,
@@ -1553,9 +1555,9 @@ class polefigure:
                     if proj=='pf':
                     ## RD and TD indication
                         ax.text(x=-0.05, y = 1.05,
-                                s='1', fontsize = 4.*fact)
+                                s=iy, fontsize = 4.*fact)
                         ax.text(x= 1.05, y = 0.,
-                                s='2', fontsize = 4.*fact)
+                                s=ix, fontsize = 4.*fact)
                 # Fixes the frame
                 #if proj!='ipf':
                 ax.set_xlim(-1.2, 1.5); ax.set_ylim(-1.2, 1.5)
@@ -1660,11 +1662,11 @@ class polefigure:
                     ## RD and TD indication
                     x4, y4 = -0.05, 1.05
                     r4, t4 = cart2polar(x4, y4)
-                    axp.text(x=t4, y=r4, s='1',
+                    axp.text(x=t4, y=r4, s=iy,
                              fontsize = 6.*fact/len(pole))
                     x5, y5 = 1.05, 0.
                     r5, t5 = cart2polar(x5, y5)
-                    axp.text(x=t5, y=r5, s='2',
+                    axp.text(x=t5, y=r5, s=ix,
                              fontsize = 6.*fact/len(pole))
                     axp.set_axis_off()
 
