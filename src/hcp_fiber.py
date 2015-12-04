@@ -79,7 +79,7 @@ def gen_gr_fiber(th,sigma,mu,iopt,tilt):
 
 def main(ngrains=100,sigma=15.,c2a=1.6235,mu=0.,
          prc='cst',isc=False,tilt_1=0.,
-         tilts_about_rd=0.,tilts_about_td=0.):
+         tilts_about_ax1=0.,tilts_about_ax2=0.):
     """
     Arguments
     =========
@@ -87,8 +87,8 @@ def main(ngrains=100,sigma=15.,c2a=1.6235,mu=0.,
     sigma   = 15.
     c2a     = 1.6235
     prc     = 'cst' or 'ext'
-    tilts_about_rd   = 0.   -- Systematic tilting abount rd?
-    tilts_about_td   = 0.   -- Systematic tilting abount rd?
+    tilts_about_ax1   = 0.   -- Systematic tilting abount axis 1
+    tilts_about_ax2   = 0.   -- Systematic tilting abount axis 2
     tilt_1  = 0.   -- Tilt in the basis pole. (systematic tilting away from ND)
     """
     if isc:
@@ -105,22 +105,22 @@ def main(ngrains=100,sigma=15.,c2a=1.6235,mu=0.,
         for j in xrange(len(h)):
             temp = np.dot(g,h[j].T)
 
-            ## tilts_about_rd?
-            if abs(tilts_about_rd)>0:
-                g_tilt = rd_rot(tilts_about_rd)
+            ## tilts_about_ax1
+            if abs(tilts_about_ax1)>0:
+                g_tilt = rd_rot(tilts_about_ax1)
                 temp = np.dot(temp,g_tilt.T)
-            ## tilts_about_rd?
-            elif abs(tilts_about_td)>0:
-                g_tilt = td_rot(tilts_about_td)
+            ## tilts_about_ax2?
+            elif abs(tilts_about_ax2)>0:
+                g_tilt = td_rot(tilts_about_ax2)
                 temp = np.dot(temp,g_tilt.T)
-            elif abs(tilts_about_td)>0 and abs(tilts_about_td)>0:
+            elif abs(tilts_about_ax2)>0 and abs(tilts_about_ax2)>0:
                 raise IOError, 'One tilt at a time is allowed.'
 
             phi1,phi,phi2 = euler(a=temp, echo=False)
             gr.append([phi1,phi,phi2,1./ngrains])
 
     mypf=upf.polefigure(grains=gr,csym='hexag',cdim=[1,1,c2a])
-    mypf.pf(pole=[[0,0,0,1],[1,0,-1,0],[1,0,-1,2]],cmode='jet')
+    mypf.pf(pole=[[0,0,0,2],[1,0,-1,0],[1,0,-1,2]],cmode='jet')
     return np.array(gr)
 
 
@@ -141,27 +141,43 @@ def write_gr(f,gr):
 
 def app(ngr=100,c2a=1.6235):
     """
+    Application for FLD-Mg paper
+    Create a set of polycrystals
+
+    ## ZE10
+    1) Small doughnut
+    2) Big dougnut
+
+    ## AZ31
+    1) double let (tilt of 30 degree)
+    1) double let (tilt of 50 degree)
+
+    Arguments
+    ---------
+    ngr=100
+    c2a=1.6235 c2a ratio for HCP structure
     """
     import matplotlib.pyplot as plt
+
     ## small donuts
     # plt.gcf().clf()
     grs = main(mu=0,ngrains=ngr,tilt_1=30.,sigma=15)
     plt.gcf().savefig('small_doughnut.pdf',bbox_inches='tight')
     plt.gcf().clf()
-    f = gen_file(lab='sm_donut',ngr=ngr)
+    f = gen_file(lab='sm_doughnut',ngr=ngr)
     write_gr(f,grs)
 
     ## Big donuts
     grs = main(mu=0,ngrains=ngr,tilt_1=50.,sigma=15)
     plt.gcf().savefig('big_doughnut.pdf',bbox_inches='tight')
     plt.gcf().clf()
-    f = gen_file(lab='big_donut',ngr=ngr)
+    f = gen_file(lab='big_doughnut',ngr=ngr)
     write_gr(f,grs)
 
     ## twin tilts (30).
-    gr1=main(mu=0,ngrains=ngr/2,tilts_about_td=30.,sigma=45)
+    gr1=main(mu=0,ngrains=ngr/2,tilts_about_ax1=30.,sigma=45)
     plt.gcf().clf()
-    gr2=main(mu=0,ngrains=ngr/2,tilts_about_td=-30.,sigma=45)
+    gr2=main(mu=0,ngrains=ngr/2,tilts_about_ax1=-30.,sigma=45)
     plt.gcf().clf()
     grs =[]
     for i in xrange(len(gr1)):
@@ -175,9 +191,9 @@ def app(ngr=100,c2a=1.6235):
     write_gr(f,grs)
 
     ## twin tilts (50).
-    gr1=main(mu=0,ngrains=ngr/2,tilts_about_td=50.,sigma=45)
+    gr1=main(mu=0,ngrains=ngr/2,tilts_about_ax1=50.,sigma=45)
     plt.gcf().clf()
-    gr2=main(mu=0,ngrains=ngr/2,tilts_about_td=-50.,sigma=45)
+    gr2=main(mu=0,ngrains=ngr/2,tilts_about_ax1=-50.,sigma=45)
     plt.gcf().clf()
     gr =[]
     for i in xrange(len(gr1)):

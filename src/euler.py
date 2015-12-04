@@ -1,6 +1,29 @@
 import numpy as np
 import math
 
+def in_plane_rot(th):
+    """
+    Return an in-plane rotation matrix
+    | cos(th)   -sin(th)   0 |
+    | sin(th)    cos(th)   0 |
+    | 0          0         1 |
+
+    Argument
+    --------
+    th  (rotation angle in degree)
+    """
+    th = th * math.pi / 180.
+
+    sth = math.sin(th)
+    cth = math.cos(th)
+    rot = np.zeros((3,3))
+    rot[0,0] =  cth
+    rot[0,1] = -sth
+    rot[1,0] =  sth
+    rot[1,1] =  cth
+    rot[2,2] =  1.
+    return rot
+
 def euler(ph=None, th=None, tm=None, a=None, echo=True):
     """
     note:
@@ -15,7 +38,7 @@ def euler(ph=None, th=None, tm=None, a=None, echo=True):
           Thanks to python's non-hardwirable-arugment feature,
           if a matrix is not given, it automatically calculates
           the matrix with given angles.
-          Vice versa, if matrix is given, given angle aurgments 
+          Vice versa, if matrix is given, given angle aurgments
           are ignored and new euler angles are returned.
 
     Nomenclature of Euler angle follows Bunge's.
@@ -25,17 +48,17 @@ def euler(ph=None, th=None, tm=None, a=None, echo=True):
     """
     if type(a).__name__=='NoneType':  a=np.resize(np.array(()),(3,3));iopt=2
     else:
-        if type(a).__name__=='ndarray': 
+        if type(a).__name__=='ndarray':
             iopt = 1
             pass
-        else: 
+        else:
             print 'Error: Unexpected Matrix a type'
             print 'It should be numpy.ndarry!'
             raise IOError
 
     if iopt==1 :
         th = math.acos(a[2,2])  #Radian
-        if abs(a[2,2] > 0.99999): 
+        if abs(a[2,2] > 0.99999):
             tm = 0.
             ph = math.atan2(a[0,1],a[0,0]) #Radian
         else:
@@ -56,7 +79,7 @@ def euler(ph=None, th=None, tm=None, a=None, echo=True):
         """ Convert the angle into Radian"""
         ph = ph * math.pi / 180.
         th = th * math.pi / 180.
-        tm = tm * math.pi / 180.    
+        tm = tm * math.pi / 180.
 
         sph = math.sin(ph)
         cph = math.cos(ph)
@@ -81,5 +104,3 @@ def euler(ph=None, th=None, tm=None, a=None, echo=True):
         return a
 
     else: print 'Error: Improper iopt input'; raise IOError
-
-    
