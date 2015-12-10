@@ -131,6 +131,12 @@ from euler import euler # in euler module def euler:
                         # A-matrix and Euler angles
 import time
 import random
+
+from MP import progress_bar
+t2s = progress_bar.convert_sec_to_string
+uet = progress_bar.update_elapsed_time
+
+
 # import pp ## parallel
 
 def cub(filename=None,gr=None,ifig=3, pole=[[1,0,0],[1,1,0],[1,1,1]],
@@ -141,12 +147,21 @@ def cub(filename=None,gr=None,ifig=3, pole=[[1,0,0],[1,1,0],[1,1,1]],
     filename = None
     gr       = None
     ifig     = 3
+    pole     = [[1,0,0],[1,1,0],[1,1,1]],
+    cmode    = None):
     """
     if filename!=None: mypf = polefigure(filename=filename, csym='cubic')
     elif gr!=None: mypf = polefigure(grains=gr, csym='cubic')
     mypf.pf(pole=pole,mode='contourf',ifig=ifig,cmode=cmode)
 
 def cubgr(gr=None,ifig=3,mode='contourf'):
+    """
+    Arguments
+    =========
+    gr
+    ifig
+    mode
+    """
     mypf = polefigure(grains=gr, csym='cubic')
     mypf.pf(pole=[[1,0,0],[1,1,0],[1,1,1]],mode=mode,ifig=ifig)
 
@@ -1771,12 +1786,15 @@ class polefigure:
         if proj!='pf' and proj!='ipf':
             raise IOError, "Other modes of projection than pf and"+\
                 "ipf is not prepared yet"
+
         if type(agrain)==type(None):
             raise IOError,"A grains must be given to the method"
         if type(pole)==type(None):
             raise IOError, "Pole must be given to core"
-        if   type(pole).__name__=='list':    pole = np.array(pole)
-        elif type(pole).__name__=='ndarray': pass
+
+        if type(pole).__name__=='ndarray': pass
+        elif type(pole).__name__=='list': pole = np.array(pole)
+
         else: raise IOError, 'Unexpected type of the pole argument'
         temp = pole.copy()
         del pole; pole = temp
@@ -1784,8 +1802,7 @@ class polefigure:
         ##### calculates crystallographically equivalent poles #####
         ## pole figure projection
         if proj=='pf':
-            if isym==True:
-                npeq = equivp # xtallographically equiv. poles
+            if isym: npeq = equivp # xtallographically equiv. poles
             else: npeq = [pole]
             nit = len(npeq)
             nppp = []
@@ -1795,7 +1812,7 @@ class polefigure:
             npeq = np.array(nppp)
             for i in xrange(len(npeq)):
                 for j in xrange(len(npeq[i])):
-                    if abs(npeq[i,j])<0.1**8:
+                    if abs(npeq[i,j])<1e-9:
                         npeq[i,j] = 0.
 
         ## inverse pole figure
@@ -1827,7 +1844,7 @@ class polefigure:
             elif proj=='ipf': # p is in ca
                 ## calculates equivalent p by
                 ## applying symmetry operations
-                if isym==True:
+                if isym:
                     """
                     Sample axis is now referred to crystal
                     coordinate system. That vector has to
@@ -1876,23 +1893,23 @@ class polefigure:
         poles_gr = None, [] array shape: (ngr, 3)
         """
         ## Frequently used local functions or methods
-        pi   = math.pi;  npi  = np.pi
+        pi   = math.pi;
         cos  = math.cos; sin  = math.sin
         pol  = [] # a group of pole points.
 
-        t0 = time.time()
+
         ## npeq calculations
         if pole_mode=='sys':
             npeq = self.__equiv__(
                 miller=pole, csym=csym,
                 cdim=cdim, cang=cang)
 
+        t0 = time.time()
         for i in xrange(len(self.gr)):
             ## Either systematic representative
             ## poles or individual pole for
             ## each and every grain.
-            if pole_mode=='sys':
-                xpole = pole
+            if pole_mode=='sys': xpole = pole
             elif pole_mode=='indv':
                 xpole = poles_gr[i]
                 npeq = [xpole, xpole*-1] ## two coaxial poles
@@ -1907,18 +1924,14 @@ class polefigure:
                 if p[j][2] <0: p[j] = p[j] * - 1
                 ## phi, and theta in radian
                 x, y = cart2sph(p[j])
-                pol.append(
-                    [x, y, self.gr[i][3]]
-                    ) #phi, theta, intensity
-        t1 = (time.time() - t0)
+                pol.append([x, y, self.gr[i][3]]) #phi, theta, intensity
+
+        print 'Elapsed time for self.core:', t2s(time.time()-t0)
 
         ## weight normalization
-        pol = np.array(pol)
+        pol = np.array(pol).T
+        pol[2] = pol[2]/ pol[2].sum() ## for normalization that follows.
         pol = pol.transpose()
-        wgts = pol[2].sum()
-        pol[2] = pol[2]/wgts
-        pol = pol.transpose()
-        del wgts
 
         # grid number along phi   axis (x) is
         # referred to as m
@@ -1928,24 +1941,42 @@ class polefigure:
         # m x n grid;  m and n's range
         # m is in [-pi.,pi];  n is in [0, pi/2.]
 
-        mgrid = 360./dm; ngrid = 90./dn
+
+        """
+        (ngrid) (0,pi/2.) (theta, tilting)
+        ^ 
+        |
+        |
+        |
+        |
+        L_______________>  (mgrid) (-pi,+pi) (phi, rotation)
+
+        phi = (-pi,+pi) + dm/2.
+        theta = (-pi,+pi) + dm/2.
+        """
+        dmp = dm * pi/180.
+        dnp = dn * pi/180.
+
+        mgrid = int(360./dm); ngrid = int(90./dn)
         phi_angle   = np.arange(-pi, pi   )/dm + dm/2
         theta_angle = np.arange( 0., pi/2.)/dn + dn/2
         f = np.zeros((mgrid, ngrid))
         for i in xrange(len(pol)):
             phi = pol[i][0]; theta = pol[i][1]
-            mi  = int((phi+pi)/(dm*pi/180.) - 1e-6) #subtract tiny
-            ni  = int(theta/(dn*pi/180.)    - 1e-6) #subtract tiny
-            if mi<0 or ni<0 :
-                raise IOError, 'Negative index'
-            elif mi>mgrid or ni>ngrid:
-                raise IOError, 'Unexpected Error'
-            try:
-                # add pole intensity
-                f[mi,ni] = f[mi,ni] + pol[i][2]
-            except:
-                print phi*180./np.pi, theta*180./np.pi
-                raise IOError, "Something wrong in the index for f[mi,ni]"
+            mi  = int((phi+pi)/dmp - 1e-9) #subtract tiny
+            ni  = int(theta/dnp    - 1e-9) #subtract tiny
+            f[mi,ni] = f[mi,ni] + pol[i][2]
+
+            # if mi<0 or ni<0 :
+            #     raise IOError, 'Negative index'
+            # elif mi>mgrid or ni>ngrid:
+            #     raise IOError, 'Unexpected Error'
+            # try:
+            #f[mi,ni] = f[mi,ni] + pol[i][2]
+            # except:
+            #     print phi*180./np.pi, theta*180./np.pi
+            #     raise IOError, "Something wrong in "+\
+            #         "the index for f[mi,ni]"
 
         ## ----------------------------------------
         """
@@ -1955,28 +1986,39 @@ class polefigure:
         #2. Symmetrization about the y-axis
         ## ----------------------------------------
 
-        # ismooth = False
-        # if ismooth==True:
+        # #ismooth = False
+        # ismooth = True
+        # if ismooth:
         #     fpole = 0.
         #     for m in xrange(int(mgrid)):
         #         fpole = fpole + f[m,0]
-        #     #fnorm = (1.-cos(7.5 * pi/180. ))*2.*pi
-        #     fnorm = 1.*pi
-        #     fpole = fpole /fnorm
-        #     for m in xrange(mgrid):
+        #     fnorm = (1.-cos(dn * pi/180. ))*2.*pi
+        #     #fnorm = 1.*pi
+        #     fpole = fpole / fnorm
+        #     for m in xrange(int(mgrid)):
         #         f[m,0] = fpole
         # else:  pass
 
+        # fnorm = dcos(z) * deltx / 360
+
+        """
+        Spherical coordinates result in an area element
+        dA = sin(n)*dm*dn
+        This area element dA is dependent on the tilting (n) grid
+
+        Normalization of pole figure intensity, i.e., f(theta, phi) is:
+        1/(2pi) \int f(theta,phi) sin(theta),dphi,dtheta = 1
+        """
+
         z = np.zeros((ngrid+1,))
         deltz = (pi/2.)/float(ngrid)
-        for i in xrange(int(ngrid)+1):
+        for i in xrange(ngrid+1):
             z[i] = deltz*i
 
         deltx = 2.*pi/mgrid
-        for m in xrange(int(mgrid)):
+        for m in xrange(mgrid):
             for n in xrange(int(ngrid)):
                 fnorm = (cos(z[n]) - cos(z[n+1])) * deltx/(2*pi)
-                #print 'fnorm =', fnorm;raw_input()
                 f[m,n] = f[m,n] / fnorm
 
         if ifig!=None:
@@ -1987,15 +2029,12 @@ class polefigure:
 
         nodes = np.zeros((mgrid+1,ngrid+1))  # rot, tilting = (azimuth, declination) ...
 
-        ## Assigns the same intensity for the first ring
-        # South-pole : along  n=0 axis ---
-        f0 = 0.
-        for m in xrange(len(f)):
-            f0 = f0 + f[m,0]
-
-        f0avg = f0 / len(f)
-        for m in xrange(len(f)+1):
-            nodes[m,0] = f0avg
+        ## Assigns the same intensity for the first n rings
+        n=1
+        for i in xrange(n):
+            # South-pole : along  n=0 axis ---
+            for m in xrange(len(f)+1):
+                nodes[m,i] = f[:,i].sum() / len(f)
         ## ------------------------------
 
         # # along n=1 axis ----------------
