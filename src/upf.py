@@ -137,6 +137,18 @@ t2s = progress_bar.convert_sec_to_string
 uet = progress_bar.update_elapsed_time
 
 
+
+try:
+    import joblib
+except:
+    is_joblib = False
+else:
+    is_joblib = True
+    from joblib import Parallel, delayed
+
+pi   = math.pi;
+cos  = math.cos; sin  = math.sin
+
 # import pp ## parallel
 
 def cub(filename=None,gr=None,ifig=3, pole=[[1,0,0],[1,1,0],[1,1,1]],
@@ -681,9 +693,9 @@ def __isunique__(a, b):
     for i in xrange(len(b)):
         ## is a//b[i]? either + or -
         diff0 = abs(b[i][0] - a[0]) + \
-            abs(b[i][1] - a[1]) + abs(b[i][2] - a[2])
+                abs(b[i][1] - a[1]) + abs(b[i][2] - a[2])
         diff1 = abs(b[i][0] + a[0]) + abs(b[i][1] + a[1])\
-            + abs(b[i][2] + a[2])
+             + abs(b[i][2] + a[2])
         if diff0 < 0.1**4 or diff1 < 0.1**4:
             return False
     return True
@@ -715,17 +727,14 @@ def projection(pole=None, agrain=None):
 
     pole = [1,1,1] or [1,1,0] something like this.
 
-    ---------
     Arguments
     ---------
     pole = None
     agrain = [ph1, phi, phi2, vf]
     """
     #normalization of the miller indices
-    norm = np.sqrt(pole[0]**2 + pole[1]**2 + pole[2]**2)
-    pole = pole / norm
-
-    a = pole[0]; b = pole[1]; c = pole[2]
+    pole = pole / np.sqrt(pole[0]**2 + pole[1]**2 + pole[2]**2)
+    a,b,c = pole[0:3]
     ###  mid-plane projection (z=0)
     if c==1:
         # pole[0] = 0; pole[1]=0; pole[2] = 1
@@ -868,6 +877,142 @@ def ipfline(center=[0,0],csym='cubic'):
 Sample symmetry application is performed over RVE calculation
 refer to the RVE class in cmb.py module.
 """
+def core(self, pole=None, proj='pf', csym=None, ssym=None,
+         agrain=None, isym=True, cdim=[1,1,1],
+         cang=[90.,90.,90.],
+         equivp=None):
+    """
+    --------------------------------
+    The core of the polefigure class
+    --------------------------------
+
+    It is the engine for plotting regular and inverse
+    pole figures by generating projected
+    cartensian coordinates for the 3D vectors
+    onto the pole figure sphere (stereographic sphere).
+    One can directly plot pole figure on a xy plane.
+
+    Provided the miller indices,
+    1. Calculates the crystallographically equivalent poles
+    2. Maps the miller indices for a grain
+       into a vector in sample axes
+    3. Returns mapped poles as raw and as projected (xy)
+
+    ---------
+    Arguments
+    ---------
+      pole = None
+      proj = 'pf'
+      csym = 'cubic', 'hexag'
+      ssym = None,
+      agrain = None
+      isym = True
+      cdim = [ 1., 1., 1.]
+      cang = [90.,90.,90.]
+      equivp = None  #crystallographically equivalent pole
+    """
+    xy = []; POLE = [];
+    if csym!='cubic' and csym!='hexag' and csym!='None' \
+            and csym!='centro':
+        raise IOError, "Other symmetries than cubic"+\
+            " or hexag or 'None'"+" nor 'centro' is"+\
+            " not prepared yet"
+    if proj!='pf' and proj!='ipf':
+        raise IOError, "Other modes of projection than pf and"+\
+            "ipf is not prepared yet"
+
+    if type(agrain)==type(None):
+        raise IOError,"A grains must be given to the method"
+    if type(pole)==type(None):
+        raise IOError, "Pole must be given to core"
+
+    if type(pole).__name__=='ndarray': pass
+    elif type(pole).__name__=='list': pole = np.array(pole)
+
+    else: raise IOError, 'Unexpected type of the pole argument'
+
+    temp = pole.copy()
+    del pole; pole = temp
+
+    ##### calculates crystallographically equivalent poles #####
+    ## pole figure projection
+    if proj=='pf':
+        if isym: npeq = equivp # xtallographically equiv. poles
+        else: npeq = [pole]
+        nit = len(npeq)
+        nppp = []
+        for i in xrange(nit):
+            nppp.append(npeq[i])
+            nppp.append(npeq[i]*-1)
+        npeq = np.array(nppp)
+        for i in xrange(len(npeq)):
+            for j in xrange(len(npeq[i])):
+                if abs(npeq[i,j])<1e-9:
+                    npeq[i,j] = 0.
+
+    ## inverse pole figure
+    elif proj=='ipf':
+        # if abs(pole[0]**2+pole[1]**2+pole[2]**2-1)>0.1**6:
+        #     print "The pole must be one of principal axes of"\
+        #         " the sample"
+        #     print "It should be among [1,0,0], [0,1,0], [0,0,1]"
+        #     print "current pole is as below\n", pole
+        #     raw_input()
+        #     raise IOError
+        npeq = [pole] ## Note it is sample axis vector!
+        #equivalent pole calculatation is deffered to
+        #next for in block
+    ## unexpected proj argument
+    else: print "It should be either pf or ipf"; raise IOError
+
+    t0=time.time()
+    t_agr2pol = 0.
+    t_proj = 0.
+    for ip in xrange(len(npeq)):
+        ## 'pf':  converts ca pole to sa pole
+        ## 'ipf': converts sa pole to ca pole
+        t_1 = time.time()
+        p = agr2pol(agrain=agrain, miller=npeq[ip], proj=proj)
+        t_agr2pol = t_agr2pol + time.time()-t_1
+        if proj=='pf': # p is in sa
+            ## if a pole is toward the north pole of the unit circle,
+            #if p[2]>0: pass
+            #else:
+            POLE.append(p)
+            t_1=time.time()
+            xy.append(projection(pole=p))
+            t_proj = t_proj + time.time()-t_1
+        elif proj=='ipf': # p is in ca
+            ## calculates equivalent p by
+            ## applying symmetry operations
+            if isym:
+                """
+                Sample axis is now referred to crystal
+                coordinate system. That vector has to
+                be mutiplicated by symmetry operations.
+                """
+                npoles = self.__equiv__(
+                    miller=p, csym=csym,
+                    cdim=cdim, cang=cang)
+                temp = []
+                for i in xrange(len(npoles)):
+                    temp.append(npoles[i])
+                    temp.append(npoles[i]*-1)
+                temp = np.array(temp)
+                npoles = temp
+
+            else: npoles=[p]
+            for npp in xrange(len(npoles)):
+                prj_xy = projection(pole=npoles[npp])
+                xy.append(prj_xy)
+                POLE.append(npoles[npp])
+            pass # if over 'pf' or 'ipf'
+        pass # End of for loop over ipf
+
+    # print 'Elapsed time for agr2pol ', t2s(t_agr2pol)
+    # print 'Elapsed time for proj ', t2s(t_proj)
+
+    return xy, POLE
 class polefigure:
     # decides if the given set is in the texture file form or array
     def __init__(self, grains=None, filename=None, csym=None,
@@ -1796,6 +1941,7 @@ class polefigure:
         elif type(pole).__name__=='list': pole = np.array(pole)
 
         else: raise IOError, 'Unexpected type of the pole argument'
+
         temp = pole.copy()
         del pole; pole = temp
 
@@ -1830,17 +1976,23 @@ class polefigure:
         ## unexpected proj argument
         else: print "It should be either pf or ipf"; raise IOError
 
+        t0=time.time()
+        t_agr2pol = 0.
+        t_proj = 0.
         for ip in xrange(len(npeq)):
             ## 'pf':  converts ca pole to sa pole
             ## 'ipf': converts sa pole to ca pole
+            t_1 = time.time()
             p = agr2pol(agrain=agrain, miller=npeq[ip], proj=proj)
+            t_agr2pol = t_agr2pol + time.time()-t_1
             if proj=='pf': # p is in sa
                 ## if a pole is toward the north pole of the unit circle,
                 #if p[2]>0: pass
                 #else:
-                temp = projection(pole=p)
                 POLE.append(p)
-                xy.append(temp)
+                t_1=time.time()
+                xy.append(projection(pole=p))
+                t_proj = t_proj + time.time()-t_1
             elif proj=='ipf': # p is in ca
                 ## calculates equivalent p by
                 ## applying symmetry operations
@@ -1867,6 +2019,10 @@ class polefigure:
                     POLE.append(npoles[npp])
                 pass # if over 'pf' or 'ipf'
             pass # End of for loop over ipf
+
+        # print 'Elapsed time for agr2pol ', t2s(t_agr2pol)
+        # print 'Elapsed time for proj ', t2s(t_proj)
+
         return xy, POLE
 
     def cells(self,pole=[1,0,0], ifig=None, dm=15., dn = 15.,
@@ -1893,10 +2049,7 @@ class polefigure:
         poles_gr = None, [] array shape: (ngr, 3)
         """
         ## Frequently used local functions or methods
-        pi   = math.pi;
-        cos  = math.cos; sin  = math.sin
         pol  = [] # a group of pole points.
-
 
         ## npeq calculations
         if pole_mode=='sys':
@@ -1905,28 +2058,51 @@ class polefigure:
                 cdim=cdim, cang=cang)
 
         t0 = time.time()
-        for i in xrange(len(self.gr)):
-            ## Either systematic representative
-            ## poles or individual pole for
-            ## each and every grain.
-            if pole_mode=='sys': xpole = pole
-            elif pole_mode=='indv':
-                xpole = poles_gr[i]
-                npeq = [xpole, xpole*-1] ## two coaxial poles
-            xy, p = self.core(
-                pole=xpole, proj=proj, csym=csym,
-                agrain=self.gr[i], cang=cang,
-                cdim=cdim, equivp=npeq)
-            # p is n equivalent poles
-            p = np.array(p)
-            for j in xrange(len(p)):
-                #make it postive.
-                if p[j][2] <0: p[j] = p[j] * - 1
-                ## phi, and theta in radian
-                x, y = cart2sph(p[j])
-                pol.append([x, y, self.gr[i][3]]) #phi, theta, intensity
+
+        is_joblib=False
+        if is_joblib:
+            ## This loop is quite extensive and slow.
+            rst = Parallel(n_jobs=3) (delayed(core)(
+                self,pole=pole,proj=proj,csym=csym,
+                cang=cang,cdim=cdim,equivp=npeq,
+                agrain=self.gr[i]) for i in xrange(len(self.gr)))
+
+            for i in xrange(len(rst)):
+                xy, p = rst[i]
+                # p is n equivalent poles
+                p = np.array(p)
+                for j in xrange(len(p)):
+                    # make it postive.
+                    if p[j][2] <0: p[j] = p[j] * - 1
+                    ## phi, and theta in radian
+                    x, y = cart2sph(p[j])
+                    pol.append([x, y, self.gr[i][3]]) #phi, theta, intensity
+
+        elif not(is_joblib):
+            for i in xrange(len(self.gr)):
+                ## Either systematic representative
+                ## poles or individual pole for
+                ## each and every grain.
+                if pole_mode=='sys': xpole = pole
+                elif pole_mode=='indv':
+                    xpole = poles_gr[i]
+                    npeq = [xpole, xpole*-1] ## two coaxial poles
+                xy, p = self.core(
+                    pole=xpole, proj=proj, csym=csym,
+                    agrain=self.gr[i], cang=cang,
+                    cdim=cdim, equivp=npeq)
+                # p is n equivalent poles
+                p = np.array(p)
+                for j in xrange(len(p)):
+                    # make it postive.
+                    if p[j][2] <0: p[j] = p[j] * - 1
+                    ## phi, and theta in radian
+                    x, y = cart2sph(p[j])
+                    pol.append([x, y, self.gr[i][3]]) #phi, theta, intensity
 
         print 'Elapsed time for self.core:', t2s(time.time()-t0)
+
+        t0=time.time()
 
         ## weight normalization
         pol = np.array(pol).T
@@ -1944,7 +2120,7 @@ class polefigure:
 
         """
         (ngrid) (0,pi/2.) (theta, tilting)
-        ^ 
+        ^
         |
         |
         |
@@ -2030,7 +2206,7 @@ class polefigure:
         nodes = np.zeros((mgrid+1,ngrid+1))  # rot, tilting = (azimuth, declination) ...
 
         ## Assigns the same intensity for the first n rings
-        n=1
+        n = 1
         for i in xrange(n):
             # South-pole : along  n=0 axis ---
             for m in xrange(len(f)+1):
@@ -2099,6 +2275,10 @@ class polefigure:
                         raise IOError
                     inten = inten + f[mi,ni]
                 nodes[m,n] = inten/4.
+
+
+        print 'Elapsed time in self.core after cells:', t2s(time.time()-t0)
+
         return f, nodes
 
     def dotplot(self, pole=None, ifig=None, npole=1,
