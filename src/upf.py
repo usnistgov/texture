@@ -136,6 +136,10 @@ from MP import progress_bar
 t2s = progress_bar.convert_sec_to_string
 uet = progress_bar.update_elapsed_time
 
+import for_lib
+agr2pol_f = for_lib.agr2pol
+proj_f    = for_lib.projection
+
 
 
 try:
@@ -976,7 +980,12 @@ def core(self, pole=None, proj='pf', csym=None, ssym=None,
         ## 'pf':  converts ca pole to sa pole
         ## 'ipf': converts sa pole to ca pole
         t_1 = time.time()
-        p = agr2pol(agrain=agrain, miller=npeq[ip], proj=proj)
+
+        if   proj=='ipf':
+            p = agr2pol(agrain=agrain, miller=npeq[ip], proj=proj)
+        elif proj=='pf':
+            p = agr2pol_f(agrain, npeq[ip].copy())
+
         t_agr2pol = t_agr2pol + time.time()-t_1
         if proj=='pf': # p is in sa
             ## if a pole is toward the north pole of the unit circle,
@@ -984,7 +993,8 @@ def core(self, pole=None, proj='pf', csym=None, ssym=None,
             #else:
             POLE.append(p)
             t_1=time.time()
-            xy.append(projection(pole=p))
+            #xy.append(projection(pole=p))
+            xy.append(proj_f(p[:3]))
             t_proj = t_proj + time.time()-t_1
         elif proj=='ipf': # p is in ca
             ## calculates equivalent p by
@@ -1007,7 +1017,8 @@ def core(self, pole=None, proj='pf', csym=None, ssym=None,
 
             else: npoles=[p]
             for npp in xrange(len(npoles)):
-                prj_xy = projection(pole=npoles[npp])
+                #prj_xy = projection(pole=npoles[npp])
+                prj_xy = proj_f(pole=npoles[npp][:3])
                 xy.append(prj_xy)
                 POLE.append(npoles[npp])
             pass # if over 'pf' or 'ipf'
@@ -1983,11 +1994,21 @@ class polefigure:
         t0=time.time()
         t_agr2pol = 0.
         t_proj = 0.
+
+
         for ip in xrange(len(npeq)):
             ## 'pf':  converts ca pole to sa pole
             ## 'ipf': converts sa pole to ca pole
             t_1 = time.time()
-            p = agr2pol(agrain=agrain, miller=npeq[ip], proj=proj)
+            if   proj=='ipf':
+                p = agr2pol(agrain=agrain, miller=npeq[ip], proj=proj)
+            elif proj=='pf':
+                ag = agrain[:3].copy()
+                _np_eq_=npeq[ip]
+                p = agr2pol_f(ag, _np_eq_)
+                
+            # p = agr2pol(agrain=agrain, miller=npeq[ip], proj=proj)
+
             t_agr2pol = t_agr2pol + time.time()-t_1
             if proj=='pf': # p is in sa
                 ## if a pole is toward the north pole of the unit circle,
@@ -1995,7 +2016,9 @@ class polefigure:
                 #else:
                 POLE.append(p)
                 t_1=time.time()
-                xy.append(projection(pole=p))
+                # xy.append(projection(pole=p))
+                xy.append(proj_f(p[:3]))
+
                 t_proj = t_proj + time.time()-t_1
             elif proj=='ipf': # p is in ca
                 ## calculates equivalent p by
@@ -2018,7 +2041,8 @@ class polefigure:
 
                 else: npoles=[p]
                 for npp in xrange(len(npoles)):
-                    prj_xy = projection(pole=npoles[npp])
+                    #prj_xy = projection(pole=npoles[npp])
+                    prj_xy = proj_f(npoles[npp][:3])
                     xy.append(prj_xy)
                     POLE.append(npoles[npp])
                 pass # if over 'pf' or 'ipf'
