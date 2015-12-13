@@ -783,6 +783,10 @@ def cart2sph(pole):
     Argument
     ========
     pole
+
+    Returns
+    -------
+    [phi,theta]
     """
     pole = np.array(pole)
     r = np.sqrt((pole**2).sum())
