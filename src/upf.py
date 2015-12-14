@@ -146,6 +146,12 @@ try:
     import joblib
 except:
     is_joblib = False
+    print 'joblib was not found.'
+    print '-'*60
+    print 'One might improve the speed by installing joblib'
+    print 'JOBLIB is to run embarrasingly parallel runs for multiple poles'
+    print "Find about joblib in  https://github.com/joblib/joblib"
+    print '-'*60
 else:
     is_joblib = True
     from joblib import Parallel, delayed
@@ -2215,7 +2221,7 @@ class polefigure:
     def pf_new(
             self,poles=[[1,0,0],[1,1,0]],
             dth=7.5,dph=7.5,n_rim=2,cdim=None,ires=True,
-            lev_opt=1,lev_norm_log=False,nlev=9):
+            lev_opt=1,lev_norm_log=False,nlev=7,cmap='viridis'):
         """
         dph  = 7.5. (tilting angle : semi-sphere 0, +90 or full-sphere 0, +180)
         dth  = 7.5. (rotation angle: -180,+180)
@@ -2245,11 +2251,25 @@ class polefigure:
 
         tiny = 1.e-9
         N = []
-        for i in xrange(len(poles)):
-            N.append(cells_pf(
-                pole_ca=poles[i],ifig=None,dth=dth,dph=dph,
-                csym=self.csym,cang=self.cang,cdim=self.cdim,
-                grains=self.gr,n_rim = n_rim))
+        t0=time.time()
+        #is_joblib=False ## Debug
+        if is_joblib and len(poles)>1:
+            rst=Parallel(n_jobs=len(poles)) (
+                delayed(cells_pf)(
+                    pole_ca=poles[i],ifig=None,dth=dth,dph=dph,
+                    csym=self.csym,cang=self.cang,cdim=self.cdim,
+                    grains=self.gr,n_rim = n_rim)for i in xrange(len(poles)))
+            for i in xrange(len(rst)):
+                N.append(rst[i])
+        else:
+            for i in xrange(len(poles)):
+                N.append(cells_pf(
+                    pole_ca=poles[i],ifig=None,dth=dth,dph=dph,
+                    csym=self.csym,cang=self.cang,cdim=self.cdim,
+                    grains=self.gr,n_rim = n_rim))
+        et = time.time()-t0
+        uet(et,head='Elapsed time for calling cells_pf')
+        print
 
         x_node = np.arange(-180.,180.+tiny,dth)
         y_node = np.arange(   0., 90.+tiny,dph)
@@ -2278,15 +2298,16 @@ class polefigure:
             if lev_opt==0: mx = N[i].flatten().max()
             
             if lev_norm_log:
-                levels = np.logspace(np.log2(mn),np.log2(mx),nlev)
+                levels = np.logspace(np.log10(mn),
+                                     np.log10(mx),nlev)
                 norm = LogNorm()
             else:
                 levels = np.linspace(mn,mx,nlev)
                 norm = None
 
-            cnt1 = ax1.contour(x,y,N[i],levels=levels,norm=norm)
+            cnt1 = ax1.contour(x,y,N[i],levels=levels,cmap=cmap,norm=norm)
             cnt2 = ax2.contour(x,y,N[i],levels=levels,cmap='gray_r',norm=norm)
-            cnt3 = ax3.contourf(x,y,N[i],levels=levels,norm=norm)
+            cnt3 = ax3.contourf(x,y,N[i],levels=levels,cmap=cmap,norm=norm)
             cnt4 = ax4.contourf(x,y,N[i],levels=levels,cmap='gray_r',norm=norm)
             cnts=[cnt1,cnt2,cnt3,cnt4]
             axs=[ax1,ax2,ax3,ax4]
