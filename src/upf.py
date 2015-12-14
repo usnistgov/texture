@@ -724,23 +724,40 @@ def __circle__(center=[0,0], r=1.):
     y = y + center[0]
     return x,y
 
-def deco_pf(ax,cnt):
-    fact=2.
-
+def deco_pf(ax,cnt,miller=[0,0,0]):
+    fact=2.5
     clev = cnt._levels
     tcolors = cnt.tcolors
 
     for i in xrange(len(tcolors)):
         cc = tcolors[i][0][0:3]
-
-        ax.plot([1.28, 1.35],
+        ax.plot([1.30, 1.37],
                 [1. - i * 0.2, 1. - i * 0.2],
                 color=cc)
         ## level text
-        ax.text(x=1.47, y= 1. - i*0.2 - 0.05,
-                s=' %4.2f'%(clev[i]),
-                fontsize=4.*fact)
+        if clev[i]<10: s='  %4.2f'%clev[i]
+        else:          s='%5.2f'%clev[i]
+            
+        ax.text(x=1.44, y= 1. - i*0.2 - 0.05,
+                s=s,fontsize=4.*fact)
 
+    ## axis label/    ## Ticks
+    ax.text(1.14,0. ,'1',va='center',ha='center')
+    ax.text(0. ,1.14,'2',va='center',ha='center')
+    ax.plot([0.0,0.0], [1.0,1.03],'k-')
+    ax.plot([1.0,1.03],[0.0,0.0],'k-')
+
+    ## pole
+    s='('
+    for i in xrange(len(miller)):
+        if miller[i]<0: h = r'\bar{%s}'%str(-1*miller[i])
+        else: h = '%s'%str(miller[i])
+        s='%s%s'%(s,h)
+    s='%s)'%s
+    s=r'$\mathbf{%s}$'%s
+    ax.text(0.6,-0.95,s,fontsize=12)
+
+    ## circle
     x,y = __circle__()
     ax.plot(x,y,'k-')
     ax.set_axis_off()
@@ -2195,219 +2212,84 @@ class polefigure:
         dph  = 7.5. (tilting angle : semi-sphere 0, +90 or full-sphere 0, +180)
         dth  = 7.5. (rotation angle: -180,+180)
         """
-        if type(cdim)!=type(None): self.cdim=cdim
+        from matplotlib.colors import LogNorm
+        miller=poles[::]
 
+        if type(cdim)!=type(None): self.cdim=cdim
         ## 4 digits miller indices are used for hexagon and trigo
 
         if self.csym=='hexag' or self.csym=='trigo':
             pole_=[]
             for i in xrange(len(poles)):
-                p = [0,0,0]
+                p  = [0,0,0]
                 p_ = poles[i]
                 if len(p_)!=4: raise IOError, \
                    '4 digits should be given'
                 p[2] = p_[3]
                 p[0] = p_[0] - p_[2]
                 p[1] = p_[1] - p_[2]
-                p[2] = p_[3]
                 pole_.append(p)
             poles = pole_[::]
 
-        # print 'Crystal poles:'
-        # for i in xrange(len(poles)):
-        #     print poles[i]
-        # print '-'*20
-
         tiny = 1.e-9
-        N=[]
-        print 'self.cdim:',self.cdim
+        N = []
         for i in xrange(len(poles)):
-            N.append(self.cells_pf(
-                pole_ca=poles[i],dth=dth,dph=dph,
-                csym=self.csym,grains=self.gr,
-                n_rim = n_rim))
+            N.append(cells_pf(
+                pole_ca=poles[i],ifig=None,dth=dth,dph=dph,
+                csym=self.csym,cang=self.cang,cdim=self.cdim,
+                grains=self.gr,n_rim = n_rim))
 
         x_node = np.arange(-180.,180.+tiny,dth)
         y_node = np.arange(   0., 90.+tiny,dph)
-        XN,YN = np.meshgrid(x_node,y_node)
+        XN, YN = np.meshgrid(x_node,y_node)
 
         #--------------------------------------------------#
-        ## plotting
-        fig=plt.figure(figsize=(3.3*len(poles),3.*4))
-        ## resolution and pole figure plotting preferences
+        ## plotting / resolution
+        fig = plt.figure(figsize=(3.3*len(poles),3.*4))
         nm = (360.0 - 0.)/dth; nn = (180. - 90.)/dph
-        # theta and phi and stereographic projection of them.
-        theta  = np.linspace(pi, pi/2., nn+1) #tilting angle
-        phi    = np.linspace(0.,2.*pi, nm+1)    #rotation angle
-        r      = np.sin(theta)/(1-np.cos(theta))  #tilting angle to radius
-        R, PHI = np.meshgrid(r,phi)          #meshing radius and rotation angle
-        PHI    = PHI + pi/2. # rotation the pole figure up.
-        x = R*np.cos(PHI); y = R*np.sin(PHI) #convert the polar coord-> cartensian
+        theta  = np.linspace(pi, pi/2., nn+1)
+        phi    = np.linspace(0., 2.*pi, nm+1)
+        r      = np.sin(theta)/(1-np.cos(theta))
+        R, PHI = np.meshgrid(r,phi)
+        PHI    = PHI# + pi/2.
+        x      = R*np.cos(PHI)
+        y      = R*np.sin(PHI)
 
-
-        from matplotlib.colors import LogNorm
         norm = LogNorm()
-
         for i in xrange(len(poles)):
             ax_cntl = fig.add_subplot(4,len(poles),i+1)
             ax_cntf = fig.add_subplot(4,len(poles),i+1+len(poles))
             ax_cntw = fig.add_subplot(4,len(poles),i+1+len(poles)*2)
             ax_cntb = fig.add_subplot(4,len(poles),i+1+len(poles)*3)
 
-            mn = N[i].flatten().min()
             mx = N[i].flatten().max()
-            if mn==0: mn = 0.5
-            levels = np.linspace(mn,mx,7)
+            mn = 0.5
+            levels = np.linspace(mn,mx,9)
 
-            cnt = ax_cntl.contour(x,y,N[i],levels=levels)
-            deco_pf(ax_cntl,cnt)
-            cnt = ax_cntw.contour(x,y,N[i],levels=levels,cmap='gray_r')
-            deco_pf(ax_cntw,cnt)
-            cnt = ax_cntf.contourf(x,y,N[i],levels=levels)
-            deco_pf(ax_cntf,cnt)
-            cnt = ax_cntb.contourf(x,y,N[i],levels=levels,cmap='gray_r')
-            deco_pf(ax_cntb,cnt)
+            cnt1 = ax_cntl.contour(x,y,N[i],levels=levels)
+            cnt2 = ax_cntw.contour(x,y,N[i],levels=levels,cmap='gray_r')
+            cnt3 = ax_cntf.contourf(x,y,N[i],levels=levels)
+            cnt4 = ax_cntb.contourf(x,y,N[i],levels=levels,cmap='gray_r')
+            deco_pf(ax_cntl,cnt1,miller[i])
+            deco_pf(ax_cntw,cnt2,miller[i])
+            deco_pf(ax_cntf,cnt3,miller[i])
+            deco_pf(ax_cntb,cnt4,miller[i])
 
             for j in xrange(len(x)-1):
                 for k in xrange(len(x[j])):
                     if N[i][j,k]<mn:
-                        ax_cntl.plot(x[j][k],y[j][k],'k.')#,alpha=0.3,markersize=2.0)
-                        ax_cntw.plot(x[j][k],y[j][k],'k.')#,alpha=0.3,markersize=2.0)
+                        ax_cntl.plot(x[j][k],y[j][k],'k.',
+                                     alpha=0.17*len(poles),markersize=2.0)
+                        ax_cntf.plot(x[j][k],y[j][k],'k.',
+                                     alpha=0.17*len(poles),markersize=2.0)
+                    if N[i][j,k]<levels[1]:
+                        ax_cntw.plot(x[j][k],y[j][k],'k.',
+                                     alpha=0.17*len(poles),markersize=2.0)
+
+                        ax_cntb.plot(x[j][k],y[j][k],'k.',
+                                     alpha=0.17*len(poles),markersize=2.0)
         #--------------------------------------------------#
 
-    def cells_pf(
-            self,pole_ca=[1,0,0],ifig=None,dph=7.5,
-            dth =7.5,csym=None, cang=[90.,90.,90.],
-            grains=None,n_rim=2):
-        """
-        Creates cells whose resolutioin is nphi, ntheta
-        Given the delta x and delt y (dm, dn), each pole's
-        weight is assigned to a cell which braces it.
-        Plots the cell's weight and returns the cell in array.
-
-        ---------
-        Arguments
-        ---------
-        pole = [1,0,0]
-        ifig = None
-        dph  = 7.5. (tilting angle : semi-sphere 0, +90 or full-sphere 0, +180)
-        dth  = 7.5. (rotation angle: -180,+180)
-        csym = None
-        cang = [90.,90.,90.]
-        grains = None, [] array shape: (ngr, 3)
-        n_rim=2
-        """
-
-        ## tests
-        test=False
-        if test:
-            fig=plt.figure()
-            ax1=fig.add_subplot(331)
-            ax2=fig.add_subplot(332,projection='polar')
-            ax3=fig.add_subplot(333)
-            ax4=fig.add_subplot(334)
-        ##
-
-        tiny = 1e-9
-        ## Find poles in sa [pole_sa]
-        phs, ths, wgts = [], [], []
-
-        p0 = __equiv__(
-            miller=pole_ca,csym=csym,
-            cdim=self.cdim,cang=self.cang)
-        poles_ca=[]
-        for i in xrange(len(p0)):
-            poles_ca.append(p0[i])
-            poles_ca.append(-p0[i])
-            # print poles_ca[i]
-
-        for j in xrange(len(poles_ca)):
-            poles_ca[j] = poles_ca[j] /\
-                (np.sqrt((poles_ca[j]**2).sum()))
-
-        poles_sa = np.zeros((len(grains),len(poles_ca),3))
-        poles_wgt = np.zeros((len(grains),len(poles_ca)))
-        print grains.shape
-        for i in xrange(len(grains)):
-            phi1,phi,phi2,wgt = grains[i]
-            if test:  ax1.plot(phi1,phi)
-            # arg = euler_f(2,phi1,phi,phi2,np.zeros((3,3)),echo=False) ## ca<-sa
-            # amat = arg[-1]
-            amat = euler(phi1,phi,phi2,echo=False)
-            for j in xrange(len(poles_ca)):
-                poles_sa[i,j,:] = np.dot(amat.T,poles_ca[j])
-                poles_wgt[i,j]  = wgt
-
-        poles_sa = poles_sa.reshape((len(grains)*len(poles_ca),3))
-        poles_wgt = poles_wgt.reshape((len(grains)*len(poles_ca)))
-
-        ## Full Sphere
-        x=np.arange(-180., 180.+tiny, dth)
-        y=np.arange(   0., 180.+tiny, dph)
-        nx, ny = int(360./dth), int(180./dph)
-        f = np.zeros((nx,ny))
-
-        ## Semi Sphere
-        x_node = np.arange(-180.,180.+tiny,dth)
-        y_node = np.arange(   0., 90.+tiny,dph)
-        nx_node = len(x_node); ny_node = len(y_node)
-        nodes = np.zeros((nx_node,ny_node))
-
-        for i in xrange(len(poles_sa)):
-            X,Y = proj_f(poles_sa[i])
-            r,th = cart2polar(X,Y)
-            if test:
-                ax2.plot(th,r,'k.')
-                ax3.plot(X,Y,'k.')
-
-            theta,phi = cart2sph(poles_sa[i])
-            wgts.append(poles_wgt[i])
-            phs.append(phi)
-            ths.append(theta)
-
-            x_,y_ = theta*180./np.pi, phi*180/np.pi
-            ix = int((x_+180)/dth-tiny)
-            iy = int(      y_/dph-tiny)
-            f[ix,iy]=f[ix,iy]+poles_wgt[i]
-
-        fsum=f[:,:int(ny/2)].flatten().sum()
-
-        z=np.zeros((ny+1))
-        dz = np.pi/float(ny)
-        for i in xrange(ny+1):
-            z[i] = dz*i
-        dx_ = 2.*np.pi/nx
-        for ix in xrange(nx):
-            for iy in xrange(ny):
-                fnorm = (np.cos(z[iy])-np.cos(z[iy+1])) * dx_ / (2.*np.pi)
-                f[ix,iy] = f[ix,iy]/fnorm/fsum
-
-        ## Centeral region is using an avergage around the rim
-        for i in xrange(n_rim):
-            f[:,i]=(f[:,i].sum())/len(f[:,i])
-
-        ## Extension of f_bounds
-        f_bounds = np.zeros((nx+2,ny+2))
-        f_bounds[1:-1,1:-1]=f[ :, :]
-        f_bounds[  -1,1:-1]=f[ 0, :]
-        f_bounds[   0,1:-1]=f[-1, :]
-        f_bounds[1:-1,   0]=f[ :,-1]
-        f_bounds[   0,   0]=f_bounds[ 0,-2]
-        f_bounds[  -1,   0]=f_bounds[-1,-2]
-        f_bounds[   :,  -1]=f_bounds[ :, 1]
-
-        ## Average of four adjacent neighbours
-        for i in xrange(len(nodes)):
-            for j in xrange(len(nodes[i])):
-                nodes[i][j] = (
-                    f_bounds[i][j]  +f_bounds[i+1][j]+
-                    f_bounds[i][j+1]+f_bounds[i+1][j+1])
-                nodes[i][j] = nodes[i][j]/4.
-
-        XN,YN=np.meshgrid(x_node,y_node)
-        if test: ax4.contour(XN,YN,nodes.T)
-
-        return nodes
 
     def dotplot(self, pole=None, ifig=None, npole=1,
                 ipole=1, alpha=1.0, color='k',
@@ -2547,6 +2429,115 @@ class polefigure:
 
 
 
+def cells_pf(
+        pole_ca=[1,0,0],ifig=None,dph=7.5,
+        dth =7.5,csym=None, cang=[90.,90.,90.],cdim=[1.,1.,1.],
+        grains=None,n_rim=2):
+    """
+    Creates cells whose resolutioin is nphi, ntheta
+    Given the delta x and delt y (dm, dn), each pole's
+    weight is assigned to a cell which braces it.
+    Plots the cell's weight and returns the cell in array.
+
+    ---------
+    Arguments
+    ---------
+    pole_ca = [1,0,0]
+    ifig = None
+    dph  = 7.5. (tilting angle : semi-sphere 0, +90 or full-sphere 0, +180)
+    dth  = 7.5. (rotation angle: -180,+180)
+    csym = None
+    cang = [90.,90.,90.]
+    grains = None, [] array shape: (ngr, 3)
+    n_rim=2
+    """
+    tiny = 1e-9
+    ## Find poles in sa [pole_sa]
+    phs, ths, wgts = [], [], []
+    p0 = __equiv__(miller=pole_ca,csym=csym,
+                   cdim=cdim,cang=cang)
+    poles_ca=[]
+    for i in xrange(len(p0)):
+        poles_ca.append(p0[i])
+        poles_ca.append(-p0[i])
+
+    for j in xrange(len(poles_ca)):
+        poles_ca[j] = poles_ca[j] /\
+            (np.sqrt((poles_ca[j]**2).sum()))
+
+    poles_sa = np.zeros((len(grains),len(poles_ca),3))
+    poles_wgt = np.zeros((len(grains),len(poles_ca)))
+    print grains.shape
+    for i in xrange(len(grains)):
+        phi1,phi,phi2,wgt = grains[i]
+        arg = euler_f(2,phi1,phi,phi2,np.zeros((3,3))) ## ca<-sa
+        amat = arg[-1]
+        for j in xrange(len(poles_ca)):
+            poles_sa[i,j,:] = np.dot(amat.T,poles_ca[j])
+            poles_wgt[i,j]  = wgt
+
+    poles_sa = poles_sa.reshape((len(grains)*len(poles_ca),3))
+    poles_wgt = poles_wgt.reshape((len(grains)*len(poles_ca)))
+
+    ## Full Sphere
+    x=np.arange(-180., 180.+tiny, dth)
+    y=np.arange(   0., 180.+tiny, dph)
+    nx, ny = int(360./dth), int(180./dph)
+    f = np.zeros((nx,ny))
+
+    ## Semi Sphere
+    x_node = np.arange(-180.,180.+tiny,dth)
+    y_node = np.arange(   0., 90.+tiny,dph)
+    nx_node = len(x_node); ny_node = len(y_node)
+    nodes = np.zeros((nx_node,ny_node))
+
+    for i in xrange(len(poles_sa)):
+        X,Y = proj_f(poles_sa[i])
+        r,th = cart2polar(X,Y)
+
+        theta,phi = cart2sph(poles_sa[i])
+        wgts.append(poles_wgt[i])
+        phs.append(phi); ths.append(theta)
+
+        x_,y_ = theta*180./np.pi, phi*180/np.pi
+        ix = int((x_+180)/dth-tiny)
+        iy = int(      y_/dph-tiny)
+        f[ix,iy]=f[ix,iy]+poles_wgt[i]
+
+    fsum=f[:,:int(ny/2)].flatten().sum()
+    z=np.zeros((ny+1))
+    dz = np.pi/float(ny)
+    for i in xrange(ny+1): z[i] = dz*i
+    dx_ = 2.*np.pi/nx
+    for ix in xrange(nx):
+        for iy in xrange(ny):
+            fnorm = (np.cos(z[iy])-np.cos(z[iy+1])) * dx_ / (2.*np.pi)
+            f[ix,iy] = f[ix,iy]/fnorm/fsum
+
+    ## Centeral region is using an avergage around the rim
+    for i in xrange(n_rim):
+        f[:,i]=(f[:,i].sum())/len(f[:,i])
+
+    ## Extension of f_bounds
+    f_bounds = np.zeros((nx+2,ny+2))
+    f_bounds[1:-1,1:-1]=f[ :, :]
+    f_bounds[  -1,1:-1]=f[ 0, :]
+    f_bounds[   0,1:-1]=f[-1, :]
+    f_bounds[1:-1,   0]=f[ :,-1]
+    f_bounds[   0,   0]=f_bounds[ 0,-2]
+    f_bounds[  -1,   0]=f_bounds[-1,-2]
+    f_bounds[   :,  -1]=f_bounds[ :, 1]
+
+    ## Average of four adjacent neighbours
+    for i in xrange(len(nodes)):
+        for j in xrange(len(nodes[i])):
+            nodes[i][j] = (
+                f_bounds[i][j]  +f_bounds[i+1][j]+
+                f_bounds[i][j+1]+f_bounds[i+1][j+1])
+            nodes[i][j] = nodes[i][j]/4.
+
+    XN,YN=np.meshgrid(x_node,y_node)
+    return nodes
 
 def __equiv__(miller=None, csym=None,
               cdim=[1.,1.,1.], cang=[90.,90.,90.]):
