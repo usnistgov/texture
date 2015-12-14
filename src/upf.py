@@ -139,7 +139,7 @@ uet = progress_bar.update_elapsed_time
 import for_lib
 agr2pol_f = for_lib.agr2pol
 proj_f    = for_lib.projection
-
+euler_f   = for_lib.euler
 
 
 try:
@@ -724,6 +724,31 @@ def __circle__(center=[0,0], r=1.):
     y = y + center[0]
     return x,y
 
+def deco_pf(ax,cnt):
+    fact=2.
+
+    clev = cnt._levels
+    tcolors = cnt.tcolors
+
+    for i in xrange(len(tcolors)):
+        cc = tcolors[i][0][0:3]
+
+        ax.plot([1.28, 1.35],
+                [1. - i * 0.2, 1. - i * 0.2],
+                color=cc)
+        ## level text
+        ax.text(x=1.47, y= 1. - i*0.2 - 0.05,
+                s=' %4.2f'%(clev[i]),
+                fontsize=4.*fact)
+
+    x,y = __circle__()
+    ax.plot(x,y,'k-')
+    ax.set_axis_off()
+    ax.set_xlim(-1.1,1.4)
+    ax.set_ylim(-1.1,1.4)
+    ax.set_aspect('equal')
+
+
 def projection(pole=None, agrain=None):
     """
     Projects a pole (vector) to projection plane.
@@ -885,149 +910,7 @@ def ipfline(center=[0,0],csym='cubic'):
 Sample symmetry application is performed over RVE calculation
 refer to the RVE class in cmb.py module.
 """
-def core(self, pole=None, proj='pf', csym=None, ssym=None,
-         agrain=None, isym=True, cdim=[1,1,1],
-         cang=[90.,90.,90.],
-         equivp=None):
-    """
-    --------------------------------
-    The core of the polefigure class
-    --------------------------------
 
-    It is the engine for plotting regular and inverse
-    pole figures by generating projected
-    cartensian coordinates for the 3D vectors
-    onto the pole figure sphere (stereographic sphere).
-    One can directly plot pole figure on a xy plane.
-
-    Provided the miller indices,
-    1. Calculates the crystallographically equivalent poles
-    2. Maps the miller indices for a grain
-       into a vector in sample axes
-    3. Returns mapped poles as raw and as projected (xy)
-
-    ---------
-    Arguments
-    ---------
-      pole = None
-      proj = 'pf'
-      csym = 'cubic', 'hexag'
-      ssym = None,
-      agrain = None
-      isym = True
-      cdim = [ 1., 1., 1.]
-      cang = [90.,90.,90.]
-      equivp = None  #crystallographically equivalent pole
-    """
-    xy = []; POLE = [];
-    if csym!='cubic' and csym!='hexag' and csym!='None' \
-            and csym!='centro':
-        raise IOError, "Other symmetries than cubic"+\
-            " or hexag or 'None'"+" nor 'centro' is"+\
-            " not prepared yet"
-    if proj!='pf' and proj!='ipf':
-        raise IOError, "Other modes of projection than pf and"+\
-            "ipf is not prepared yet"
-
-    if type(agrain)==type(None):
-        raise IOError,"A grains must be given to the method"
-    if type(pole)==type(None):
-        raise IOError, "Pole must be given to core"
-
-    if type(pole).__name__=='ndarray': pass
-    elif type(pole).__name__=='list': pole = np.array(pole)
-
-    else: raise IOError, 'Unexpected type of the pole argument'
-
-    temp = pole.copy()
-    del pole; pole = temp
-
-    ##### calculates crystallographically equivalent poles #####
-    ## pole figure projection
-    if proj=='pf':
-        if isym: npeq = equivp # xtallographically equiv. poles
-        else: npeq = [pole]
-        nit = len(npeq)
-        nppp = []
-        for i in xrange(nit):
-            nppp.append(npeq[i])
-            nppp.append(npeq[i]*-1)
-        npeq = np.array(nppp)
-        for i in xrange(len(npeq)):
-            for j in xrange(len(npeq[i])):
-                if abs(npeq[i,j])<1e-9:
-                    npeq[i,j] = 0.
-
-    ## inverse pole figure
-    elif proj=='ipf':
-        # if abs(pole[0]**2+pole[1]**2+pole[2]**2-1)>0.1**6:
-        #     print "The pole must be one of principal axes of"\
-        #         " the sample"
-        #     print "It should be among [1,0,0], [0,1,0], [0,0,1]"
-        #     print "current pole is as below\n", pole
-        #     raw_input()
-        #     raise IOError
-        npeq = [pole] ## Note it is sample axis vector!
-        #equivalent pole calculatation is deffered to
-        #next for in block
-    ## unexpected proj argument
-    else: print "It should be either pf or ipf"; raise IOError
-
-    t0=time.time()
-    t_agr2pol = 0.
-    t_proj = 0.
-    for ip in xrange(len(npeq)):
-        ## 'pf':  converts ca pole to sa pole
-        ## 'ipf': converts sa pole to ca pole
-        t_1 = time.time()
-
-        if   proj=='ipf':
-            p = agr2pol(agrain=agrain, miller=npeq[ip], proj=proj)
-        elif proj=='pf':
-            p = agr2pol_f(agrain, npeq[ip].copy())
-
-        t_agr2pol = t_agr2pol + time.time()-t_1
-        if proj=='pf': # p is in sa
-            ## if a pole is toward the north pole of the unit circle,
-            #if p[2]>0: pass
-            #else:
-            POLE.append(p)
-            t_1=time.time()
-            #xy.append(projection(pole=p))
-            xy.append(proj_f(p[:3]))
-            t_proj = t_proj + time.time()-t_1
-        elif proj=='ipf': # p is in ca
-            ## calculates equivalent p by
-            ## applying symmetry operations
-            if isym:
-                """
-                Sample axis is now referred to crystal
-                coordinate system. That vector has to
-                be mutiplicated by symmetry operations.
-                """
-                npoles = self.__equiv__(
-                    miller=p, csym=csym,
-                    cdim=cdim, cang=cang)
-                temp = []
-                for i in xrange(len(npoles)):
-                    temp.append(npoles[i])
-                    temp.append(npoles[i]*-1)
-                temp = np.array(temp)
-                npoles = temp
-
-            else: npoles=[p]
-            for npp in xrange(len(npoles)):
-                #prj_xy = projection(pole=npoles[npp])
-                prj_xy = proj_f(pole=npoles[npp][:3])
-                xy.append(prj_xy)
-                POLE.append(npoles[npp])
-            pass # if over 'pf' or 'ipf'
-        pass # End of for loop over ipf
-
-    # print 'Elapsed time for agr2pol ', t2s(t_agr2pol)
-    # print 'Elapsed time for proj ', t2s(t_proj)
-
-    return xy, POLE
 class polefigure:
     # decides if the given set is in the texture file form or array
     def __init__(self, grains=None, filename=None, csym=None,
@@ -1447,7 +1330,7 @@ class polefigure:
             phi1, phi, phi2 = gr[:3:]
             phi1 = phi1 - 90.
 
-            npeq = self.__equiv__(
+            npeq = __equiv__(
                 miller=pole, csym=csym, cdim=cdim, cang=cang)
 
             xy, POLE = self.core(
@@ -2006,7 +1889,7 @@ class polefigure:
                 ag = agrain[:3].copy()
                 _np_eq_=npeq[ip]
                 p = agr2pol_f(ag, _np_eq_)
-                
+
             # p = agr2pol(agrain=agrain, miller=npeq[ip], proj=proj)
 
             t_agr2pol = t_agr2pol + time.time()-t_1
@@ -2029,7 +1912,7 @@ class polefigure:
                     coordinate system. That vector has to
                     be mutiplicated by symmetry operations.
                     """
-                    npoles = self.__equiv__(
+                    npoles = __equiv__(
                         miller=p, csym=csym,
                         cdim=cdim, cang=cang)
                     temp = []
@@ -2081,7 +1964,7 @@ class polefigure:
 
         ## npeq calculations
         if pole_mode=='sys':
-            npeq = self.__equiv__(
+            npeq = __equiv__(
                 miller=pole, csym=csym,
                 cdim=cdim, cang=cang)
 
@@ -2304,10 +2187,227 @@ class polefigure:
                     inten = inten + f[mi,ni]
                 nodes[m,n] = inten/4.
 
-
         print 'Elapsed time in self.core after cells:', t2s(time.time()-t0)
-
         return f, nodes
+
+    def pf_new(self,poles=[[1,0,0],[1,1,0]],dth=7.5,dph=7.5,n_rim=2,cdim=None):
+        """
+        dph  = 7.5. (tilting angle : semi-sphere 0, +90 or full-sphere 0, +180)
+        dth  = 7.5. (rotation angle: -180,+180)
+        """
+        if type(cdim)!=type(None): self.cdim=cdim
+
+        ## 4 digits miller indices are used for hexagon and trigo
+
+        if self.csym=='hexag' or self.csym=='trigo':
+            pole_=[]
+            for i in xrange(len(poles)):
+                p = [0,0,0]
+                p_ = poles[i]
+                if len(p_)!=4: raise IOError, \
+                   '4 digits should be given'
+                p[2] = p_[3]
+                p[0] = p_[0] - p_[2]
+                p[1] = p_[1] - p_[2]
+                p[2] = p_[3]
+                pole_.append(p)
+            poles = pole_[::]
+
+        # print 'Crystal poles:'
+        # for i in xrange(len(poles)):
+        #     print poles[i]
+        # print '-'*20
+
+        tiny = 1.e-9
+        N=[]
+        print 'self.cdim:',self.cdim
+        for i in xrange(len(poles)):
+            N.append(self.cells_pf(
+                pole_ca=poles[i],dth=dth,dph=dph,
+                csym=self.csym,grains=self.gr,
+                n_rim = n_rim))
+
+        x_node = np.arange(-180.,180.+tiny,dth)
+        y_node = np.arange(   0., 90.+tiny,dph)
+        XN,YN = np.meshgrid(x_node,y_node)
+
+        #--------------------------------------------------#
+        ## plotting
+        fig=plt.figure(figsize=(3.3*len(poles),3.*4))
+        ## resolution and pole figure plotting preferences
+        nm = (360.0 - 0.)/dth; nn = (180. - 90.)/dph
+        # theta and phi and stereographic projection of them.
+        theta  = np.linspace(pi, pi/2., nn+1) #tilting angle
+        phi    = np.linspace(0.,2.*pi, nm+1)    #rotation angle
+        r      = np.sin(theta)/(1-np.cos(theta))  #tilting angle to radius
+        R, PHI = np.meshgrid(r,phi)          #meshing radius and rotation angle
+        PHI    = PHI + pi/2. # rotation the pole figure up.
+        x = R*np.cos(PHI); y = R*np.sin(PHI) #convert the polar coord-> cartensian
+
+
+        from matplotlib.colors import LogNorm
+        norm = LogNorm()
+
+        for i in xrange(len(poles)):
+            ax_cntl = fig.add_subplot(4,len(poles),i+1)
+            ax_cntf = fig.add_subplot(4,len(poles),i+1+len(poles))
+            ax_cntw = fig.add_subplot(4,len(poles),i+1+len(poles)*2)
+            ax_cntb = fig.add_subplot(4,len(poles),i+1+len(poles)*3)
+
+            mn = N[i].flatten().min()
+            mx = N[i].flatten().max()
+            if mn==0: mn = 0.5
+            levels = np.linspace(mn,mx,7)
+
+            cnt = ax_cntl.contour(x,y,N[i],levels=levels)
+            deco_pf(ax_cntl,cnt)
+            cnt = ax_cntw.contour(x,y,N[i],levels=levels,cmap='gray_r')
+            deco_pf(ax_cntw,cnt)
+            cnt = ax_cntf.contourf(x,y,N[i],levels=levels)
+            deco_pf(ax_cntf,cnt)
+            cnt = ax_cntb.contourf(x,y,N[i],levels=levels,cmap='gray_r')
+            deco_pf(ax_cntb,cnt)
+
+            for j in xrange(len(x)-1):
+                for k in xrange(len(x[j])):
+                    if N[i][j,k]<mn:
+                        ax_cntl.plot(x[j][k],y[j][k],'k.')#,alpha=0.3,markersize=2.0)
+                        ax_cntw.plot(x[j][k],y[j][k],'k.')#,alpha=0.3,markersize=2.0)
+        #--------------------------------------------------#
+
+    def cells_pf(
+            self,pole_ca=[1,0,0],ifig=None,dph=7.5,
+            dth =7.5,csym=None, cang=[90.,90.,90.],
+            grains=None,n_rim=2):
+        """
+        Creates cells whose resolutioin is nphi, ntheta
+        Given the delta x and delt y (dm, dn), each pole's
+        weight is assigned to a cell which braces it.
+        Plots the cell's weight and returns the cell in array.
+
+        ---------
+        Arguments
+        ---------
+        pole = [1,0,0]
+        ifig = None
+        dph  = 7.5. (tilting angle : semi-sphere 0, +90 or full-sphere 0, +180)
+        dth  = 7.5. (rotation angle: -180,+180)
+        csym = None
+        cang = [90.,90.,90.]
+        grains = None, [] array shape: (ngr, 3)
+        n_rim=2
+        """
+
+        ## tests
+        test=False
+        if test:
+            fig=plt.figure()
+            ax1=fig.add_subplot(331)
+            ax2=fig.add_subplot(332,projection='polar')
+            ax3=fig.add_subplot(333)
+            ax4=fig.add_subplot(334)
+        ##
+
+        tiny = 1e-9
+        ## Find poles in sa [pole_sa]
+        phs, ths, wgts = [], [], []
+
+        p0 = __equiv__(
+            miller=pole_ca,csym=csym,
+            cdim=self.cdim,cang=self.cang)
+        poles_ca=[]
+        for i in xrange(len(p0)):
+            poles_ca.append(p0[i])
+            poles_ca.append(-p0[i])
+            # print poles_ca[i]
+
+        for j in xrange(len(poles_ca)):
+            poles_ca[j] = poles_ca[j] /\
+                (np.sqrt((poles_ca[j]**2).sum()))
+
+        poles_sa = np.zeros((len(grains),len(poles_ca),3))
+        poles_wgt = np.zeros((len(grains),len(poles_ca)))
+        print grains.shape
+        for i in xrange(len(grains)):
+            phi1,phi,phi2,wgt = grains[i]
+            if test:  ax1.plot(phi1,phi)
+            # arg = euler_f(2,phi1,phi,phi2,np.zeros((3,3)),echo=False) ## ca<-sa
+            # amat = arg[-1]
+            amat = euler(phi1,phi,phi2,echo=False)
+            for j in xrange(len(poles_ca)):
+                poles_sa[i,j,:] = np.dot(amat.T,poles_ca[j])
+                poles_wgt[i,j]  = wgt
+
+        poles_sa = poles_sa.reshape((len(grains)*len(poles_ca),3))
+        poles_wgt = poles_wgt.reshape((len(grains)*len(poles_ca)))
+
+        ## Full Sphere
+        x=np.arange(-180., 180.+tiny, dth)
+        y=np.arange(   0., 180.+tiny, dph)
+        nx, ny = int(360./dth), int(180./dph)
+        f = np.zeros((nx,ny))
+
+        ## Semi Sphere
+        x_node = np.arange(-180.,180.+tiny,dth)
+        y_node = np.arange(   0., 90.+tiny,dph)
+        nx_node = len(x_node); ny_node = len(y_node)
+        nodes = np.zeros((nx_node,ny_node))
+
+        for i in xrange(len(poles_sa)):
+            X,Y = proj_f(poles_sa[i])
+            r,th = cart2polar(X,Y)
+            if test:
+                ax2.plot(th,r,'k.')
+                ax3.plot(X,Y,'k.')
+
+            theta,phi = cart2sph(poles_sa[i])
+            wgts.append(poles_wgt[i])
+            phs.append(phi)
+            ths.append(theta)
+
+            x_,y_ = theta*180./np.pi, phi*180/np.pi
+            ix = int((x_+180)/dth-tiny)
+            iy = int(      y_/dph-tiny)
+            f[ix,iy]=f[ix,iy]+poles_wgt[i]
+
+        fsum=f[:,:int(ny/2)].flatten().sum()
+
+        z=np.zeros((ny+1))
+        dz = np.pi/float(ny)
+        for i in xrange(ny+1):
+            z[i] = dz*i
+        dx_ = 2.*np.pi/nx
+        for ix in xrange(nx):
+            for iy in xrange(ny):
+                fnorm = (np.cos(z[iy])-np.cos(z[iy+1])) * dx_ / (2.*np.pi)
+                f[ix,iy] = f[ix,iy]/fnorm/fsum
+
+        ## Centeral region is using an avergage around the rim
+        for i in xrange(n_rim):
+            f[:,i]=(f[:,i].sum())/len(f[:,i])
+
+        ## Extension of f_bounds
+        f_bounds = np.zeros((nx+2,ny+2))
+        f_bounds[1:-1,1:-1]=f[ :, :]
+        f_bounds[  -1,1:-1]=f[ 0, :]
+        f_bounds[   0,1:-1]=f[-1, :]
+        f_bounds[1:-1,   0]=f[ :,-1]
+        f_bounds[   0,   0]=f_bounds[ 0,-2]
+        f_bounds[  -1,   0]=f_bounds[-1,-2]
+        f_bounds[   :,  -1]=f_bounds[ :, 1]
+
+        ## Average of four adjacent neighbours
+        for i in xrange(len(nodes)):
+            for j in xrange(len(nodes[i])):
+                nodes[i][j] = (
+                    f_bounds[i][j]  +f_bounds[i+1][j]+
+                    f_bounds[i][j+1]+f_bounds[i+1][j+1])
+                nodes[i][j] = nodes[i][j]/4.
+
+        XN,YN=np.meshgrid(x_node,y_node)
+        if test: ax4.contour(XN,YN,nodes.T)
+
+        return nodes
 
     def dotplot(self, pole=None, ifig=None, npole=1,
                 ipole=1, alpha=1.0, color='k',
@@ -2383,12 +2483,13 @@ class polefigure:
         for i in xrange(len(agr)):
             ### crystallographically equivalent poles are calculated.
             agr[i][0] = agr[i][0] - 90.
-            npeq = self.__equiv__(
+            npeq = __equiv__(
                 miller=pole, csym=csym, cdim=cdim, cang=cang)
             ### -----------------------------------------------------
             xy, POLE = self.core(
                 pole=pole, proj=proj, csym=csym,
-                agrain=agr[i], isym=isym, cdim=cdim, cang=cang,
+                agrain=agr[i], isym=isym, cdim=cdim,
+                cang=cang,
                 equivp = npeq)
             ##### POLE FIGURE PROJECTIN #####
             if proj=='pf':
@@ -2444,83 +2545,86 @@ class polefigure:
             #-------------------------------
         return np.array(XY)
 
-    def __equiv__(self, miller=None, csym=None,
-                  cdim=[1.,1.,1.], cang=[90.,90.,90.]):
-        """
-        Provided the miller indices,
-        Crystallographically equivalent and only unique
-        vectors are returned.
 
-        ---------
-        Arguments
-        ---------
-        miller = None  , e.g. [1,1,1]
-        csym   = 'cubic'
-        """
-        start = time.time()
-        from sym import cv
-        from sym import cubic, hexag
-        #from sym_cy import cubic, hexag
-        import sym    #python compiled
-        #import sym_cy #cython compiled
-        #from sym.py cvec, cubic, and hexgonal modules are brought in
-        if miller==None:
-            print "Miller index should be given"
-            raise IOError
-        vect = np.array(miller)
-        norm = 0.; sneq = []
-        temp = vect.copy()
-        #norm = vect[0]**2 + vect[1]**2 + vect[2]**2
-        #norm = np.sqrt(norm)
-        #vect = vect/ norm
-        #print 'elapsed time before v calculation: %8.6f'%
-        #(time.time()-start)
-        ##---------------------------------
-        #start = time.time()
-        if csym=='cubic':
-            #H = sym_cy.cubic(1)  #cython compiled
-            H = sym.cubic()  #operators
-            for i in xrange(len(H)):
-                sneq.append(np.dot(H[i], vect))
-        elif csym=='hexag':
-            #H = sym_cy.hexag(1) #cython compiled
-            H = sym.hexag() #operators
-            v = cv(pole=vect, cdim=cdim, cang=cang)
-            for i in xrange(len(H)):
-                sneq.append(np.dot(H[i], v))
-        elif csym=='None':
-            #H = [np.identity(3)]
-            sneq = [vect]
-        elif csym=='centro':
-            sneq = [vect, -vect]
-        else:
-            print 'Given symmetry, %s is not prepared'%csym
-            raw_input('Enter to raise an error and quits the job');
-            raise IOError
 
-        #print 'elapsed time during v calculation: %8.6f'%
-        #(time.time()-start)
-        #####-------------------------------
-        start = time.time()
-        stacked = [] #empty unique vectors
-                # is cH in the already existing stacked list?
-                # yes: pass
-                # no : add
 
-        ## filtering the sneq under whether or not it is unique
-        for i in xrange(len(sneq)):
-            cH = sneq[i].copy()  #current vector
-            if __isunique__(a=cH, b=stacked):
-                stacked.append(cH)
+def __equiv__(miller=None, csym=None,
+              cdim=[1.,1.,1.], cang=[90.,90.,90.]):
+    """
+    Provided the miller indices,
+    Crystallographically equivalent and only unique
+    vectors are returned.
 
-        ## if v[2] is minus, mutiply minus sign to the vector.
-        for i in xrange(len(stacked)):
-            if stacked[i][2]<0:
-                stacked[i] = stacked[i]*-1
-        #print 'elapsed time during the rest: %8.6f'%
-        #(time.time()-start)
-        return np.array(stacked)
-    pass # end of class polefigure
+    ---------
+    Arguments
+    ---------
+    miller = None  , e.g. [1,1,1]
+    csym   = 'cubic'
+    """
+    start = time.time()
+    from sym import cv
+    from sym import cubic, hexag
+    #from sym_cy import cubic, hexag
+    import sym    #python compiled
+    #import sym_cy #cython compiled
+    #from sym.py cvec, cubic, and hexgonal modules are brought in
+    if miller==None:
+        print "Miller index should be given"
+        raise IOError
+    vect = np.array(miller)
+    norm = 0.; sneq = []
+    temp = vect.copy()
+    #norm = vect[0]**2 + vect[1]**2 + vect[2]**2
+    #norm = np.sqrt(norm)
+    #vect = vect/ norm
+    #print 'elapsed time before v calculation: %8.6f'%
+    #(time.time()-start)
+    ##---------------------------------
+    #start = time.time()
+    if csym=='cubic':
+        #H = sym_cy.cubic(1)  #cython compiled
+        H = sym.cubic()  #operators
+        for i in xrange(len(H)):
+            sneq.append(np.dot(H[i], vect))
+    elif csym=='hexag':
+        #H = sym_cy.hexag(1) #cython compiled
+        H = sym.hexag() #operators
+        v = cv(pole=vect, cdim=cdim, cang=cang)
+        for i in xrange(len(H)):
+            sneq.append(np.dot(H[i], v))
+    elif csym=='None':
+        #H = [np.identity(3)]
+        sneq = [vect]
+    elif csym=='centro':
+        sneq = [vect, -vect]
+    else:
+        print 'Given symmetry, %s is not prepared'%csym
+        raw_input('Enter to raise an error and quits the job');
+        raise IOError
+
+    #print 'elapsed time during v calculation: %8.6f'%
+    #(time.time()-start)
+    #####-------------------------------
+    start = time.time()
+    stacked = [] #empty unique vectors
+            # is cH in the already existing stacked list?
+            # yes: pass
+            # no : add
+
+    ## filtering the sneq under whether or not it is unique
+    for i in xrange(len(sneq)):
+        cH = sneq[i].copy()  #current vector
+        if __isunique__(a=cH, b=stacked):
+            stacked.append(cH)
+
+    ## if v[2] is minus, mutiply minus sign to the vector.
+    for i in xrange(len(stacked)):
+        if stacked[i][2]<0:
+            stacked[i] = stacked[i]*-1
+    #print 'elapsed time during the rest: %8.6f'%
+    #(time.time()-start)
+    return np.array(stacked)
+pass # end of class polefigure
 
 ### Excutes the module in the command line with arguments and options
 def main(filename, pfmode, gr, csym):

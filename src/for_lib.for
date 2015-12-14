@@ -66,7 +66,8 @@ c     ph,th,om ARE THE EULER ANGLES (in degrees) OF ca REFERRED TO sa.
 c *****************************************************************************
       integer iopt
       real*8 ph,th,tm,a(3,3),pi,sth,sph,cph,cth,stm,ctm
-Cf2py intent(out,in) iopt,ph,th,tm,a
+Cf2py intent(in) iopt
+Cf2py intent(out,in) ph,th,tm,a
       pi=4.*datan(1.d0)
 
       if(iopt.eq.1) then
