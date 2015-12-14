@@ -131,6 +131,34 @@ from euler import euler # in euler module def euler:
                         # A-matrix and Euler angles
 import time
 import random
+
+from MP import progress_bar
+t2s = progress_bar.convert_sec_to_string
+uet = progress_bar.update_elapsed_time
+
+import for_lib
+agr2pol_f = for_lib.agr2pol
+proj_f    = for_lib.projection
+euler_f   = for_lib.euler
+
+
+try:
+    import joblib
+except:
+    is_joblib = False
+    print 'joblib was not found.'
+    print '-'*60
+    print 'One might improve the speed by installing joblib'
+    print 'JOBLIB is to run embarrasingly parallel runs for multiple poles'
+    print "Find about joblib in  https://github.com/joblib/joblib"
+    print '-'*60
+else:
+    is_joblib = True
+    from joblib import Parallel, delayed
+
+pi   = math.pi;
+cos  = math.cos; sin  = math.sin
+
 # import pp ## parallel
 
 def cub(filename=None,gr=None,ifig=3, pole=[[1,0,0],[1,1,0],[1,1,1]],
@@ -141,12 +169,21 @@ def cub(filename=None,gr=None,ifig=3, pole=[[1,0,0],[1,1,0],[1,1,1]],
     filename = None
     gr       = None
     ifig     = 3
+    pole     = [[1,0,0],[1,1,0],[1,1,1]],
+    cmode    = None):
     """
     if filename!=None: mypf = polefigure(filename=filename, csym='cubic')
     elif gr!=None: mypf = polefigure(grains=gr, csym='cubic')
     mypf.pf(pole=pole,mode='contourf',ifig=ifig,cmode=cmode)
 
 def cubgr(gr=None,ifig=3,mode='contourf'):
+    """
+    Arguments
+    =========
+    gr
+    ifig
+    mode
+    """
     mypf = polefigure(grains=gr, csym='cubic')
     mypf.pf(pole=[[1,0,0],[1,1,0],[1,1,1]],mode=mode,ifig=ifig)
 
@@ -666,9 +703,9 @@ def __isunique__(a, b):
     for i in xrange(len(b)):
         ## is a//b[i]? either + or -
         diff0 = abs(b[i][0] - a[0]) + \
-            abs(b[i][1] - a[1]) + abs(b[i][2] - a[2])
+                abs(b[i][1] - a[1]) + abs(b[i][2] - a[2])
         diff1 = abs(b[i][0] + a[0]) + abs(b[i][1] + a[1])\
-            + abs(b[i][2] + a[2])
+             + abs(b[i][2] + a[2])
         if diff0 < 0.1**4 or diff1 < 0.1**4:
             return False
     return True
@@ -693,6 +730,53 @@ def __circle__(center=[0,0], r=1.):
     y = y + center[0]
     return x,y
 
+def deco_pf(ax,cnt,miller=[0,0,0],iopt=0):
+    """
+    iopt==1: skip level lines
+    """
+    fact=2.5
+    clev = cnt._levels
+    tcolors = cnt.tcolors
+
+    if iopt==1: pass
+    elif iopt==0:
+        for i in xrange(len(tcolors)):
+            cc = tcolors[i][0][0:3]
+            ax.plot([1.30, 1.37],
+                    [1. - i * 0.2, 1. - i * 0.2],
+                    color=cc)
+            ## level text
+            if clev[i]<10: s='  %4.2f'%clev[i]
+            else:          s='%5.2f'%clev[i]
+            
+            ax.text(x=1.44, y= 1. - i*0.2 - 0.05,
+                    s=s,fontsize=4.*fact)
+
+    ## axis label/    ## Ticks
+    ax.text(1.14,0. ,'1',va='center',ha='center')
+    ax.text(0. ,1.14,'2',va='center',ha='center')
+    ax.plot([0.0,0.0], [1.0,1.03],'k-')
+    ax.plot([1.0,1.03],[0.0,0.0],'k-')
+
+    ## pole
+    s='('
+    for i in xrange(len(miller)):
+        if miller[i]<0: h = r'\bar{%s}'%str(-1*miller[i])
+        else: h = '%s'%str(miller[i])
+        s='%s%s'%(s,h)
+    s='%s)'%s
+    s=r'$\mathbf{%s}$'%s
+    ax.text(0.6,-0.95,s,fontsize=12)
+
+    ## circle
+    x,y = __circle__()
+    ax.plot(x,y,'k-')
+    ax.set_axis_off()
+    ax.set_xlim(-1.1,1.4)
+    ax.set_ylim(-1.1,1.4)
+    ax.set_aspect('equal')
+
+
 def projection(pole=None, agrain=None):
     """
     Projects a pole (vector) to projection plane.
@@ -700,17 +784,14 @@ def projection(pole=None, agrain=None):
 
     pole = [1,1,1] or [1,1,0] something like this.
 
-    ---------
     Arguments
     ---------
     pole = None
     agrain = [ph1, phi, phi2, vf]
     """
     #normalization of the miller indices
-    norm = np.sqrt(pole[0]**2 + pole[1]**2 + pole[2]**2)
-    pole = pole / norm
-
-    a = pole[0]; b = pole[1]; c = pole[2]
+    pole = pole / np.sqrt(pole[0]**2 + pole[1]**2 + pole[2]**2)
+    a,b,c = pole[0:3]
     ###  mid-plane projection (z=0)
     if c==1:
         # pole[0] = 0; pole[1]=0; pole[2] = 1
@@ -759,6 +840,10 @@ def cart2sph(pole):
     Argument
     ========
     pole
+
+    Returns
+    -------
+    [phi,theta]
     """
     pole = np.array(pole)
     r = np.sqrt((pole**2).sum())
@@ -853,6 +938,7 @@ def ipfline(center=[0,0],csym='cubic'):
 Sample symmetry application is performed over RVE calculation
 refer to the RVE class in cmb.py module.
 """
+
 class polefigure:
     # decides if the given set is in the texture file form or array
     def __init__(self, grains=None, filename=None, csym=None,
@@ -1272,7 +1358,7 @@ class polefigure:
             phi1, phi, phi2 = gr[:3:]
             phi1 = phi1 - 90.
 
-            npeq = self.__equiv__(
+            npeq = __equiv__(
                 miller=pole, csym=csym, cdim=cdim, cang=cang)
 
             xy, POLE = self.core(
@@ -1771,21 +1857,24 @@ class polefigure:
         if proj!='pf' and proj!='ipf':
             raise IOError, "Other modes of projection than pf and"+\
                 "ipf is not prepared yet"
+
         if type(agrain)==type(None):
             raise IOError,"A grains must be given to the method"
         if type(pole)==type(None):
             raise IOError, "Pole must be given to core"
-        if   type(pole).__name__=='list':    pole = np.array(pole)
-        elif type(pole).__name__=='ndarray': pass
+
+        if type(pole).__name__=='ndarray': pass
+        elif type(pole).__name__=='list': pole = np.array(pole)
+
         else: raise IOError, 'Unexpected type of the pole argument'
+
         temp = pole.copy()
         del pole; pole = temp
 
         ##### calculates crystallographically equivalent poles #####
         ## pole figure projection
         if proj=='pf':
-            if isym==True:
-                npeq = equivp # xtallographically equiv. poles
+            if isym: npeq = equivp # xtallographically equiv. poles
             else: npeq = [pole]
             nit = len(npeq)
             nppp = []
@@ -1795,7 +1884,7 @@ class polefigure:
             npeq = np.array(nppp)
             for i in xrange(len(npeq)):
                 for j in xrange(len(npeq[i])):
-                    if abs(npeq[i,j])<0.1**8:
+                    if abs(npeq[i,j])<1e-9:
                         npeq[i,j] = 0.
 
         ## inverse pole figure
@@ -1813,27 +1902,45 @@ class polefigure:
         ## unexpected proj argument
         else: print "It should be either pf or ipf"; raise IOError
 
+        t0=time.time()
+        t_agr2pol = 0.
+        t_proj = 0.
+
+
         for ip in xrange(len(npeq)):
             ## 'pf':  converts ca pole to sa pole
             ## 'ipf': converts sa pole to ca pole
-            p = agr2pol(agrain=agrain, miller=npeq[ip], proj=proj)
+            t_1 = time.time()
+            if   proj=='ipf':
+                p = agr2pol(agrain=agrain, miller=npeq[ip], proj=proj)
+            elif proj=='pf':
+                ag = agrain[:3].copy()
+                _np_eq_=npeq[ip]
+                p = agr2pol_f(ag, _np_eq_)
+
+            # p = agr2pol(agrain=agrain, miller=npeq[ip], proj=proj)
+
+            t_agr2pol = t_agr2pol + time.time()-t_1
             if proj=='pf': # p is in sa
                 ## if a pole is toward the north pole of the unit circle,
                 #if p[2]>0: pass
                 #else:
-                temp = projection(pole=p)
                 POLE.append(p)
-                xy.append(temp)
+                t_1=time.time()
+                # xy.append(projection(pole=p))
+                xy.append(proj_f(p[:3]))
+
+                t_proj = t_proj + time.time()-t_1
             elif proj=='ipf': # p is in ca
                 ## calculates equivalent p by
                 ## applying symmetry operations
-                if isym==True:
+                if isym:
                     """
                     Sample axis is now referred to crystal
                     coordinate system. That vector has to
                     be mutiplicated by symmetry operations.
                     """
-                    npoles = self.__equiv__(
+                    npoles = __equiv__(
                         miller=p, csym=csym,
                         cdim=cdim, cang=cang)
                     temp = []
@@ -1845,11 +1952,16 @@ class polefigure:
 
                 else: npoles=[p]
                 for npp in xrange(len(npoles)):
-                    prj_xy = projection(pole=npoles[npp])
+                    #prj_xy = projection(pole=npoles[npp])
+                    prj_xy = proj_f(npoles[npp][:3])
                     xy.append(prj_xy)
                     POLE.append(npoles[npp])
                 pass # if over 'pf' or 'ipf'
             pass # End of for loop over ipf
+
+        # print 'Elapsed time for agr2pol ', t2s(t_agr2pol)
+        # print 'Elapsed time for proj ', t2s(t_proj)
+
         return xy, POLE
 
     def cells(self,pole=[1,0,0], ifig=None, dm=15., dn = 15.,
@@ -1876,49 +1988,65 @@ class polefigure:
         poles_gr = None, [] array shape: (ngr, 3)
         """
         ## Frequently used local functions or methods
-        pi   = math.pi;  npi  = np.pi
-        cos  = math.cos; sin  = math.sin
         pol  = [] # a group of pole points.
 
-        t0 = time.time()
         ## npeq calculations
         if pole_mode=='sys':
-            npeq = self.__equiv__(
+            npeq = __equiv__(
                 miller=pole, csym=csym,
                 cdim=cdim, cang=cang)
 
-        for i in xrange(len(self.gr)):
-            ## Either systematic representative
-            ## poles or individual pole for
-            ## each and every grain.
-            if pole_mode=='sys':
-                xpole = pole
-            elif pole_mode=='indv':
-                xpole = poles_gr[i]
-                npeq = [xpole, xpole*-1] ## two coaxial poles
-            xy, p = self.core(
-                pole=xpole, proj=proj, csym=csym,
-                agrain=self.gr[i], cang=cang,
-                cdim=cdim, equivp=npeq)
-            # p is n equivalent poles
-            p = np.array(p)
-            for j in xrange(len(p)):
-                #make it postive.
-                if p[j][2] <0: p[j] = p[j] * - 1
-                ## phi, and theta in radian
-                x, y = cart2sph(p[j])
-                pol.append(
-                    [x, y, self.gr[i][3]]
-                    ) #phi, theta, intensity
-        t1 = (time.time() - t0)
+        t0 = time.time()
+
+        is_joblib=False
+        if is_joblib:
+            ## This loop is quite extensive and slow.
+            rst = Parallel(n_jobs=3) (delayed(core)(
+                self,pole=pole,proj=proj,csym=csym,
+                cang=cang,cdim=cdim,equivp=npeq,
+                agrain=self.gr[i]) for i in xrange(len(self.gr)))
+
+            for i in xrange(len(rst)):
+                xy, p = rst[i]
+                # p is n equivalent poles
+                p = np.array(p)
+                for j in xrange(len(p)):
+                    # make it postive.
+                    if p[j][2] <0: p[j] = p[j] * - 1
+                    ## phi, and theta in radian
+                    x, y = cart2sph(p[j])
+                    pol.append([x, y, self.gr[i][3]]) #phi, theta, intensity
+
+        elif not(is_joblib):
+            for i in xrange(len(self.gr)):
+                ## Either systematic representative
+                ## poles or individual pole for
+                ## each and every grain.
+                if pole_mode=='sys': xpole = pole
+                elif pole_mode=='indv':
+                    xpole = poles_gr[i]
+                    npeq = [xpole, xpole*-1] ## two coaxial poles
+                xy, p = self.core(
+                    pole=xpole, proj=proj, csym=csym,
+                    agrain=self.gr[i], cang=cang,
+                    cdim=cdim, equivp=npeq)
+                # p is n equivalent poles
+                p = np.array(p)
+                for j in xrange(len(p)):
+                    # make it postive.
+                    if p[j][2] <0: p[j] = p[j] * - 1
+                    ## phi, and theta in radian
+                    x, y = cart2sph(p[j])
+                    pol.append([x, y, self.gr[i][3]]) #phi, theta, intensity
+
+        print 'Elapsed time for self.core:', t2s(time.time()-t0)
+
+        t0=time.time()
 
         ## weight normalization
-        pol = np.array(pol)
+        pol = np.array(pol).T
+        pol[2] = pol[2]/ pol[2].sum() ## for normalization that follows.
         pol = pol.transpose()
-        wgts = pol[2].sum()
-        pol[2] = pol[2]/wgts
-        pol = pol.transpose()
-        del wgts
 
         # grid number along phi   axis (x) is
         # referred to as m
@@ -1928,24 +2056,42 @@ class polefigure:
         # m x n grid;  m and n's range
         # m is in [-pi.,pi];  n is in [0, pi/2.]
 
-        mgrid = 360./dm; ngrid = 90./dn
+
+        """
+        (ngrid) (0,pi/2.) (theta, tilting)
+        ^
+        |
+        |
+        |
+        |
+        L_______________>  (mgrid) (-pi,+pi) (phi, rotation)
+
+        phi = (-pi,+pi) + dm/2.
+        theta = (-pi,+pi) + dm/2.
+        """
+        dmp = dm * pi/180.
+        dnp = dn * pi/180.
+
+        mgrid = int(360./dm); ngrid = int(90./dn)
         phi_angle   = np.arange(-pi, pi   )/dm + dm/2
         theta_angle = np.arange( 0., pi/2.)/dn + dn/2
         f = np.zeros((mgrid, ngrid))
         for i in xrange(len(pol)):
             phi = pol[i][0]; theta = pol[i][1]
-            mi  = int((phi+pi)/(dm*pi/180.) - 1e-6) #subtract tiny
-            ni  = int(theta/(dn*pi/180.)    - 1e-6) #subtract tiny
-            if mi<0 or ni<0 :
-                raise IOError, 'Negative index'
-            elif mi>mgrid or ni>ngrid:
-                raise IOError, 'Unexpected Error'
-            try:
-                # add pole intensity
-                f[mi,ni] = f[mi,ni] + pol[i][2]
-            except:
-                print phi*180./np.pi, theta*180./np.pi
-                raise IOError, "Something wrong in the index for f[mi,ni]"
+            mi  = int((phi+pi)/dmp - 1e-9) #subtract tiny
+            ni  = int(theta/dnp    - 1e-9) #subtract tiny
+            f[mi,ni] = f[mi,ni] + pol[i][2]
+
+            # if mi<0 or ni<0 :
+            #     raise IOError, 'Negative index'
+            # elif mi>mgrid or ni>ngrid:
+            #     raise IOError, 'Unexpected Error'
+            # try:
+            #f[mi,ni] = f[mi,ni] + pol[i][2]
+            # except:
+            #     print phi*180./np.pi, theta*180./np.pi
+            #     raise IOError, "Something wrong in "+\
+            #         "the index for f[mi,ni]"
 
         ## ----------------------------------------
         """
@@ -1955,28 +2101,39 @@ class polefigure:
         #2. Symmetrization about the y-axis
         ## ----------------------------------------
 
-        # ismooth = False
-        # if ismooth==True:
+        # #ismooth = False
+        # ismooth = True
+        # if ismooth:
         #     fpole = 0.
         #     for m in xrange(int(mgrid)):
         #         fpole = fpole + f[m,0]
-        #     #fnorm = (1.-cos(7.5 * pi/180. ))*2.*pi
-        #     fnorm = 1.*pi
-        #     fpole = fpole /fnorm
-        #     for m in xrange(mgrid):
+        #     fnorm = (1.-cos(dn * pi/180. ))*2.*pi
+        #     #fnorm = 1.*pi
+        #     fpole = fpole / fnorm
+        #     for m in xrange(int(mgrid)):
         #         f[m,0] = fpole
         # else:  pass
 
+        # fnorm = dcos(z) * deltx / 360
+
+        """
+        Spherical coordinates result in an area element
+        dA = sin(n)*dm*dn
+        This area element dA is dependent on the tilting (n) grid
+
+        Normalization of pole figure intensity, i.e., f(theta, phi) is:
+        1/(2pi) \int f(theta,phi) sin(theta),dphi,dtheta = 1
+        """
+
         z = np.zeros((ngrid+1,))
         deltz = (pi/2.)/float(ngrid)
-        for i in xrange(int(ngrid)+1):
+        for i in xrange(ngrid+1):
             z[i] = deltz*i
 
         deltx = 2.*pi/mgrid
-        for m in xrange(int(mgrid)):
+        for m in xrange(mgrid):
             for n in xrange(int(ngrid)):
                 fnorm = (cos(z[n]) - cos(z[n+1])) * deltx/(2*pi)
-                #print 'fnorm =', fnorm;raw_input()
                 f[m,n] = f[m,n] / fnorm
 
         if ifig!=None:
@@ -1987,15 +2144,12 @@ class polefigure:
 
         nodes = np.zeros((mgrid+1,ngrid+1))  # rot, tilting = (azimuth, declination) ...
 
-        ## Assigns the same intensity for the first ring
-        # South-pole : along  n=0 axis ---
-        f0 = 0.
-        for m in xrange(len(f)):
-            f0 = f0 + f[m,0]
-
-        f0avg = f0 / len(f)
-        for m in xrange(len(f)+1):
-            nodes[m,0] = f0avg
+        ## Assigns the same intensity for the first n rings
+        n = 1
+        for i in xrange(n):
+            # South-pole : along  n=0 axis ---
+            for m in xrange(len(f)+1):
+                nodes[m,i] = f[:,i].sum() / len(f)
         ## ------------------------------
 
         # # along n=1 axis ----------------
@@ -2060,7 +2214,124 @@ class polefigure:
                         raise IOError
                     inten = inten + f[mi,ni]
                 nodes[m,n] = inten/4.
+
+        print 'Elapsed time in self.core after cells:', t2s(time.time()-t0)
         return f, nodes
+
+    def pf_new(
+            self,poles=[[1,0,0],[1,1,0]],
+            dth=7.5,dph=7.5,n_rim=2,cdim=None,ires=True,
+            lev_opt=1,lev_norm_log=False,nlev=7,cmap='viridis'):
+        """
+        dph  = 7.5. (tilting angle : semi-sphere 0, +90 or full-sphere 0, +180)
+        dth  = 7.5. (rotation angle: -180,+180)
+        ires = True;  If True, indicate the grid
+        lev_opt=0 (0: individual, 1: shared between poles)
+        lev_norm_log=False (If True, use logarithmic scales)
+        nlev
+        """
+        from matplotlib.colors import LogNorm
+        miller=poles[::]
+
+        if type(cdim)!=type(None): self.cdim=cdim
+        ## 4 digits miller indices are used for hexagon and trigo
+
+        if self.csym=='hexag' or self.csym=='trigo':
+            pole_=[]
+            for i in xrange(len(poles)):
+                p  = [0,0,0]
+                p_ = poles[i]
+                if len(p_)!=4: raise IOError, \
+                   '4 digits should be given'
+                p[2] = p_[3]
+                p[0] = p_[0] - p_[2]
+                p[1] = p_[1] - p_[2]
+                pole_.append(p)
+            poles = pole_[::]
+
+        tiny = 1.e-9
+        N = []
+        t0=time.time()
+        #is_joblib=False ## Debug
+        if is_joblib and len(poles)>1:
+            rst=Parallel(n_jobs=len(poles)) (
+                delayed(cells_pf)(
+                    pole_ca=poles[i],ifig=None,dth=dth,dph=dph,
+                    csym=self.csym,cang=self.cang,cdim=self.cdim,
+                    grains=self.gr,n_rim = n_rim)for i in xrange(len(poles)))
+            for i in xrange(len(rst)):
+                N.append(rst[i])
+        else:
+            for i in xrange(len(poles)):
+                N.append(cells_pf(
+                    pole_ca=poles[i],ifig=None,dth=dth,dph=dph,
+                    csym=self.csym,cang=self.cang,cdim=self.cdim,
+                    grains=self.gr,n_rim = n_rim))
+        et = time.time()-t0
+        uet(et,head='Elapsed time for calling cells_pf')
+        print
+
+        x_node = np.arange(-180.,180.+tiny,dth)
+        y_node = np.arange(   0., 90.+tiny,dph)
+        XN, YN = np.meshgrid(x_node,y_node)
+
+        #--------------------------------------------------#
+        ## plotting / resolution
+        fig = plt.figure(figsize=(3.3*len(poles),3.0*4))
+        nm = (360.0 - 0.)/dth; nn = (180. - 90.)/dph
+        theta  = np.linspace(pi, pi/2., nn+1)
+        phi    = np.linspace(0., 2.*pi, nm+1)
+        r      = np.sin(theta)/(1-np.cos(theta))
+        R, PHI = np.meshgrid(r,phi)
+        PHI    = PHI# + pi/2.
+        x      = R*np.cos(PHI)
+        y      = R*np.sin(PHI)
+
+        mn = 0.5
+        mx = np.array(N).flatten().max()
+        for i in xrange(len(poles)):
+            ax1 = fig.add_subplot(4,len(poles),i+1)
+            ax2 = fig.add_subplot(4,len(poles),i+1+len(poles))
+            ax3 = fig.add_subplot(4,len(poles),i+1+len(poles)*2)
+            ax4 = fig.add_subplot(4,len(poles),i+1+len(poles)*3)
+
+            if lev_opt==0: mx = N[i].flatten().max()
+            
+            if lev_norm_log:
+                levels = np.logspace(np.log10(mn),
+                                     np.log10(mx),nlev)
+                norm = LogNorm()
+            else:
+                levels = np.linspace(mn,mx,nlev)
+                norm = None
+
+            cnt1 = ax1.contour(x,y,N[i],levels=levels,cmap=cmap,norm=norm)
+            cnt2 = ax2.contour(x,y,N[i],levels=levels,cmap='gray_r',norm=norm)
+            cnt3 = ax3.contourf(x,y,N[i],levels=levels,cmap=cmap,norm=norm)
+            cnt4 = ax4.contourf(x,y,N[i],levels=levels,cmap='gray_r',norm=norm)
+            cnts=[cnt1,cnt2,cnt3,cnt4]
+            axs=[ax1,ax2,ax3,ax4]
+
+            for j in xrange(len(x)-1):
+                for k in xrange(len(x[j])):
+                    if N[i][j,k]<mn:
+                        for l in xrange(len(axs)):
+                            axs[l].plot(
+                                x[j][k],y[j][k],'k.',
+                                alpha=0.17*len(poles),
+                                markersize=2.0)
+
+            if lev_opt==0:
+                for j in xrange(4):
+                    deco_pf(axs[j],cnts[j],miller[i],lev_opt)
+            elif lev_opt==1 and i==len(poles)-1:
+                for j in xrange(4):
+                    deco_pf(axs[j],cnts[j],miller[i],0)
+            elif lev_opt==1 and i!=len(poles)-1:
+                for j in xrange(4):
+                    deco_pf(axs[j],cnts[j],miller[i],1)
+        #--------------------------------------------------#
+
 
     def dotplot(self, pole=None, ifig=None, npole=1,
                 ipole=1, alpha=1.0, color='k',
@@ -2136,12 +2407,13 @@ class polefigure:
         for i in xrange(len(agr)):
             ### crystallographically equivalent poles are calculated.
             agr[i][0] = agr[i][0] - 90.
-            npeq = self.__equiv__(
+            npeq = __equiv__(
                 miller=pole, csym=csym, cdim=cdim, cang=cang)
             ### -----------------------------------------------------
             xy, POLE = self.core(
                 pole=pole, proj=proj, csym=csym,
-                agrain=agr[i], isym=isym, cdim=cdim, cang=cang,
+                agrain=agr[i], isym=isym, cdim=cdim,
+                cang=cang,
                 equivp = npeq)
             ##### POLE FIGURE PROJECTIN #####
             if proj=='pf':
@@ -2197,83 +2469,196 @@ class polefigure:
             #-------------------------------
         return np.array(XY)
 
-    def __equiv__(self, miller=None, csym=None,
-                  cdim=[1.,1.,1.], cang=[90.,90.,90.]):
-        """
-        Provided the miller indices,
-        Crystallographically equivalent and only unique
-        vectors are returned.
 
-        ---------
-        Arguments
-        ---------
-        miller = None  , e.g. [1,1,1]
-        csym   = 'cubic'
-        """
-        start = time.time()
-        from sym import cv
-        from sym import cubic, hexag
-        #from sym_cy import cubic, hexag
-        import sym    #python compiled
-        #import sym_cy #cython compiled
-        #from sym.py cvec, cubic, and hexgonal modules are brought in
-        if miller==None:
-            print "Miller index should be given"
-            raise IOError
-        vect = np.array(miller)
-        norm = 0.; sneq = []
-        temp = vect.copy()
-        #norm = vect[0]**2 + vect[1]**2 + vect[2]**2
-        #norm = np.sqrt(norm)
-        #vect = vect/ norm
-        #print 'elapsed time before v calculation: %8.6f'%
-        #(time.time()-start)
-        ##---------------------------------
-        #start = time.time()
-        if csym=='cubic':
-            #H = sym_cy.cubic(1)  #cython compiled
-            H = sym.cubic()  #operators
-            for i in xrange(len(H)):
-                sneq.append(np.dot(H[i], vect))
-        elif csym=='hexag':
-            #H = sym_cy.hexag(1) #cython compiled
-            H = sym.hexag() #operators
-            v = cv(pole=vect, cdim=cdim, cang=cang)
-            for i in xrange(len(H)):
-                sneq.append(np.dot(H[i], v))
-        elif csym=='None':
-            #H = [np.identity(3)]
-            sneq = [vect]
-        elif csym=='centro':
-            sneq = [vect, -vect]
-        else:
-            print 'Given symmetry, %s is not prepared'%csym
-            raw_input('Enter to raise an error and quits the job');
-            raise IOError
 
-        #print 'elapsed time during v calculation: %8.6f'%
-        #(time.time()-start)
-        #####-------------------------------
-        start = time.time()
-        stacked = [] #empty unique vectors
-                # is cH in the already existing stacked list?
-                # yes: pass
-                # no : add
+def cells_pf(
+        pole_ca=[1,0,0],ifig=None,dph=7.5,
+        dth =7.5,csym=None, cang=[90.,90.,90.],cdim=[1.,1.,1.],
+        grains=None,n_rim=2):
+    """
+    Creates cells whose resolutioin is nphi, ntheta
+    Given the delta x and delt y (dm, dn), each pole's
+    weight is assigned to a cell which braces it.
+    Plots the cell's weight and returns the cell in array.
 
-        ## filtering the sneq under whether or not it is unique
-        for i in xrange(len(sneq)):
-            cH = sneq[i].copy()  #current vector
-            if __isunique__(a=cH, b=stacked):
-                stacked.append(cH)
+    ---------
+    Arguments
+    ---------
+    pole_ca = [1,0,0]
+    ifig = None
+    dph  = 7.5. (tilting angle : semi-sphere 0, +90 or full-sphere 0, +180)
+    dth  = 7.5. (rotation angle: -180,+180)
+    csym = None
+    cang = [90.,90.,90.]
+    grains = None, [] array shape: (ngr, 3)
+    n_rim=2
+    """
+    tiny = 1e-9
+    ## Find poles in sa [pole_sa]
+    phs, ths, wgts = [], [], []
+    p0 = __equiv__(miller=pole_ca,csym=csym,
+                   cdim=cdim,cang=cang)
+    poles_ca=[]
+    for i in xrange(len(p0)):
+        poles_ca.append(p0[i])
+        poles_ca.append(-p0[i])
 
-        ## if v[2] is minus, mutiply minus sign to the vector.
-        for i in xrange(len(stacked)):
-            if stacked[i][2]<0:
-                stacked[i] = stacked[i]*-1
-        #print 'elapsed time during the rest: %8.6f'%
-        #(time.time()-start)
-        return np.array(stacked)
-    pass # end of class polefigure
+    for j in xrange(len(poles_ca)):
+        poles_ca[j] = poles_ca[j] /\
+            (np.sqrt((poles_ca[j]**2).sum()))
+
+    poles_sa = np.zeros((len(grains),len(poles_ca),3))
+    poles_wgt = np.zeros((len(grains),len(poles_ca)))
+    print grains.shape
+    for i in xrange(len(grains)):
+        phi1,phi,phi2,wgt = grains[i]
+        arg = euler_f(2,phi1,phi,phi2,np.zeros((3,3))) ## ca<-sa
+        amat = arg[-1]
+        for j in xrange(len(poles_ca)):
+            poles_sa[i,j,:] = np.dot(amat.T,poles_ca[j])
+            poles_wgt[i,j]  = wgt
+
+    poles_sa = poles_sa.reshape((len(grains)*len(poles_ca),3))
+    poles_wgt = poles_wgt.reshape((len(grains)*len(poles_ca)))
+
+    ## Full Sphere
+    x=np.arange(-180., 180.+tiny, dth)
+    y=np.arange(   0., 180.+tiny, dph)
+    nx, ny = int(360./dth), int(180./dph)
+    f = np.zeros((nx,ny))
+
+    ## Semi Sphere
+    x_node = np.arange(-180.,180.+tiny,dth)
+    y_node = np.arange(   0., 90.+tiny,dph)
+    nx_node = len(x_node); ny_node = len(y_node)
+    nodes = np.zeros((nx_node,ny_node))
+
+    for i in xrange(len(poles_sa)):
+        X,Y = proj_f(poles_sa[i])
+        r,th = cart2polar(X,Y)
+
+        theta,phi = cart2sph(poles_sa[i])
+        wgts.append(poles_wgt[i])
+        phs.append(phi); ths.append(theta)
+
+        x_,y_ = theta*180./np.pi, phi*180/np.pi
+        ix = int((x_+180)/dth-tiny)
+        iy = int(      y_/dph-tiny)
+        f[ix,iy]=f[ix,iy]+poles_wgt[i]
+
+    fsum=f[:,:int(ny/2)].flatten().sum()
+    z=np.zeros((ny+1))
+    dz = np.pi/float(ny)
+    for i in xrange(ny+1): z[i] = dz*i
+    dx_ = 2.*np.pi/nx
+    for ix in xrange(nx):
+        for iy in xrange(ny):
+            fnorm = (np.cos(z[iy])-np.cos(z[iy+1])) * dx_ / (2.*np.pi)
+            f[ix,iy] = f[ix,iy]/fnorm/fsum
+
+    ## Extension of f_bounds
+    f_bounds = np.zeros((nx+2,ny+2))
+    f_bounds[1:-1,1:-1]=f[ :, :]
+    f_bounds[  -1,1:-1]=f[ 0, :]
+    f_bounds[   0,1:-1]=f[-1, :]
+    f_bounds[1:-1,   0]=f[ :,-1]
+    f_bounds[   0,   0]=f_bounds[ 0,-2]
+    f_bounds[  -1,   0]=f_bounds[-1,-2]
+    f_bounds[   :,  -1]=f_bounds[ :, 1]
+
+    ## Average of four adjacent neighbours
+    for i in xrange(len(nodes)):
+        for j in xrange(len(nodes[i])):
+            nodes[i][j] = (
+                f_bounds[i][j]  +f_bounds[i+1][j]+
+                f_bounds[i][j+1]+f_bounds[i+1][j+1])
+            nodes[i][j] = nodes[i][j]/4.
+
+    ## Centeral region is using an avergage around the rim
+    for i in xrange(n_rim):
+        nodes[:,i]=(nodes[:,i].sum())/len(nodes[:,i])
+
+
+    XN,YN=np.meshgrid(x_node,y_node)
+    return nodes
+
+def __equiv__(miller=None, csym=None,
+              cdim=[1.,1.,1.], cang=[90.,90.,90.]):
+    """
+    Provided the miller indices,
+    Crystallographically equivalent and only unique
+    vectors are returned.
+
+    ---------
+    Arguments
+    ---------
+    miller = None  , e.g. [1,1,1]
+    csym   = 'cubic'
+    """
+    start = time.time()
+    from sym import cv
+    from sym import cubic, hexag
+    #from sym_cy import cubic, hexag
+    import sym    #python compiled
+    #import sym_cy #cython compiled
+    #from sym.py cvec, cubic, and hexgonal modules are brought in
+    if miller==None:
+        print "Miller index should be given"
+        raise IOError
+    vect = np.array(miller)
+    norm = 0.; sneq = []
+    temp = vect.copy()
+    #norm = vect[0]**2 + vect[1]**2 + vect[2]**2
+    #norm = np.sqrt(norm)
+    #vect = vect/ norm
+    #print 'elapsed time before v calculation: %8.6f'%
+    #(time.time()-start)
+    ##---------------------------------
+    #start = time.time()
+    if csym=='cubic':
+        #H = sym_cy.cubic(1)  #cython compiled
+        H = sym.cubic()  #operators
+        for i in xrange(len(H)):
+            sneq.append(np.dot(H[i], vect))
+    elif csym=='hexag':
+        #H = sym_cy.hexag(1) #cython compiled
+        H = sym.hexag() #operators
+        v = cv(pole=vect, cdim=cdim, cang=cang)
+        for i in xrange(len(H)):
+            sneq.append(np.dot(H[i], v))
+    elif csym=='None':
+        #H = [np.identity(3)]
+        sneq = [vect]
+    elif csym=='centro':
+        sneq = [vect, -vect]
+    else:
+        print 'Given symmetry, %s is not prepared'%csym
+        raw_input('Enter to raise an error and quits the job');
+        raise IOError
+
+    #print 'elapsed time during v calculation: %8.6f'%
+    #(time.time()-start)
+    #####-------------------------------
+    start = time.time()
+    stacked = [] #empty unique vectors
+            # is cH in the already existing stacked list?
+            # yes: pass
+            # no : add
+
+    ## filtering the sneq under whether or not it is unique
+    for i in xrange(len(sneq)):
+        cH = sneq[i].copy()  #current vector
+        if __isunique__(a=cH, b=stacked):
+            stacked.append(cH)
+
+    ## if v[2] is minus, mutiply minus sign to the vector.
+    for i in xrange(len(stacked)):
+        if stacked[i][2]<0:
+            stacked[i] = stacked[i]*-1
+    #print 'elapsed time during the rest: %8.6f'%
+    #(time.time()-start)
+    return np.array(stacked)
+pass # end of class polefigure
 
 ### Excutes the module in the command line with arguments and options
 def main(filename, pfmode, gr, csym):
