@@ -724,22 +724,27 @@ def __circle__(center=[0,0], r=1.):
     y = y + center[0]
     return x,y
 
-def deco_pf(ax,cnt,miller=[0,0,0]):
+def deco_pf(ax,cnt,miller=[0,0,0],iopt=0):
+    """
+    iopt==1: skip level lines
+    """
     fact=2.5
     clev = cnt._levels
     tcolors = cnt.tcolors
 
-    for i in xrange(len(tcolors)):
-        cc = tcolors[i][0][0:3]
-        ax.plot([1.30, 1.37],
-                [1. - i * 0.2, 1. - i * 0.2],
-                color=cc)
-        ## level text
-        if clev[i]<10: s='  %4.2f'%clev[i]
-        else:          s='%5.2f'%clev[i]
+    if iopt==1: pass
+    elif iopt==0:
+        for i in xrange(len(tcolors)):
+            cc = tcolors[i][0][0:3]
+            ax.plot([1.30, 1.37],
+                    [1. - i * 0.2, 1. - i * 0.2],
+                    color=cc)
+            ## level text
+            if clev[i]<10: s='  %4.2f'%clev[i]
+            else:          s='%5.2f'%clev[i]
             
-        ax.text(x=1.44, y= 1. - i*0.2 - 0.05,
-                s=s,fontsize=4.*fact)
+            ax.text(x=1.44, y= 1. - i*0.2 - 0.05,
+                    s=s,fontsize=4.*fact)
 
     ## axis label/    ## Ticks
     ax.text(1.14,0. ,'1',va='center',ha='center')
@@ -2207,10 +2212,17 @@ class polefigure:
         print 'Elapsed time in self.core after cells:', t2s(time.time()-t0)
         return f, nodes
 
-    def pf_new(self,poles=[[1,0,0],[1,1,0]],dth=7.5,dph=7.5,n_rim=2,cdim=None):
+    def pf_new(
+            self,poles=[[1,0,0],[1,1,0]],
+            dth=7.5,dph=7.5,n_rim=2,cdim=None,ires=True,
+            lev_opt=1,lev_norm_log=False,nlev=9):
         """
         dph  = 7.5. (tilting angle : semi-sphere 0, +90 or full-sphere 0, +180)
         dth  = 7.5. (rotation angle: -180,+180)
+        ires = True;  If True, indicate the grid
+        lev_opt=0 (0: individual, 1: shared between poles)
+        lev_norm_log=False (If True, use logarithmic scales)
+        nlev
         """
         from matplotlib.colors import LogNorm
         miller=poles[::]
@@ -2245,7 +2257,7 @@ class polefigure:
 
         #--------------------------------------------------#
         ## plotting / resolution
-        fig = plt.figure(figsize=(3.3*len(poles),3.*4))
+        fig = plt.figure(figsize=(3.3*len(poles),3.0*4))
         nm = (360.0 - 0.)/dth; nn = (180. - 90.)/dph
         theta  = np.linspace(pi, pi/2., nn+1)
         phi    = np.linspace(0., 2.*pi, nm+1)
@@ -2255,39 +2267,48 @@ class polefigure:
         x      = R*np.cos(PHI)
         y      = R*np.sin(PHI)
 
-        norm = LogNorm()
+        mn = 0.5
+        mx = np.array(N).flatten().max()
         for i in xrange(len(poles)):
-            ax_cntl = fig.add_subplot(4,len(poles),i+1)
-            ax_cntf = fig.add_subplot(4,len(poles),i+1+len(poles))
-            ax_cntw = fig.add_subplot(4,len(poles),i+1+len(poles)*2)
-            ax_cntb = fig.add_subplot(4,len(poles),i+1+len(poles)*3)
+            ax1 = fig.add_subplot(4,len(poles),i+1)
+            ax2 = fig.add_subplot(4,len(poles),i+1+len(poles))
+            ax3 = fig.add_subplot(4,len(poles),i+1+len(poles)*2)
+            ax4 = fig.add_subplot(4,len(poles),i+1+len(poles)*3)
 
-            mx = N[i].flatten().max()
-            mn = 0.5
-            levels = np.linspace(mn,mx,9)
+            if lev_opt==0: mx = N[i].flatten().max()
+            
+            if lev_norm_log:
+                levels = np.logspace(np.log2(mn),np.log2(mx),nlev)
+                norm = LogNorm()
+            else:
+                levels = np.linspace(mn,mx,nlev)
+                norm = None
 
-            cnt1 = ax_cntl.contour(x,y,N[i],levels=levels)
-            cnt2 = ax_cntw.contour(x,y,N[i],levels=levels,cmap='gray_r')
-            cnt3 = ax_cntf.contourf(x,y,N[i],levels=levels)
-            cnt4 = ax_cntb.contourf(x,y,N[i],levels=levels,cmap='gray_r')
-            deco_pf(ax_cntl,cnt1,miller[i])
-            deco_pf(ax_cntw,cnt2,miller[i])
-            deco_pf(ax_cntf,cnt3,miller[i])
-            deco_pf(ax_cntb,cnt4,miller[i])
+            cnt1 = ax1.contour(x,y,N[i],levels=levels,norm=norm)
+            cnt2 = ax2.contour(x,y,N[i],levels=levels,cmap='gray_r',norm=norm)
+            cnt3 = ax3.contourf(x,y,N[i],levels=levels,norm=norm)
+            cnt4 = ax4.contourf(x,y,N[i],levels=levels,cmap='gray_r',norm=norm)
+            cnts=[cnt1,cnt2,cnt3,cnt4]
+            axs=[ax1,ax2,ax3,ax4]
 
             for j in xrange(len(x)-1):
                 for k in xrange(len(x[j])):
                     if N[i][j,k]<mn:
-                        ax_cntl.plot(x[j][k],y[j][k],'k.',
-                                     alpha=0.17*len(poles),markersize=2.0)
-                        ax_cntf.plot(x[j][k],y[j][k],'k.',
-                                     alpha=0.17*len(poles),markersize=2.0)
-                    if N[i][j,k]<levels[1]:
-                        ax_cntw.plot(x[j][k],y[j][k],'k.',
-                                     alpha=0.17*len(poles),markersize=2.0)
+                        for l in xrange(len(axs)):
+                            axs[l].plot(
+                                x[j][k],y[j][k],'k.',
+                                alpha=0.17*len(poles),
+                                markersize=2.0)
 
-                        ax_cntb.plot(x[j][k],y[j][k],'k.',
-                                     alpha=0.17*len(poles),markersize=2.0)
+            if lev_opt==0:
+                for j in xrange(4):
+                    deco_pf(axs[j],cnts[j],miller[i],lev_opt)
+            elif lev_opt==1 and i==len(poles)-1:
+                for j in xrange(4):
+                    deco_pf(axs[j],cnts[j],miller[i],0)
+            elif lev_opt==1 and i!=len(poles)-1:
+                for j in xrange(4):
+                    deco_pf(axs[j],cnts[j],miller[i],1)
         #--------------------------------------------------#
 
 
@@ -2514,10 +2535,6 @@ def cells_pf(
             fnorm = (np.cos(z[iy])-np.cos(z[iy+1])) * dx_ / (2.*np.pi)
             f[ix,iy] = f[ix,iy]/fnorm/fsum
 
-    ## Centeral region is using an avergage around the rim
-    for i in xrange(n_rim):
-        f[:,i]=(f[:,i].sum())/len(f[:,i])
-
     ## Extension of f_bounds
     f_bounds = np.zeros((nx+2,ny+2))
     f_bounds[1:-1,1:-1]=f[ :, :]
@@ -2535,6 +2552,11 @@ def cells_pf(
                 f_bounds[i][j]  +f_bounds[i+1][j]+
                 f_bounds[i][j+1]+f_bounds[i+1][j+1])
             nodes[i][j] = nodes[i][j]/4.
+
+    ## Centeral region is using an avergage around the rim
+    for i in xrange(n_rim):
+        nodes[:,i]=(nodes[:,i].sum())/len(nodes[:,i])
+
 
     XN,YN=np.meshgrid(x_node,y_node)
     return nodes
