@@ -1,4 +1,6 @@
 archive
+*ipynb_checkpoints*
+*.png
 *~
 *.pyc
 *.eps
