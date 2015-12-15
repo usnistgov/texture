@@ -1424,6 +1424,10 @@ class polefigure:
         gray_r, gray, pink_r, pink, summer_r, summer, winter_r, winter,
         Blues, Blues_r, Set1_r, Set1 .... '
         """
+
+        print 'pf is deprecated. Considering using pf_new'
+
+
         ## PF ploting directly from experimental pole figure
         if type(self.epf)!=type(None):
             # mode is fixed to be 'im'
