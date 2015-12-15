@@ -2241,6 +2241,7 @@ class polefigure:
         lev_norm_log=False (If True, use logarithmic scales)
         nlev
         """
+        nlev = nlev + 1 ##
         from matplotlib.colors import LogNorm
         miller=poles[::]
 
