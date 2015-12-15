@@ -735,9 +735,17 @@ def __circle__(center=[0,0], r=1.):
     y = y + center[0]
     return x,y
 
-def deco_pf(ax,cnt,miller=[0,0,0],iopt=0,iskip_last=False):
+def deco_pf(ax,cnt,miller=[0,0,0],iopt=0,iskip_last=False,ix='1',iy='2'):
     """
     iopt==1: skip level lines
+
+    ax
+    cnt
+    miller
+    ix
+    iy
+    iopt
+    iskip_last
     """
     fact=2.5
     clev = cnt._levels
@@ -760,10 +768,10 @@ def deco_pf(ax,cnt,miller=[0,0,0],iopt=0,iskip_last=False):
                     s=s,fontsize=4.*fact)
 
     ## axis label/    ## Ticks
-    ax.text(1.14,0. ,'1',va='center',ha='center')
-    ax.text(0. ,1.14,'2',va='center',ha='center')
-    ax.plot([0.0,0.0], [1.0,1.03],'k-')
-    ax.plot([1.0,1.03],[0.0,0.0],'k-')
+    ax.text(1.14,0. ,ix,va='center',ha='center')
+    ax.text(0. ,1.14,iy,va='center',ha='center')
+    ax.plot([0.0,0.0], [0.97,1.00],'k-')
+    ax.plot([0.97,1.00],[0.0,0.0],'k-')
 
     ## pole
     s='('
@@ -2230,16 +2238,23 @@ class polefigure:
         return f, nodes
 
     def pf_new(
-            self,poles=[[1,0,0],[1,1,0]],
+            self,poles=[[1,0,0],[1,1,0]],ix='1',iy='2',
             dth=10,dph=10,n_rim=2,cdim=None,ires=True,mn=None,
-            lev_opt=0,lev_norm_log=False,nlev=7,cmap='viridis'):
+            lev_opt=0,lev_norm_log=True,nlev=7,cmap='viridis'):
         """
+        poles
+        ix
+        iy
         dph  = 7.5. (tilting angle : semi-sphere 0, +90 or full-sphere 0, +180)
         dth  = 7.5. (rotation angle: -180,+180)
+        n_rim
+        cdim
         ires = True;  If True, indicate the grid
+        mn    = minimum level of countour
         lev_opt=0 (0: individual, 1: shared between poles)
         lev_norm_log=False (If True, use logarithmic scales)
-        nlev
+        nlev = 7
+        cmap ='viridis'
         """
         nlev = nlev + 1 ##
         from matplotlib.colors import LogNorm
@@ -2347,13 +2362,13 @@ class polefigure:
 
                 if lev_opt==0:
                     deco_pf(axs[j],cnts[j],miller[i],lev_opt,
-                            iskip_last=sl)
+                            iskip_last=sl,ix=ix,iy=iy)
                 elif lev_opt==1 and i==len(poles)-1:
                     deco_pf(axs[j],cnts[j],miller[i],0,
-                            iskip_last=sl)
+                            iskip_last=sl,ix=ix,iy=iy)
                 elif lev_opt==1 and i!=len(poles)-1:
                     deco_pf(axs[j],cnts[j],miller[i],1,
-                            iskip_last=sl)
+                            iskip_last=sl,ix=ix,iy=iy)
         #--------------------------------------------------#
 
     def dotplot(self, pole=None, ifig=None, npole=1,

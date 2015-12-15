@@ -120,7 +120,7 @@ def main(ngrains=100,sigma=15.,c2a=1.6235,mu=0.,
             gr.append([phi1,phi,phi2,1./ngrains])
 
     mypf=upf.polefigure(grains=gr,csym='hexag',cdim=[1,1,c2a])
-    mypf.pf_new(poles=[[0,0,0,2],[1,0,-1,0]],cmap='jet')
+    mypf.pf_new(poles=[[0,0,0,2],[1,0,-1,0]],cmap='jet',ix='TD',iy='RD')
     return np.array(gr)
 
 
@@ -185,7 +185,7 @@ def app(ngr=100,c2a=1.6235):
         grs.append(gr2[i])
     grs=np.array(grs)
     mypf=upf.polefigure(grains=grs,csym='hexag',cdim=[1,1,c2a])
-    mypf.pf_new(poles=[[0,0,0,1],[1,0,-1,0]],cmap='jet')
+    mypf.pf_new(poles=[[0,0,0,1],[1,0,-1,0]],cmap='jet',ix='TD',iy='RD')
     plt.gcf().savefig('t30.pdf',bbox_inches='tight')
     f = gen_file(lab='dbl_lets_30',ngr=ngr)
     write_gr(f,grs)
@@ -201,7 +201,7 @@ def app(ngr=100,c2a=1.6235):
         gr.append(gr2[i])
     gr=np.array(gr)
     mypf=upf.polefigure(grains=gr,csym='hexag',cdim=[1,1,c2a])
-    mypf.pf_new(poles=[[0,0,0,1],[1,0,-1,0]],cmap='jet')
+    mypf.pf_new(poles=[[0,0,0,1],[1,0,-1,0]],cmap='jet',ix='TD',iy='RD')
     plt.gcf().savefig('t50.pdf',bbox_inches='tight')
     plt.gcf().clf()
     f = gen_file(lab='dbl_lets_50',ngr=ngr)
