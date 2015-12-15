@@ -748,7 +748,7 @@ def deco_pf(ax,cnt,miller=[0,0,0],iopt=0):
             ## level text
             if clev[i]<10: s='  %4.2f'%clev[i]
             else:          s='%5.2f'%clev[i]
-            
+
             ax.text(x=1.44, y= 1. - i*0.2 - 0.05,
                     s=s,fontsize=4.*fact)
 
@@ -2296,10 +2296,9 @@ class polefigure:
             ax4 = fig.add_subplot(4,len(poles),i+1+len(poles)*3)
 
             if lev_opt==0: mx = N[i].flatten().max()
-            
             if lev_norm_log:
-                levels = np.logspace(np.log10(mn),
-                                     np.log10(mx),nlev)
+                levels = np.logspace(
+                    np.log10(mn),np.log10(mx),nlev)
                 norm = LogNorm()
             else:
                 levels = np.linspace(mn,mx,nlev)
@@ -2331,7 +2330,6 @@ class polefigure:
                 for j in xrange(4):
                     deco_pf(axs[j],cnts[j],miller[i],1)
         #--------------------------------------------------#
-
 
     def dotplot(self, pole=None, ifig=None, npole=1,
                 ipole=1, alpha=1.0, color='k',
@@ -2472,9 +2470,9 @@ class polefigure:
 
 
 def cells_pf(
-        pole_ca=[1,0,0],ifig=None,dph=7.5,
-        dth =7.5,csym=None, cang=[90.,90.,90.],cdim=[1.,1.,1.],
-        grains=None,n_rim=2):
+        pole_ca=[1,0,0],dph=7.5,
+        dth =7.5,csym=None, cang=[90.,90.,90.],
+        cdim=[1.,1.,1.],grains=None,n_rim=2):
     """
     Creates cells whose resolutioin is nphi, ntheta
     Given the delta x and delt y (dm, dn), each pole's
@@ -2485,7 +2483,6 @@ def cells_pf(
     Arguments
     ---------
     pole_ca = [1,0,0]
-    ifig = None
     dph  = 7.5. (tilting angle : semi-sphere 0, +90 or full-sphere 0, +180)
     dth  = 7.5. (rotation angle: -180,+180)
     csym = None
@@ -2500,16 +2497,15 @@ def cells_pf(
                    cdim=cdim,cang=cang)
     poles_ca=[]
     for i in xrange(len(p0)):
-        poles_ca.append(p0[i])
+        poles_ca.append( p0[i])
         poles_ca.append(-p0[i])
 
     for j in xrange(len(poles_ca)):
         poles_ca[j] = poles_ca[j] /\
-            (np.sqrt((poles_ca[j]**2).sum()))
+                      (np.sqrt((poles_ca[j]**2).sum()))
 
-    poles_sa = np.zeros((len(grains),len(poles_ca),3))
+    poles_sa  = np.zeros((len(grains),len(poles_ca),3))
     poles_wgt = np.zeros((len(grains),len(poles_ca)))
-    print grains.shape
     for i in xrange(len(grains)):
         phi1,phi,phi2,wgt = grains[i]
         arg = euler_f(2,phi1,phi,phi2,np.zeros((3,3))) ## ca<-sa
@@ -2518,12 +2514,12 @@ def cells_pf(
             poles_sa[i,j,:] = np.dot(amat.T,poles_ca[j])
             poles_wgt[i,j]  = wgt
 
-    poles_sa = poles_sa.reshape((len(grains)*len(poles_ca),3))
+    poles_sa  = poles_sa.reshape( (len(grains)*len(poles_ca),3))
     poles_wgt = poles_wgt.reshape((len(grains)*len(poles_ca)))
 
     ## Full Sphere
-    x=np.arange(-180., 180.+tiny, dth)
-    y=np.arange(   0., 180.+tiny, dph)
+    x = np.arange(-180., 180.+tiny, dth)
+    y = np.arange(   0., 180.+tiny, dph)
     nx, ny = int(360./dth), int(180./dph)
     f = np.zeros((nx,ny))
 
@@ -2546,17 +2542,17 @@ def cells_pf(
         iy = int(      y_/dph-tiny)
         f[ix,iy]=f[ix,iy]+poles_wgt[i]
 
+    ## Normalization (m.u.r)
     fsum=f[:,:int(ny/2)].flatten().sum()
-    z=np.zeros((ny+1))
-    dz = np.pi/float(ny)
-    for i in xrange(ny+1): z[i] = dz*i
+    z = np.zeros((ny+1))
+    for i in xrange(ny+1): z[i] = np.pi/float(ny)*i
     dx_ = 2.*np.pi/nx
     for ix in xrange(nx):
         for iy in xrange(ny):
             fnorm = (np.cos(z[iy])-np.cos(z[iy+1])) * dx_ / (2.*np.pi)
             f[ix,iy] = f[ix,iy]/fnorm/fsum
 
-    ## Extension of f_bounds
+    ## Extension of f_bounds - see algorithm ipynb
     f_bounds = np.zeros((nx+2,ny+2))
     f_bounds[1:-1,1:-1]=f[ :, :]
     f_bounds[  -1,1:-1]=f[ 0, :]
@@ -2578,7 +2574,6 @@ def cells_pf(
     for i in xrange(n_rim):
         nodes[:,i]=(nodes[:,i].sum())/len(nodes[:,i])
 
-
     XN,YN=np.meshgrid(x_node,y_node)
     return nodes
 
@@ -2594,6 +2589,8 @@ def __equiv__(miller=None, csym=None,
     ---------
     miller = None  , e.g. [1,1,1]
     csym   = 'cubic'
+    cdim   = [ 1, 1, 1]
+    cang   = [90,90,90]
     """
     start = time.time()
     from sym import cv
@@ -2602,18 +2599,12 @@ def __equiv__(miller=None, csym=None,
     import sym    #python compiled
     #import sym_cy #cython compiled
     #from sym.py cvec, cubic, and hexgonal modules are brought in
-    if miller==None:
-        print "Miller index should be given"
-        raise IOError
+    if miller==None: raise IOError, \
+       "Miller index should be given"
+
     vect = np.array(miller)
     norm = 0.; sneq = []
     temp = vect.copy()
-    #norm = vect[0]**2 + vect[1]**2 + vect[2]**2
-    #norm = np.sqrt(norm)
-    #vect = vect/ norm
-    #print 'elapsed time before v calculation: %8.6f'%
-    #(time.time()-start)
-    ##---------------------------------
     #start = time.time()
     if csym=='cubic':
         #H = sym_cy.cubic(1)  #cython compiled
@@ -2658,7 +2649,7 @@ def __equiv__(miller=None, csym=None,
     #print 'elapsed time during the rest: %8.6f'%
     #(time.time()-start)
     return np.array(stacked)
-pass # end of class polefigure
+
 
 ### Excutes the module in the command line with arguments and options
 def main(filename, pfmode, gr, csym):

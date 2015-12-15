@@ -1290,3 +1290,4 @@ c         write(*,'(3i2)') foundi
  100  return
       end function iseqrot
 c----------------------------------------------------------------------c
+      include 'mat_lib.f'
