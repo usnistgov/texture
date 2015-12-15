@@ -27,6 +27,8 @@ ext_modules = []
 ext_modules += [
     Extension(
         name="for_lib",
-        sources=['src/for_lib.for','src/cs.f'])]
+        sources=['src/for_lib.for','src/cs.f'],
+        extra_compile_args=['-O3']
+    )]
 
 setup_numpy(ext_modules=ext_modules)

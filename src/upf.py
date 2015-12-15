@@ -136,11 +136,16 @@ from MP import progress_bar
 t2s = progress_bar.convert_sec_to_string
 uet = progress_bar.update_elapsed_time
 
+
+## Fortran modules
 import for_lib
 agr2pol_f = for_lib.agr2pol
 proj_f    = for_lib.projection
 euler_f   = for_lib.euler
+gr2psa    = for_lib.grain2pole_sa
 
+## Cython modules
+# import proj
 
 try:
     import joblib
@@ -730,17 +735,19 @@ def __circle__(center=[0,0], r=1.):
     y = y + center[0]
     return x,y
 
-def deco_pf(ax,cnt,miller=[0,0,0],iopt=0):
+def deco_pf(ax,cnt,miller=[0,0,0],iopt=0,iskip_last=False):
     """
     iopt==1: skip level lines
     """
     fact=2.5
     clev = cnt._levels
     tcolors = cnt.tcolors
+    if iskip_last: nlev = len(tcolors)-1
+    else:  nlev = len(tcolors)
 
     if iopt==1: pass
     elif iopt==0:
-        for i in xrange(len(tcolors)):
+        for i in xrange(nlev):
             cc = tcolors[i][0][0:3]
             ax.plot([1.30, 1.37],
                     [1. - i * 0.2, 1. - i * 0.2],
@@ -1998,7 +2005,7 @@ class polefigure:
 
         t0 = time.time()
 
-        is_joblib=False
+        # is_joblib=False
         if is_joblib:
             ## This loop is quite extensive and slow.
             rst = Parallel(n_jobs=3) (delayed(core)(
@@ -2220,8 +2227,8 @@ class polefigure:
 
     def pf_new(
             self,poles=[[1,0,0],[1,1,0]],
-            dth=7.5,dph=7.5,n_rim=2,cdim=None,ires=True,
-            lev_opt=1,lev_norm_log=False,nlev=7,cmap='viridis'):
+            dth=10,dph=10,n_rim=2,cdim=None,ires=True,mn=None,
+            lev_opt=0,lev_norm_log=False,nlev=7,cmap='viridis'):
         """
         dph  = 7.5. (tilting angle : semi-sphere 0, +90 or full-sphere 0, +180)
         dth  = 7.5. (rotation angle: -180,+180)
@@ -2252,21 +2259,25 @@ class polefigure:
         tiny = 1.e-9
         N = []
         t0=time.time()
-        #is_joblib=False ## Debug
+        # is_joblib=False ## Debug
         if is_joblib and len(poles)>1:
             rst=Parallel(n_jobs=len(poles)) (
                 delayed(cells_pf)(
-                    pole_ca=poles[i],ifig=None,dth=dth,dph=dph,
+                    pole_ca=poles[i],dth=dth,dph=dph,
                     csym=self.csym,cang=self.cang,cdim=self.cdim,
-                    grains=self.gr,n_rim = n_rim)for i in xrange(len(poles)))
+                    grains=self.gr,n_rim = n_rim) \
+                for i in xrange(len(poles)))
+
             for i in xrange(len(rst)):
                 N.append(rst[i])
         else:
             for i in xrange(len(poles)):
                 N.append(cells_pf(
-                    pole_ca=poles[i],ifig=None,dth=dth,dph=dph,
-                    csym=self.csym,cang=self.cang,cdim=self.cdim,
-                    grains=self.gr,n_rim = n_rim))
+                    pole_ca=poles[i],dth=dth,dph=dph,
+                    csym=self.csym,cang=self.cang,
+                    cdim=self.cdim,grains=self.gr,
+                    n_rim = n_rim))
+
         et = time.time()-t0
         uet(et,head='Elapsed time for calling cells_pf')
         print
@@ -2277,18 +2288,19 @@ class polefigure:
 
         #--------------------------------------------------#
         ## plotting / resolution
-        fig = plt.figure(figsize=(3.3*len(poles),3.0*4))
         nm = (360.0 - 0.)/dth; nn = (180. - 90.)/dph
         theta  = np.linspace(pi, pi/2., nn+1)
         phi    = np.linspace(0., 2.*pi, nm+1)
         r      = np.sin(theta)/(1-np.cos(theta))
         R, PHI = np.meshgrid(r,phi)
-        PHI    = PHI# + pi/2.
-        x      = R*np.cos(PHI)
-        y      = R*np.sin(PHI)
+        PHI    = PHI
+        x = R*np.cos(PHI); y = R*np.sin(PHI)
 
-        mn = 0.5
         mx = np.array(N).flatten().max()
+        if mx>100: mx=99.
+
+        if type(mn)==type(None): mn = 0.5
+        fig = plt.figure(figsize=(3.3*len(poles),3.0*4))
         for i in xrange(len(poles)):
             ax1 = fig.add_subplot(4,len(poles),i+1)
             ax2 = fig.add_subplot(4,len(poles),i+1+len(poles))
@@ -2305,7 +2317,7 @@ class polefigure:
                 norm = None
 
             cnt1 = ax1.contour(x,y,N[i],levels=levels,cmap=cmap,norm=norm)
-            cnt2 = ax2.contour(x,y,N[i],levels=levels,cmap='gray_r',norm=norm)
+            cnt2 = ax2.contour(x,y,N[i],levels=levels,cmap='rainbow',norm=norm)
             cnt3 = ax3.contourf(x,y,N[i],levels=levels,cmap=cmap,norm=norm)
             cnt4 = ax4.contourf(x,y,N[i],levels=levels,cmap='gray_r',norm=norm)
             cnts=[cnt1,cnt2,cnt3,cnt4]
@@ -2313,22 +2325,30 @@ class polefigure:
 
             for j in xrange(len(x)-1):
                 for k in xrange(len(x[j])):
-                    if N[i][j,k]<mn:
+                    if N[i][j,k]<levels[0]:
                         for l in xrange(len(axs)):
-                            axs[l].plot(
-                                x[j][k],y[j][k],'k.',
-                                alpha=0.17*len(poles),
-                                markersize=2.0)
+                            if k==0 and j>1:
+                                pass
+                            else:
+                                axs[l].plot(
+                                    x[j][k],y[j][k],'k.',
+                                    alpha=0.17*len(poles),
+                                    markersize=2.0)
 
-            if lev_opt==0:
-                for j in xrange(4):
-                    deco_pf(axs[j],cnts[j],miller[i],lev_opt)
-            elif lev_opt==1 and i==len(poles)-1:
-                for j in xrange(4):
-                    deco_pf(axs[j],cnts[j],miller[i],0)
-            elif lev_opt==1 and i!=len(poles)-1:
-                for j in xrange(4):
-                    deco_pf(axs[j],cnts[j],miller[i],1)
+
+            for j in xrange(4):
+                if j in [0,1]: sl=True
+                else: sl=False
+
+                if lev_opt==0:
+                    deco_pf(axs[j],cnts[j],miller[i],lev_opt,
+                            iskip_last=sl)
+                elif lev_opt==1 and i==len(poles)-1:
+                    deco_pf(axs[j],cnts[j],miller[i],0,
+                            iskip_last=sl)
+                elif lev_opt==1 and i!=len(poles)-1:
+                    deco_pf(axs[j],cnts[j],miller[i],1,
+                            iskip_last=sl)
         #--------------------------------------------------#
 
     def dotplot(self, pole=None, ifig=None, npole=1,
@@ -2467,11 +2487,9 @@ class polefigure:
             #-------------------------------
         return np.array(XY)
 
-
-
 def cells_pf(
         pole_ca=[1,0,0],dph=7.5,
-        dth =7.5,csym=None, cang=[90.,90.,90.],
+        dth =7.5,csym=None,cang=[90.,90.,90.],
         cdim=[1.,1.,1.],grains=None,n_rim=2):
     """
     Creates cells whose resolutioin is nphi, ntheta
@@ -2504,18 +2522,30 @@ def cells_pf(
         poles_ca[j] = poles_ca[j] /\
                       (np.sqrt((poles_ca[j]**2).sum()))
 
-    poles_sa  = np.zeros((len(grains),len(poles_ca),3))
-    poles_wgt = np.zeros((len(grains),len(poles_ca)))
-    for i in xrange(len(grains)):
-        phi1,phi,phi2,wgt = grains[i]
-        arg = euler_f(2,phi1,phi,phi2,np.zeros((3,3))) ## ca<-sa
-        amat = arg[-1]
-        for j in xrange(len(poles_ca)):
-            poles_sa[i,j,:] = np.dot(amat.T,poles_ca[j])
-            poles_wgt[i,j]  = wgt
+    nx,ny = len(grains), len(poles_ca)
+
+    poles_sa  = np.zeros((nx,ny,3))
+    poles_wgt = np.zeros((nx,ny))
+
+    i_for=True
+    #i_for=False # debug
+    if i_for:
+        poles_sa, poles_wgt = gr2psa(
+            ngr= len(grains),grains=grains,
+            npol=len(poles_ca),poles_ca=np.array(poles_ca))
+    else:
+        for i in xrange(len(grains)):
+            phi1,phi,phi2,wgt = grains[i]
+            arg = euler_f(2,phi1,phi,phi2,np.zeros((3,3))) ## ca<-sa
+            amat = arg[-1]
+            for j in xrange(len(poles_ca)):
+                poles_sa[i,j,:] = np.dot(amat.T,poles_ca[j])
+                poles_wgt[i,j]  = wgt
+
 
     poles_sa  = poles_sa.reshape( (len(grains)*len(poles_ca),3))
     poles_wgt = poles_wgt.reshape((len(grains)*len(poles_ca)))
+
 
     ## Full Sphere
     x = np.arange(-180., 180.+tiny, dth)
