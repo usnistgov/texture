@@ -1135,6 +1135,7 @@ class polefigure:
         levels
         rot
         """
+        from matplotlib.colors import LogNorm
         print 'List of files:'
         for f in self.epf_fn: print '%s '%f
         #print 'dimension of self.grid:', self.grid.shape
@@ -1143,201 +1144,50 @@ class polefigure:
         fact = 2.
         nrow = len(self.grid)
 
-        figs = []
-        for i in xrange(nrow):
-            fig=plt.figure(ifig+21+i,figsize=(4,4))
-            fig.clf()
-            figs.append(fig)
+        fig = plt.figure(figsize=(3.3*nrow,3.0))
 
-        fig = plt.figure(ifig+21+i+1,figsize=(3.5*nrow,4))
-        fig.clf()
-        fig_all = fig
-        for i in xrange(nrow):
-            fig_all.add_subplot(1,nrow,i+1,polar=True)
 
         ## loop over each of pole figures
         for ip in xrange(len(self.grid)): #upon each of self.eps_fn
-            # each pole figure set
+            ax = fig.add_subplot(1,nrow,ip+1)
             pf = np.zeros((self.grid[ip].shape[0]+1,
                            self.grid[ip].shape[1]))
             for i in xrange(len(self.grid[ip])):
                 for j in xrange(len(self.grid[ip][i])):
-                    #0, 5, 10 ... 350, 355, 360 : phi
                     pf[i,j] = self.grid[ip][i][j]
                     pf[-1,j] = self.grid[ip][0][j]
 
+            mx = np.array(pf).flatten().max()
+            mn = np.array(pf).flatten().min()
+            if mn==0: mn=0.5
+            if mx>100: mx=99.
+
+            levels = np.logspace(
+                np.log10(mn),np.log10(mx),7)
+            norm = LogNorm()
+
+
             nm = len(pf); nn = len(pf[0]) #phi, khi
             dp = 360. / nm; dk = 90. / nn
-            phi = np.linspace(0., 2.*np.pi, nm)
             khi = np.linspace(np.pi, np.pi/2., nn)
+            phi = np.linspace(0., 2.*np.pi, nm)
+            r   = np.sin(khi)/(1-np.cos(khi))
+            R, PHI = np.meshgrid(r,phi)
+
+            x = R*np.cos(PHI); y = R*np.sin(PHI)
 
             #print self.grid.shape
-            try: max_khi = self.max_khi[ip] # if popLA
-            except:
-                max_khi = 80.
+            # try: max_khi = self.max_khi[ip] # if popLA
+            # except:
+            max_khi = 80.
 
-            ## trimmed out the unmeasured khi rims ---- ##
-            iidk = 0; tiny = 10**-4
-            #print max_khi
-            #print abs(np.rad2deg(khi[::-1] - np.pi))
-            while True:
-                if abs(abs(np.rad2deg(\
-                            khi[::-1][iidk]-np.pi))\
-                           - max_khi) < tiny:
-                    break
-                iidk = iidk + 1
+            r_khi=2-np.sin(max_khi*np.pi/180.)/(1-np.cos(max_khi*np.pi/180.))
+            rx,ry = __circle__(center=[0,0], r=r_khi)
+            ax.plot(rx,ry,'--',color='gray')
+            cnt=ax.contour(x,y,pf,levels=levels,cmap='jet',norm=norm)
+            deco_pf(ax,cnt,[0,0,0])
 
-            if iidk==0: #full khi available
-                khi_r = khi[:]
-            else: khi_r = khi[:-iidk]
-            ## ---------------------------------------- ##
 
-            ## To see if the experimental pole figure is
-            ## a partial one or full. If partial one, then
-            ## it figures out until which khi it was measured.
-            dum = pf.T[::-1]
-            izero = 0
-            for ikhi in xrange(len(dum)):
-                if all(dum[ikhi][i] == 0.\
-                           for i in xrange(len(pf.T[ikhi]))):
-                    izero = izero + 1
-
-            if izero!=0: khi_r = khi[0:-izero]     #reduced khi_r
-            else: khi_r = khi[::]
-
-            r = np.sin(khi)/(1-np.cos(khi))
-            rr = np.sin(khi_r)/(1-np.cos(khi_r)) #reduced rr..
-
-            ##
-            ## prescribed rotation
-            phi = phi + rot * np.pi/180.
-            R,  PHI  = np.meshgrid(r, phi)    #meshing radius and rotation angle
-            RR, PHIR = np.meshgrid(rr,phi)
-            PHI  = PHI  + np.pi/2. # rotation the pole figure up.
-            PHIR = PHIR + np.pi/2. # rotation the pole figure up.
-            phi  = phi  + np.pi/2. # rotation the pole figure up.
-            x = R * np.cos(PHI); y = R*np.sin(PHI) #convert the polar coord
-
-            each_ax = figs[ip].add_subplot(111, polar=True)
-            each_all_ax = fig_all.axes[ip]
-
-            each_ax.set_axis_off()
-            each_all_ax.set_axis_off()
-            ## ------------------------------------- ##
-
-            ########################################
-            ## border line drawing
-            ##
-            # polar
-            r0 = np.ones(100)
-            t0 = np.linspace(0., np.pi*2, 100)
-            each_ax.plot(t0, r0, color='gray', alpha=0.5)
-            each_all_ax.plot(t0, r0, color='gray', alpha=0.5)
-
-            max_khi = (90 - max_khi) + 90
-            max_khi = max_khi * np.pi/180.
-            # _ max khi outline
-            r0 = np.sin(max_khi)/(1-np.cos(max_khi))
-            r0 = np.ones(100) * r0
-            each_ax.plot( t0, r0, 'k')
-            each_all_ax.plot( t0, r0, 'k')
-            ########################################
-
-            # Trim out the unmeasured rims.
-            pfr = pf.T.copy()
-            if iidk==0: pass
-            else: pfr = pfr[0:-iidk]
-
-            cnt_each = each_ax.contourf(
-                phi.copy(), rr.copy(), pfr,
-                linewidth=1.,cmap=plt.cm.cmap_d[cmode])
-            cnt_all_each = each_all_ax.contourf(
-                phi.copy(), rr.copy(), pfr,
-                linewidth=1.,cmap=plt.cm.cmap_d[cmode])
-
-            # pcmr_each = each_ax.pcolormesh(
-            #     phi.copy(), rr.copy(), pfr)
-
-            ## add pole indices or pole figure file name
-            x0, y0 = 0.45, -1.18
-            r0, t0 = cart2polar(x0, y0)
-            print 'print self.epf_mode:', self.epf_mode
-            if self.epf_mode=='epf':
-                #if self.hkl[ip]==None:
-                hkl = raw_input(
-                    "Type the indices delimiter"\
-                        " as a space (e.g. 1 1 1)>>>")
-                hkl = map(int, hkl.split())
-                #else: hkl = self.hkl[ip]
-                # (hkl)
-                index = '('
-                for hk in hkl: index = index+'%i'%hk
-                index = index + ')'
-                each_ax.text(
-                    x=t0, y=r0, s=index, fontsize=8.*fact)
-                each_all_ax.text(
-                    x=t0, y=r0, s=index, fontsize=8.*fact)
-            else:
-                if self.hkl[ip]==None:
-                    hkl = raw_input(
-                        "Type the indices delimiter"+\
-                        " as a space (e.g. 1 1 1)>>>")
-                    hkl = map(int, hkl.split())
-                # (hkl)
-                index = '('
-                for hk in hkl: index = index + '%i'%hkl[hk]
-                index = index + ')'
-                each_ax.text(
-                    x=t0, y=r0, s='%s %s'%(
-                        index, self.epf_fn[ip]),
-                    fontsize=8.*fact)
-                each_all_ax.text(
-                    x=t0, y=r0, s='%s %s'%(
-                        index, self.epf_fn[ip]),
-                    fontsize=8.*fact)
-
-            tcolors = cnt_each.tcolors
-            clev = cnt_each._levels
-
-            for i in xrange(len(tcolors)):
-                cc = tcolors[i][0][0:3]
-                if levels==None or ip==len(pole)-1:
-                    ## Colored marker
-                    x0, y0 = 1.45, 0.8 - i * 0.2
-                    r0, t0 = cart2polar(x0,y0)
-                    r1, t1 = cart2polar(x0-0.07, y0)
-
-                    each_ax.plot(
-                        [t1,t0], [r1,r0],color=cc)
-                    each_all_ax.plot(
-                        [t1,t0], [r1,r0],color=cc)
-
-                    # marker='-', mfc=cc, ms=7.,
-                    # ls='None', mec='None',lc=cc)
-
-                    ## Contour level
-                    x2, y2 = 1.45, 0.8 - i *0.2 - 0.05
-                    r2, t2 = cart2polar(x2, y2)
-                    each_ax.text(
-                        x=t2, y=r2,s='%4.2f'%(clev[i]),
-                        fontsize=4.*fact)
-                    each_all_ax.text(
-                        x=t2, y=r2,s='%4.2f'%(clev[i]),
-                        fontsize=4.*fact)
-
-                ## RD and TD indication
-            x4, y4 = -0.05, 1.05
-            r4, t4 = cart2polar(x4, y4)
-            each_ax.text(x=t4, y=r4, s='1', fontsize = 6.*fact)
-            each_all_ax.text(x=t4, y=r4, s='2', fontsize = 6.*fact)
-            x5, y5 = 1.02, 0.
-            r5, t5 = cart2polar(x5, y5)
-            each_all_ax.text(x=t5, y=r5, s='2', fontsize = 6.*fact)
-
-            # Save individual pole figure
-            figs[ip].savefig('figs_%s.pdf'%str(ip).zfill(2), bbox_inches='tight')
-
-        fig_all.savefig('figs_pfs.pdf',bbox_inches='tight')
         return
 
     def pf_axis(self, pole=[[1,0,0]], ifig=1):
