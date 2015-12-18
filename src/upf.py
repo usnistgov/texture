@@ -166,7 +166,7 @@ cos  = math.cos; sin  = math.sin
 
 # import pp ## parallel
 
-def cub(filename=None,gr=None,ifig=3, pole=[[1,0,0],[1,1,0],[1,1,1]],
+def cub(filename=None,gr=None,ifig=3, poles=[[1,0,0],[1,1,0],[1,1,1]],
         cmode=None):
     """
     arguments
@@ -179,9 +179,9 @@ def cub(filename=None,gr=None,ifig=3, pole=[[1,0,0],[1,1,0],[1,1,1]],
     """
     if filename!=None: mypf = polefigure(filename=filename, csym='cubic')
     elif gr!=None: mypf = polefigure(grains=gr, csym='cubic')
-    mypf.pf(pole=pole,mode='contourf',ifig=ifig,cmode=cmode)
+    mypf.pf_new(poles=poles,cmap=cmode)
 
-def cubgr(gr=None,ifig=3,mode='contourf'):
+def cubgr(gr=None,ifig=3,mode='contourf',poles=[[1,0,0]]):
     """
     Arguments
     =========
@@ -190,7 +190,7 @@ def cubgr(gr=None,ifig=3,mode='contourf'):
     mode
     """
     mypf = polefigure(grains=gr, csym='cubic')
-    mypf.pf(pole=[[1,0,0],[1,1,0],[1,1,1]],mode=mode,ifig=ifig)
+    mypf.pf_new(poles=poles,ncol=1,cmap='jet')
 
 def pfnorm(data):
     """
@@ -400,29 +400,33 @@ def epfformat(mode=None, filename=None):
         ## phi must be 0~355, khi must be 0~90 with 5 as an ang
         resolution
         """
-        print 'You are now reading %s'%filename
+        print 'You are now reading experimental pole figure(s) :%s'%filename
         blocks = open(filename, 'rU').read().split('(')[1:]
         if len(blocks)==0:
-            print 'Consider looking at %s as no paranthesis that'%filename
-            raise IOError, ' embraces hkl was found'
-
+            print ' %s as no paranthesis that embraces hkl was found'%filename
+            blocks = parse_epf(filename)
 
         npf = len(blocks)
+        if npf==0:
+            raise IOError, 'No pf block found.'
         datasets = []
         max_khi = []
-        for i in xrange(len(blocks)):
+        if  npf>1: hkls=[] ## multiple number of pole figures in a file
+        for i in xrange(npf):
             #d = __epffiletrimmer__(blocks[i]) #only for popLA epf format
             ## epffiletrimmer should return a block of intensity grid map
             ## as well as maximum khi.
             ## --> modification (2011 NOV 8)
             hkl = blocks[i][0:3] #hkl
             hkl = map(int, [hkl[0],hkl[1],hkl[2]])
+
+            if npf>1: hkls.append(hkl)
+
             if blocks[i][3]!=')':
                 print 'Caution: unexpected hkl labeling format'
 
             d, mxk = __epffiletrimmer__(blocks[i])
             #only for popLA epf format
-
             datasets.append(d)
             max_khi.append(mxk)
 
@@ -442,7 +446,8 @@ def epfformat(mode=None, filename=None):
         for i in xrange(len(data)):
             data[i] = pfnorm(data[i].copy())
         ## --
-
+        if npf>1: hkl=hkls[::]
+        else: hkl=[hkl]
         return data, max_khi, hkl
     else: raise IOError, 'Unexpected mode is given'
     return data
@@ -958,7 +963,7 @@ class polefigure:
     # decides if the given set is in the texture file form or array
     def __init__(self, grains=None, filename=None, csym=None,
                  ngrain=100, cdim=[1.,1.,1.], cang=[90.,90.,90.],
-                 ssym=False, epf=None):
+                 ssym=False, epf=None,epf_mode=None):
         """
         cdim=[1.,1.,1.6235] ## AZ31
 
@@ -1039,11 +1044,12 @@ class polefigure:
             ## --------------------------------- ##
 
             ## POLE FIGURE MODE --------------------------------------
-            print "Type the experimental polfe figure mode"
-            print "Available options:", #continuation
-            print "bruker, steglich, epf (default: %s)"%'epf'
-            epf_mode = raw_input(" >>>" )
-            if len(epf_mode)==0: epf_mode='epf'
+            if type(epf_mode)==type(None):
+                print "Type the experimental polfe figure mode"
+                print "Available options:", #continuation
+                print "bruker, steglich, epf (default: %s)"%'epf'
+                epf_mode = raw_input(" >>>" )
+                if len(epf_mode)==0: epf_mode='epf'
             ##---------------------------------------------------------
 
             self.grid = []; self.hkl = []
@@ -1060,7 +1066,7 @@ class polefigure:
                     for i in xrange(len(data)):
                         self.grid.append(data[i])
                         self.max_khi.append(maxk[i])
-                        self.hkl.append(hkl)
+                        self.hkl.append(hkl[i])
                     npole_per_file.append(len(data)) # of pole per a file
 
                 else:
@@ -1185,9 +1191,7 @@ class polefigure:
             rx,ry = __circle__(center=[0,0], r=r_khi)
             ax.plot(rx,ry,'--',color='gray')
             cnt=ax.contour(x,y,pf,levels=levels,cmap='jet',norm=norm)
-            deco_pf(ax,cnt,[0,0,0])
-
-
+            deco_pf(ax,cnt,self.hkl[ip])
         return
 
     def pf_axis(self, pole=[[1,0,0]], ifig=1):
@@ -2088,9 +2092,10 @@ class polefigure:
         return f, nodes
 
     def pf_new(
-            self,poles=[[1,0,0],[1,1,0]],ix='1',iy='2',
-            dth=10,dph=10,n_rim=2,cdim=None,ires=True,mn=None,
-            lev_opt=0,lev_norm_log=True,nlev=7,cmap='viridis'):
+            self,ifig=None,poles=[[1,0,0],[1,1,0]],ix='1',iy='2',
+            dth=10,dph=10,n_rim=2,cdim=None,ires=True,mn=None,mx=None,
+            lev_opt=0,lev_norm_log=True,nlev=7,cmap='viridis',
+            ncol=1):
         """
         poles
         ix
@@ -2105,6 +2110,7 @@ class polefigure:
         lev_norm_log=False (If True, use logarithmic scales)
         nlev = 7
         cmap ='viridis'
+        ncol = 1 (1: single graph, 1: 4 graphs)
         """
         nlev = nlev + 1 ##
         from matplotlib.colors import LogNorm
@@ -2166,18 +2172,24 @@ class polefigure:
         PHI    = PHI
         x = R*np.cos(PHI); y = R*np.sin(PHI)
 
-        mx = np.array(N).flatten().max()
+        if type(mx)==type(None): mx = np.array(N).flatten().max()
         if mx>100: mx=99.
-
         if type(mn)==type(None): mn = 0.5
-        fig = plt.figure(figsize=(3.3*len(poles),3.0*4))
-        for i in xrange(len(poles)):
-            ax1 = fig.add_subplot(4,len(poles),i+1)
-            ax2 = fig.add_subplot(4,len(poles),i+1+len(poles))
-            ax3 = fig.add_subplot(4,len(poles),i+1+len(poles)*2)
-            ax4 = fig.add_subplot(4,len(poles),i+1+len(poles)*3)
 
-            if lev_opt==0: mx = N[i].flatten().max()
+        if type(ifig)==type(None):
+            fig = plt.figure(figsize=(3.3*len(poles),3.0*ncol))
+        else:
+            fig = plt.figure(ifig,figsize=(3.3*len(poles),3.0*ncol))
+        for i in xrange(len(poles)):
+            axs=[]
+            for n in xrange(ncol):
+                _ax_ = fig.add_subplot(ncol,len(poles),i+1+ncol*n)
+                axs.append(_ax_)
+
+
+            if lev_opt==0: 
+                mx = N[i].flatten().max()
+
             if lev_norm_log:
                 levels = np.logspace(
                     np.log10(mn),np.log10(mx),nlev)
@@ -2186,12 +2198,14 @@ class polefigure:
                 levels = np.linspace(mn,mx,nlev)
                 norm = None
 
-            cnt1 = ax1.contour(x,y,N[i],levels=levels,cmap=cmap,norm=norm)
-            cnt2 = ax2.contour(x,y,N[i],levels=levels,cmap='rainbow',norm=norm)
-            cnt3 = ax3.contourf(x,y,N[i],levels=levels,cmap=cmap,norm=norm)
-            cnt4 = ax4.contourf(x,y,N[i],levels=levels,cmap='gray_r',norm=norm)
-            cnts=[cnt1,cnt2,cnt3,cnt4]
-            axs=[ax1,ax2,ax3,ax4]
+            if ncol==4:
+                cnt1 = axs[0].contour(x,y,N[i],levels=levels,cmap=cmap,norm=norm)
+                cnt2 = axs[1].contour(x,y,N[i],levels=levels,cmap='rainbow',norm=norm)
+                cnt3 = axs[2].contourf(x,y,N[i],levels=levels,cmap=cmap,norm=norm)
+                cnt4 = axs[3].contourf(x,y,N[i],levels=levels,cmap='gray_r',norm=norm)
+                cnts=[cnt1,cnt2,cnt3,cnt4]
+            elif ncol==1:
+                cnts=[axs[0].contour(x,y,N[i],levels=levels,cmap=cmap,norm=norm)]
 
             for j in xrange(len(x)-1):
                 for k in xrange(len(x[j])):
@@ -2205,11 +2219,9 @@ class polefigure:
                                     alpha=0.17*len(poles),
                                     markersize=2.0)
 
-
-            for j in xrange(4):
+            for j in xrange(ncol):
                 if j in [0,1]: sl=True
                 else: sl=False
-
                 if lev_opt==0:
                     deco_pf(axs[j],cnts[j],miller[i],lev_opt,
                             iskip_last=sl,ix=ix,iy=iy)
@@ -2219,6 +2231,7 @@ class polefigure:
                 elif lev_opt==1 and i!=len(poles)-1:
                     deco_pf(axs[j],cnts[j],miller[i],1,
                             iskip_last=sl,ix=ix,iy=iy)
+        return fig
         #--------------------------------------------------#
 
     def dotplot(self, pole=None, ifig=None, npole=1,
@@ -2598,3 +2611,39 @@ if __name__ == "__main__":
     main(filename=inputfile, csym=csym, pfmode=mode)
     plt.gcf().savefig(outputfile)
     if ishow==True: plt.show()
+
+
+def parse_epf(fn,n_unit=79):
+    """
+    Parse popLA-generated epf files
+    """
+    nline_each_block = n_unit
+    with open(fn,'r') as fo:
+        string = fo.read()
+        lines  = string.split('\n')[:-1]
+        nl = len(lines)
+
+    print '# of lines : %i'%nl
+    print '# of blocks: %i'%(float(nl)/float(n_unit))
+
+    nb = int(float(nl)/float(n_unit))
+
+    blocks = []
+    for i in xrange(nb):
+        i0 = n_unit * i+1
+        i1 = n_unit * (i+1)
+
+        l = lines[i0:i1]
+
+        l[0]=l[0][1:]
+        # print '*'*10
+        # print l[0]
+        # print l[-1]
+
+        b = ''
+        # print 'number of lines:', len(l)
+        for j in xrange(len(l)):
+            b = '%s%s\n'%(b,l[j])
+        blocks.append(b)
+
+    return blocks
