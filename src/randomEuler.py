@@ -357,7 +357,7 @@ def sampling(odf=None, p1=360., p2=90., *args):
     else: pass
     pass
 ## print document of def sampling, for it is frequnetly used.
-print sampling.__doc__
+# print sampling.__doc__
 
 ## Finds a relavant incremental angle for a given ngrain
 ## using an optimization scheme.

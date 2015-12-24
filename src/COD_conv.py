@@ -10,7 +10,7 @@ Convert Sectioned OD to LABOTEXT format
 
 print __doc__
 
-def reader(fn=None):
+def reader(fn=None,nomen='b'):
     """
     Reads a file consisting of sections of 'phi2=constant'
     and return total section blocks and maximum phi2
@@ -28,14 +28,20 @@ def reader(fn=None):
             blocks.append(temp)
             temp = []
 
-    maxphi2 = float(blocks[-2][1].split('phi2=')[1])
-    dum = float(blocks[-3][1].split('phi2=')[1])
-    dphi2 = maxphi2 - dum
+    ## Hardwired.
+    maxphi2=90.
+    dphi2=5.
+
+    if nomen=='b':
+        pass
+    elif nomen=='k':
+        pass
+
     print 'maximum phi2', maxphi2
     print 'phi2 increment:', dphi2
     return blocks, maxphi2
 
-def readblock(block):
+def readblock(block,nomen='b'):
     """
     Read a block and returns
     1) section's intensity mesh
@@ -52,8 +58,8 @@ def readblock(block):
     phimx   = float(block[1][10:15])
     dphi1   = float(block[1][15:20])
     phi1mx  = float(block[1][20:25])
-    print 'dphi, phimx, dphi1, phi1mx',
-    print dphi, phimx, dphi1, phi1mx
+    # print 'dphi, phimx, dphi1, phi1mx',
+    # print dphi, phimx, dphi1, phi1mx
 
     if phi1mx==180: pass
     elif phi1mx==90: pass
@@ -82,7 +88,10 @@ def readblock(block):
     #     dum = block[i].split()
     #     section[i] = map(float, dum)
 
-    section = section.T # (phi, phi1) -> (phi1, phi)
+    if nomen=='b':
+        section = section.T # (phi, phi1) -> (phi1, phi)
+    elif nomen=='k':
+        seciton ## (Theta, PSI)
     return section, phimx, phi1mx
 
 def __cod2labo__(fn=None):
@@ -90,10 +99,12 @@ def __cod2labo__(fn=None):
     Argument
     =========
     fn = None
+    nomen='b'
     """
     import numpy as np
-    blocks, phi2mx = reader(fn=fn)
 
+
+    blocks, phi2mx = reader(fn=fn)
     sct, phimx, phi1mx = readblock(blocks[0])
 
     nphi2 = len(blocks)-1
@@ -111,7 +122,8 @@ def __cod2labo__(fn=None):
 
     return cod, phi1mx, phimx, phi2mx
 
-def main(fn=None, odfn='labo.txt',fnout='dum', rot=0):
+def main(fn=None, odfn='labo.txt',fnout='dum', rot=0,
+         nomen='b'):
     """
     Writes COD to Labotex convention file
 
@@ -143,11 +155,14 @@ def main(fn=None, odfn='labo.txt',fnout='dum', rot=0):
 
     f.write('phi1   phi2  phi  COD\n')
     for i in range(len(cod)): # phi
-        p = phi[i]
+        if nomen=='b': p = phi[i]
+        if nomen=='k': p = phi[i]-90.
         for j in range(len(cod[i])): #phi2
-            p2 = phi2[j]
+            if nomen=='b': p2 = phi2[j]
+            if nomen=='k': p2 = -phi2[j]
             for k in range(len(cod[i][j])): #phi1
-                p1 = phi1[k]
+                if nomen=='b': p1 = phi1[k]
+                if nomen=='k': p1 = -phi1[k]-90
                 f.write('%4.1f  %4.1f  %4.1f  %6.3f \n'%(
                         p1, p2, p, cod[i][j][k]))
 
@@ -156,7 +171,7 @@ def main(fn=None, odfn='labo.txt',fnout='dum', rot=0):
     ## write into weighted discrete grains files
     odf2dg(odfn=odfn, mmm=mmm, rot=rot, fnout=fnout)
 
-def odf2dg(odfn=None, mmm=False, rot=0, fnout=None):
+def odf2dg(odfn=None, mmm=False, rot=0, fnout=None,ng=None):
     """
     write into weighted discrete grain files
 
@@ -167,23 +182,23 @@ def odf2dg(odfn=None, mmm=False, rot=0, fnout=None):
     rot  = 0
     """
     import os
+    import matplotlib.pyplot as plt
     import numpy as np
     os.sys.path.append('/Users/yj/Dropbox/devel/EVPSC_f2py/pyscripts')
     os.sys.path.append('/Users/yj/Dropbox/devel/EVPSC_f2py/pyscripts/pf')
 
     import cmb, upf
-    ng = [12, 40,100,400,200, 500, 1000, 2000, 4000, 8000, 10000, 20000]
-    if mmm: ng = np.array(ng) / 4
+    if type(ng)!=type(None):
+        ng = [20000]
 
+    if mmm: ng = np.array(ng) / 4
     for igr in range(len(ng)):
         cmb.main(odf=odfn, ngrain=ng[igr], outputfile='dum.tex', iplot=False)
         # sample symmetry recovery when mmm has been applied (reduced 90x90x90)
-        if mmm:
-            grains = sample_mmm(fn='dum.tex')
-        else:
-            grains = np.loadtxt('dum.tex', skiprows=4)
-        os.remove('dum.tex')
+        if mmm: grains = sample_mmm(fn='dum.tex')
+        else: grains = np.loadtxt('dum.tex', skiprows=4)
 
+        os.remove('dum.tex')
         grains = inplanerot(rot=rot,grains=grains)
 
         fout = open('%s_%i.cmb'%(fnout, len(grains)), 'w')
@@ -192,7 +207,8 @@ def odf2dg(odfn=None, mmm=False, rot=0, fnout=None):
         for i in range(len(grains)):
             fout.writelines('%.5f %.5f %.5f  %.7e\n'%(
                 grains[i][0],grains[i][1],grains[i][2],grains[i][3]))
-        upf.cubgr(gr=grains,ifig=igr)
+        upf.cubgr(gr=grains,ifig=igr,poles=[[1,1,0],[2,0,0],[2,1,1]])
+        plt.gcf().savefig('pf_%i.pdf'%ng[igr])
 
 def sample_mmm(fn=None):
     """
