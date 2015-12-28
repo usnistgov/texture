@@ -132,9 +132,19 @@ from euler import euler # in euler module def euler:
 import time
 import random
 
-from MP import progress_bar
-t2s = progress_bar.convert_sec_to_string
-uet = progress_bar.update_elapsed_time
+
+try:
+    import MP
+except:
+    print '-'*50
+    print 'MP was not installed'
+    print 'You may clone it and install via:'
+    print 'git@github.com:youngung/mpl-lib.git'
+    print '-'*50
+else:
+    from MP import progress_bar
+    t2s = progress_bar.convert_sec_to_string
+    uet = progress_bar.update_elapsed_time
 
 
 ## Fortran modules

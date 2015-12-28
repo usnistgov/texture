@@ -82,4 +82,4 @@ if __name__=='__main__':
 
     main(fn=fn,csym=csym,
          poles=[[1,0,0],[1,1,0],[1,1,1]],
-         mn=mn,mx=mx,nlev=5):
+         mn=mn,mx=mx,nlev=5)
