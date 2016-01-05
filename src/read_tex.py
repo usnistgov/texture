@@ -47,11 +47,13 @@ def main(fn='TEX_PH1.OUT',csym='cubic',
     Save pole figures to a series of files <pf_%i.pdf>
     """
     blocks = read(fn)
+    figs=[]
     for i in xrange(len(blocks)):
         gr=block2gr(blocks[i])
         mypf=upf.polefigure(grains=gr,csym=csym)
         fig=mypf.pf_new(ifig=None,poles=poles,mn=None,mx=None,nlev=nlev)
-        fig.savefig('pf_%i.pdf'%(i+1),bbox_inches='tight')
+        figs.append(fig)
+    return figs
 
 if __name__=='__main__':
     import argparse    
