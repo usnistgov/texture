@@ -14,3 +14,8 @@ A collection of python modules related with texture.
    A tool to generate discrete orientation files from a discretly sampled COD in the Euler space.
 5. cod_section.py
    A tool to visualize cod sections from directe orientation files
+
+
+## Publications
+- Forming limit prediction using a self-consistent crystal plasticity framework: a case study for BCC fiber textures, Y. Jeong, M.-S. Pham, M. Iadicola, A. Creuziger, T. Foecke, Modelling and Simulation in Materials Science and Engineering (Accepted for publication)
+- Texture-based forming limit prediction for Mg sheet alloys ZE10 and AZ31, Dirk Steglich, Youngung Jeong (Under peer-review in International Journal of Mechanical Sciences)
