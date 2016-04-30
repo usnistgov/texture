@@ -1,8 +1,18 @@
+"""
+Sampling a set of discrete orientations that represent the
+crystallographic texture given as the crystallographic
+orientation distribution.
+
+
+Youngung Jeong
+youngung.jeong@gmail.com
+"""
+
 ###
 ## Representative volume element maker
 ###
 
-print """
+"""
 cmb module calculates represetnative volume element, also
 known as the population of discrete grains.
 
@@ -619,6 +629,9 @@ def random_gen(ngrain=100,mmm=False,phi1=360,phi2=360,phi=360):
     =========
     ngrain = 100
     mmm = False
+    phi1
+    phi2
+    phi
     """
     import upf
     # if mmm:
