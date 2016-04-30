@@ -31,9 +31,9 @@ def block2gr(block):
         grs[i,:]=map(float,l[i].split())
     return grs
 
-def main(fn='TEX_PH1.OUT',csym='cubic',
-         poles=[[1,0,0],[1,1,0],[1,1,1]],
-         mn=None,mx=None,nlev=5):
+def main(fn='TEX_PH1.OUT',csym='cubic',**kwargs):
+         # poles=[[1,0,0],[1,1,0],[1,1,1]],
+         # mn=None,mx=None,nlev=5):
     """
     Arguments
     =========
@@ -51,7 +51,11 @@ def main(fn='TEX_PH1.OUT',csym='cubic',
     for i in xrange(len(blocks)):
         gr=block2gr(blocks[i])
         mypf=upf.polefigure(grains=gr,csym=csym)
-        fig=mypf.pf_new(ifig=None,poles=poles,mn=None,mx=None,nlev=nlev)
+        fig=mypf.pf_new(**kwargs)
+            # ifig=None,poles=poles,
+            #             dth=15,dph=15,
+            #             mn=None,mx=None,
+            #             nlev=nlev)
         figs.append(fig)
     return figs
 

@@ -2105,7 +2105,7 @@ class polefigure:
             self,ifig=None,poles=[[1,0,0],[1,1,0]],ix='1',iy='2',
             dth=10,dph=10,n_rim=2,cdim=None,ires=True,mn=None,mx=None,
             lev_opt=0,lev_norm_log=True,nlev=7,cmap='viridis',
-            ncol=1):
+            ncol=1,rot=0.):
         """
         poles
         ix
@@ -2179,8 +2179,8 @@ class polefigure:
         phi    = np.linspace(0., 2.*pi, nm+1)
         r      = np.sin(theta)/(1-np.cos(theta))
         R, PHI = np.meshgrid(r,phi)
-        PHI    = PHI
-        x = R*np.cos(PHI); y = R*np.sin(PHI)
+        PHI    = PHI + rot ## default: rot=0.
+        x      = R*np.cos(PHI); y = R*np.sin(PHI)
 
         if type(mx)==type(None): mx = np.array(N).flatten().max()
         if mx>100: mx=99.
@@ -2197,7 +2197,7 @@ class polefigure:
                 axs.append(_ax_)
 
 
-            if lev_opt==0: 
+            if lev_opt==0:
                 mx = N[i].flatten().max()
 
             if lev_norm_log:

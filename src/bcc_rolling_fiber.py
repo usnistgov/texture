@@ -98,10 +98,16 @@ def main(ngrains=100,sigma=5.,iopt=1,ifig=1,fiber='gamma',
         f.writelines('%+7.3f %+7.3f %+7.3f %+13.4e\n'%(
             gr[i][0], gr[i][1], gr[i][2], 1./len(gr)))
 
-    upf.cubgr(gr=gr,ifig=2*ifig,mode='contourf')
-    plt.figure(2*ifig).savefig('%s_contf.pdf'%(fn.split('.cmb')[0]))
-    upf.cubgr(gr=gr,ifig=2*ifig+1,mode='dot')
-    plt.figure(2*ifig+1).savefig('%s_dot.png'%(fn.split('.cmb')[0]))
+    # upf.cubgr(gr=gr,ifig=2*ifig,mode='contourf',ix='RD',iy='TD')
+    mypf1 = upf.polefigure(grains=gr,csym='cubic')
+    mypf1.pf_new(poles=[[1,0,0],[1,1,0],[1,1,1]],ix='RD',iy='TD')
+    fig=plt.gcf()
+    fig.tight_layout()
+    fig.savefig(
+        '%s_contf.pdf'%(fn.split('.cmb')[0]),
+        bbox_inches='tight')
+    fig.clf()
+    plt.close(fig)
 
     return np.array(gr)
 
