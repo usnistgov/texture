@@ -189,7 +189,8 @@ def cub(filename=None,gr=None,ifig=3, poles=[[1,0,0],[1,1,0],[1,1,1]],
     """
     if filename!=None: mypf = polefigure(filename=filename, csym='cubic')
     elif gr!=None: mypf = polefigure(grains=gr, csym='cubic')
-    mypf.pf_new(poles=poles,cmap=cmode)
+    fig=mypf.pf_new(poles=poles,cmap=cmode)
+    return fig
 
 def cubgr(gr=None,ifig=3,mode='contourf',poles=[[1,0,0]]):
     """
@@ -200,7 +201,8 @@ def cubgr(gr=None,ifig=3,mode='contourf',poles=[[1,0,0]]):
     mode
     """
     mypf = polefigure(grains=gr, csym='cubic')
-    mypf.pf_new(poles=poles,ncol=1,cmap='jet')
+    fig=mypf.pf_new(poles=poles,ncol=1,cmap='jet')
+    return fig
 
 def pfnorm(data):
     """
@@ -1097,15 +1099,15 @@ class polefigure:
             dat = self.gr.transpose()
             phi1 = dat[0]; phi = dat[1]; phi2 = dat[2]
 
-            print 'phi1: %i ~ %i'%(
-                int(round(min(dat[0]/90.)))*90, int(
-                    round(max(dat[0]/90.)))*90)
-            print 'phi:  %i ~ %i'%(
-                int(round(min(dat[1]/90.)))*90, int(
-                    round(max(dat[1]/90.)))*90)
-            print 'phi2: %i ~ %i'%(
-                int(round(min(dat[2]/90.)))*90, int(
-                    round(max(dat[2]/90.)))*90)
+            # print 'phi1: %i ~ %i'%(
+            #     int(round(min(dat[0]/90.)))*90, int(
+            #         round(max(dat[0]/90.)))*90)
+            # print 'phi:  %i ~ %i'%(
+            #     int(round(min(dat[1]/90.)))*90, int(
+            #         round(max(dat[1]/90.)))*90)
+            # print 'phi2: %i ~ %i'%(
+            #     int(round(min(dat[2]/90.)))*90, int(
+            #         round(max(dat[2]/90.)))*90)
             ph1min, ph1max= int(
                 round(min(dat[0]/90.)))*90, int(
                 round(max(dat[0]/90.)))*90
@@ -2165,7 +2167,7 @@ class polefigure:
                     n_rim = n_rim))
 
         et = time.time()-t0
-        uet(et,head='Elapsed time for calling cells_pf')
+        # uet(et,head='Elapsed time for calling cells_pf')
         print
 
         x_node = np.arange(-180.,180.+tiny,dth)

@@ -410,6 +410,19 @@ class RVE:
                 (self.rve[i][0], self.rve[i][1], self.rve[i][2],\
                      self.rve[i][3]))
         FILE.close()
+    def write(self,grs,fn):
+        import time
+        ngrain = len(grs)
+        with open(fn, 'w') as FILE:
+            FILE.writelines('%s\n%s\n%s\n %s %i\n'%(
+                time.asctime(),'Current texture file was made by cmb.py',
+                'contact: youngung.jeong@gmail.com',
+                'B', ngrain))
+            for i in range(len(grs)):
+                FILE.writelines(
+                    '%13.7f %13.7f %13.7f   %13.7e \n'%
+                    (grs[i][0], grs[i][1], grs[i][2],\
+                     grs[i][3]))
 
     def plot(self,csym='cubic'):
         import upf,time
