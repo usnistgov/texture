@@ -2,7 +2,7 @@ TEXTURE
 -------
 A collection of python modules to analyze/plot crystallographic texture information. Below is the list of main modules included in this package, which can be very useful for those who study crystallographic texture / crystal plasticity and to plot the crystallographic data and to generate ideal textures on the basis of python/fortran codes.
 
-1.  upf.py
+1. upf.py
   This module allows to plot pole figures in any crystallographic structure from a discrete set of orientations. Look at the examples in ./ipynb/ folder. One can plot *pretty* pole figure plots and have a lot of options.
 2. bcc_rolling_fiber.py
    This module generates a set of 'ideal' fiber textures including 'gamma','alpha','eta','epsilon' and 'sigma'. This module was used to create the set of BCC fibers studied in the paper entiled "Forming limit prediction using a self-consistent crystal plasticity framework: a case study for BCC fiber textures" submitted to Modelling and Simulations in Materials Science and Engineering.

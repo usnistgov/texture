@@ -27,7 +27,6 @@ import math
 rand = np.random.rand
 randi = np.random.random_integers
 
-
 def steglich_format(filename=None):
     """
     2011-Sept-21
@@ -276,17 +275,76 @@ class RVE:
        odf : Orientation Distribution File (Labotex format)
        cmbfile : output file of the created RVE
        ssym : None (0, 1) sample symmetry
+       fmt = 'labo' : labotex Discrete ODF
+             'mtex' : mtex discrete ODF
     """
     def __init__(self, ngrain=100, odf=None, cmbfile='temp.cmb',
-                 ssym=None):
+                 ssym=None, fmt='labo'):
+        """
+        Arguments
+        ---------
+        """
         ## globally shared info ----------------------------- ##
-        self.cod = np.loadtxt(odf,skiprows=1)
-        self.codt = self.cod.transpose()
-        self.resolution = self.codt[0][1] - self.codt[0][0]
-        self.inc = self.resolution
-        self.p1max = max(self.codt[0])  #phi1
-        self.p2max = max(self.codt[1])  #phi2
-        self.p3max = max(self.codt[2])  #phi
+        if fmt=='labo':
+            self.cod = np.loadtxt(odf,skiprows=1)
+            self.codt = self.cod.T
+            self.resolution = self.codt[0][1] - self.codt[0][0]
+            self.inc = self.resolution
+            self.p1max = max(self.codt[0])  #phi1
+            self.p2max = max(self.codt[1])  #phi2
+            self.p3max = max(self.codt[2])  #phi
+        elif fmt=='mtex':
+            nhead = 4
+            F     = np.loadtxt(odf,skiprows=nhead)
+            Ft    = F.T
+            p1mx  = Ft[0,-1]#max(Ft[0]) # phi1
+            pmx   = Ft[1,-1]#max(Ft[1]) # PHI
+            p2mx  = Ft[2,-1]#max(Ft[2]) # phi2
+
+            if p1mx==355 and pmx==90 and p2mx==85:
+                self.p1max=360.
+                self.p2max=90.
+                self.p3max=90.
+                self.resolution = 5.
+                self.inc=self.resolution
+            else:
+                print 'phi1:',p1mx
+                print 'PHI :',pmx
+                print 'phi2:',p2mx
+                raise IOError, 'unexpected format'+\
+                    ' in the given mtex odf file'
+
+            res   = 5
+            nphi1 = 360 / res + 1
+            nphi  =  90 / res + 1
+            nphi2 =  90 / res + 1
+            cod_  = np.zeros((nphi1,nphi,nphi2))
+
+            n=0
+            for i in xrange(nphi2-1):
+                for j in xrange(nphi):
+                    for k in xrange(nphi1-1):
+                        cod_[k,j,i] = F[n][3]
+                        n=n+1
+
+            cod_[-1,:,:] = cod_[0,:,:]
+            cod_[:,:,-1] = cod_[:,:,0]
+
+            ## swap 2nd and 3rd axes to comply with labo format
+            cod_ = cod_.swapaxes(1,2) ## [phi1,phi2,phi]
+            self.cod = np.zeros((nphi1*nphi*nphi2,4))
+            n = 0
+            for i in xrange(nphi):
+                for j in xrange(nphi2):
+                    for k in xrange(nphi1):
+                        self.cod[n,:3] = k*5.,j*5,i*5
+                        self.cod[n,3]  = cod_[k,j,i]
+                        n=n+1
+            self.codt = self.cod.T
+        else:
+            raise IOError, 'Unexpected file format requested'
+
+
         self.ngrain = ngrain
         ## -------------------------------------------------- ##
 
@@ -353,6 +411,11 @@ class RVE:
                      self.rve[i][3]))
         FILE.close()
 
+    def plot(self,csym='cubic'):
+        import upf,time
+        mypf = upf.polefigure(grains =  self.rve, csym=csym)
+        mypf.pf_new(poles=[[1,0,0],[1,1,0],[1,1,1]])
+        plt.show()
 
     def reflect(self,th):
         import math
