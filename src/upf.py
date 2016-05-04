@@ -176,8 +176,7 @@ cos  = math.cos; sin  = math.sin
 
 # import pp ## parallel
 
-def cub(filename=None,gr=None,ifig=3, poles=[[1,0,0],[1,1,0],[1,1,1]],
-        cmode=None):
+def cub(filename=None,gr=None,ifig=3,**kwargs):
     """
     arguments
     =========
@@ -189,20 +188,20 @@ def cub(filename=None,gr=None,ifig=3, poles=[[1,0,0],[1,1,0],[1,1,1]],
     """
     if filename!=None: mypf = polefigure(filename=filename, csym='cubic')
     elif gr!=None: mypf = polefigure(grains=gr, csym='cubic')
-    fig=mypf.pf_new(poles=poles,cmap=cmode)
+    fig=mypf.pf_new(**kwargs)
     return fig
 
-def cubgr(gr=None,ifig=3,mode='contourf',poles=[[1,0,0]]):
-    """
-    Arguments
-    =========
-    gr
-    ifig
-    mode
-    """
-    mypf = polefigure(grains=gr, csym='cubic')
-    fig=mypf.pf_new(poles=poles,ncol=1,cmap='jet')
-    return fig
+# def cubgr(gr=None,ifig=3,mode='contourf',poles=[[1,0,0]]):
+#     """
+#     Arguments
+#     =========
+#     gr
+#     ifig
+#     mode
+#     """
+#     mypf = polefigure(grains=gr, csym='cubic')
+#     fig = mypf.pf_new(poles=poles,ncol=1,cmap='jet')
+#     return fig
 
 def pfnorm(data):
     """

@@ -410,6 +410,26 @@ class RVE:
                 (self.rve[i][0], self.rve[i][1], self.rve[i][2],\
                      self.rve[i][3]))
         FILE.close()
+
+    def rot(self,r):
+        """
+        Given rotation matrix that transform the sample axes to another sample axes,
+        apply to the all constituent grains in the aggregate.
+
+        Argument
+        --------
+        r
+        """
+        from euler import euler
+        for i in xrange(len(self.rve)):
+            a1,a2,a3 = self.rve[i][:3]
+            rot = euler(a1,a2,a3,echo=False) ## CA<-SA(old)
+            rt = rot.T        ## SA<-CA
+            rt = np.dot(r,rt) ## SA`<-SA<-CA
+            rot = rt.T         ## CA<-SA`
+            a1,a2,a3 = euler(a=rot,echo=False)
+            self.rve[i][:3]=a1,a2,a3
+
     def write(self,grs,fn):
         import time
         ngrain = len(grs)
@@ -424,10 +444,10 @@ class RVE:
                     (grs[i][0], grs[i][1], grs[i][2],\
                      grs[i][3]))
 
-    def plot(self,csym='cubic'):
+    def plot(self,csym='cubic',**kwargs):
         import upf,time
         mypf = upf.polefigure(grains =  self.rve, csym=csym)
-        mypf.pf_new(poles=[[1,0,0],[1,1,0],[1,1,1]])
+        mypf.pf_new(**kwargs)
         plt.show()
 
     def reflect(self,th):
