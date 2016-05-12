@@ -61,7 +61,7 @@ def rolling(fibers=['gamma','alpha','eta','epsilon','sigma'],
 def main(ngrains=100,sigma=5.,iopt=1,ifig=1,fiber='gamma',
          iexit=False):
     """
-    arguments
+    Arguments
     =========
     ngrains = 100
     sigma   = 5.
@@ -106,9 +106,11 @@ def main(ngrains=100,sigma=5.,iopt=1,ifig=1,fiber='gamma',
     fig.savefig(
         '%s_contf.pdf'%(fn.split('.cmb')[0]),
         bbox_inches='tight')
+    fig.savefig(
+        '%s_contf.png'%(fn.split('.cmb')[0]),
+        bbox_inches='tight')
     fig.clf()
     plt.close(fig)
-
     return np.array(gr)
 
 def gen_gr_fiber(th,sigma,iopt,fiber='gamma'):

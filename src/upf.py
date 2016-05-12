@@ -191,17 +191,17 @@ def cub(filename=None,gr=None,ifig=3,**kwargs):
     fig=mypf.pf_new(**kwargs)
     return fig
 
-# def cubgr(gr=None,ifig=3,mode='contourf',poles=[[1,0,0]]):
-#     """
-#     Arguments
-#     =========
-#     gr
-#     ifig
-#     mode
-#     """
-#     mypf = polefigure(grains=gr, csym='cubic')
-#     fig = mypf.pf_new(poles=poles,ncol=1,cmap='jet')
-#     return fig
+def cubgr(gr=None,ifig=3,poles=[[1,0,0],[1,1,0],[1,1,1]]):
+    """
+    Arguments
+    =========
+    gr
+    ifig
+    poles
+    """
+    mypf = polefigure(grains=gr, csym='cubic')
+    fig = mypf.pf_new(poles=poles,ncol=1,cmap='jet')
+    return fig
 
 def pfnorm(data):
     """
