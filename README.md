@@ -13,9 +13,22 @@ A collection of python modules to analyze/plot crystallographic texture informat
 5. cod_section.py
    A tool to visualize cod sections from directe orientation files
 
+
+## Features
+-----------
+Plot beautiful pole figures from a population of discrete orientations (such as the inputs to VPSC) using matplotlib
+![image of AZ31]
+(https://github.com/usnistgov/texture/blob/dev/images/Mg_texture.png)
+
+
+
+
 # Used in the following publications
 - Forming limit prediction using a self-consistent crystal plasticity framework: a case study for BCC fiber textures, Y. Jeong, M.-S. Pham, M. Iadicola, A. Creuziger, T. Foecke, Modelling and Simulation in Materials Science and Engineering 24 (5), 055002 (21 pp)
 - Texture-based forming limit prediction for Mg sheet alloys ZE10 and AZ31, Dirk Steglich, Youngung Jeong (Under peer-review in International Journal of Mechanical Sciences)
+
+
+
 
 
 # Contact info
