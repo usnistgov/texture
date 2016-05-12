@@ -18,11 +18,11 @@ A collection of python modules to analyze/plot crystallographic texture informat
 -----------
 Plot beautiful pole figures from a population of discrete orientations (such as the texture input to VPSC code) using open source matplotlib
 ![image of AZ31]
-(https://github.com/usnistgov/texture/blob/dev/images/Mg_texture.png)
+(https://github.com/youngung/texture/blob/dev/images/Mg_texture.png)
 
 Generate model textures typically found in rolled sheets
 ![image of gamma fiber]
-(https://github.com/usnistgov/texture/blob/dev/images/gamma_fib_ngr08000_sigma015_contf.png)
+(https://github.com/youngung/texture/blob/dev/images/gamma_fib_ngr08000_sigma015_contf.png)
 For example, a gamma fiber typically found in various mild steel sheets.
 
 
