@@ -22,8 +22,9 @@ Plot beautiful pole figures from a population of discrete orientations (such as 
 
 Generate model textures typically found in rolled sheets
 ![image]
-For example, a gamma fiber typically found in various mild steel sheets.
 (https://github.com/usnistgov/texture/blob/dev/images/gamma_fib_ngr24000_sigma015_contf.pdf)
+For example, a gamma fiber typically found in various mild steel sheets.
+
 
 
 # Used in the following publications
