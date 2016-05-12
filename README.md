@@ -13,8 +13,8 @@ A collection of python modules to analyze/plot crystallographic texture informat
 5. cod_section.py
    A tool to visualize cod sections from directe orientation files
 
-# Publications
-- Forming limit prediction using a self-consistent crystal plasticity framework: a case study for BCC fiber textures, Y. Jeong, M.-S. Pham, M. Iadicola, A. Creuziger, T. Foecke, Modelling and Simulation in Materials Science and Engineering (Accepted for publication)
+# Used in the following publications
+- Forming limit prediction using a self-consistent crystal plasticity framework: a case study for BCC fiber textures, Y. Jeong, M.-S. Pham, M. Iadicola, A. Creuziger, T. Foecke, Modelling and Simulation in Materials Science and Engineering 24 (5), 055002 (21 pp)
 - Texture-based forming limit prediction for Mg sheet alloys ZE10 and AZ31, Dirk Steglich, Youngung Jeong (Under peer-review in International Journal of Mechanical Sciences)
 
 
