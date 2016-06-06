@@ -2136,7 +2136,7 @@ class polefigure:
             self,ifig=None,poles=[[1,0,0],[1,1,0]],ix='1',iy='2',
             dth=10,dph=10,n_rim=2,cdim=None,ires=True,mn=None,mx=None,
             lev_opt=0,lev_norm_log=True,nlev=7,cmap='viridis',
-            ncol=1,rot=0.):
+            ncol=1,rot=0.,iline_khi80=False):
         """
         poles
         ix
@@ -2153,6 +2153,7 @@ class polefigure:
         nlev = 7
         cmap ='viridis'
         ncol = 1 (1: single graph, 1: 4 graphs)
+        iline_khi80 = False
         """
         ##################################################
         ## PF plots for experimental pole figure is
@@ -2161,7 +2162,7 @@ class polefigure:
             return self.epfplot(ifig=ifig,
                                 cmap=cmap,
                                 nlev=nlev, mn=mn, mx=mx,
-                                rot=rot,iline_khi80=False)
+                                rot=rot,iline_khi80=iline_khi80)
 
         ##################################################
 
@@ -2261,6 +2262,8 @@ class polefigure:
                 cnts=[axs[0].contour(x,y,N[i],levels=levels,cmap=cmap,norm=norm)]
 
             xs=[];ys=[]
+
+
             for j in xrange(len(x)-1):
                 for k in xrange(len(x[j])):
                     if N[i][j,k]<levels[0]:

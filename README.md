@@ -36,6 +36,11 @@ Plot beautiful pole figures from a population of discrete orientations (such as 
 (https://github.com/youngung/texture/blob/dev/images/Mg_texture.png)
 
 
+Experimental pole figures are also drawn: example below is for the EPF format (a.k.a the popLA format).
+![image of FSS]
+(https://github.com/youngung/texture/blob/dev/images/fss.png)
+
+
 Through this software one can generate model textures typically found in rolled sheets.
 For example, a gamma fiber typically found in various mild steel sheets.
 
