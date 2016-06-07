@@ -55,6 +55,12 @@ For example, a gamma fiber typically found in various mild steel sheets.
 - Texture-based forming limit prediction for Mg sheet alloys ZE10 and AZ31, Dirk Steglich, Youngung Jeong (Under peer-review in International Journal of Mechanical Sciences)
 
 
+# License
+This software was written by Youngung Jeong and it started in 2011 while he was a student at POSTECH, South Korea.
+TEXTURE is a collection of personal libraries used to study crystallographic texture.
+You are permitted to redistribute the source code (and binaries).
+This software is distributed in the hope that it will be useful but without any warranty.
+
 
 # Contact information
 Youngung Jeong
