@@ -148,11 +148,18 @@ else:
 
 
 ## Fortran modules
-import for_lib
-agr2pol_f = for_lib.agr2pol
-proj_f    = for_lib.projection
-euler_f   = for_lib.euler
-gr2psa    = for_lib.grain2pole_sa
+# import for_lib
+# agr2pol_f = for_lib.agr2pol
+# proj_f    = for_lib.projection
+# euler_f   = for_lib.euler
+# gr2psa    = for_lib.grain2pole_sa
+
+import pf_for_lib
+agr2pol_f = pf_for_lib.agr2pol
+proj_f    = pf_for_lib.projection
+euler_f   = pf_for_lib.euler
+gr2psa    = pf_for_lib.grain2pole_sa
+
 
 ## Cython modules
 # import proj
