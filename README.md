@@ -1,12 +1,10 @@
 TEXTURE
 -------
-A collection of python modules to analyze/plot crystallographic texture information.
-Below is the list of main modules included in this package, which can be very useful
+A collection of python modules to analyze/plot crystallographic texture.
+Below is the list of main modules included in this package, which can be useful
 for those who study crystallographic texture / crystal plasticity and those who
-need to repeatedly plot/visualize the crystallographic data.
+need to *repeatedly* plot/visualize the crystallographic data.
 Also a few modules can be used to generate ideal model textures.
-Source codes are written mostly in Python and a few modules are written in Fortran and wrapped by f2py.
-
 
 1. upf.py
    This module can plot pole figures in any crystallographic structure from a discrete set of orientations.
@@ -36,7 +34,7 @@ Plot beautiful pole figures from a population of discrete orientations (such as 
 (https://github.com/youngung/texture/blob/dev/images/Mg_texture.png)
 
 
-Experimental pole figures can be also drawn using the exactly the same template.
+Experimental pole figures can be also drawn using exactly the same template.
 The below example shows the case for the EPF format (a.k.a. the popLA format).
 
 
@@ -55,28 +53,27 @@ For example, a gamma fiber typically found in various mild steel sheets can be e
 ## Installation
 ---------------
 Following installation guide has been checked for Mac and Linux machines.
-For Windows, I have not thoroughly checked but the same method should be applicable...
+For Windows, I have not thoroughly checked but the same method should be applicable.
 
 What you first need is Python and scientific python packages including NumPy, SciPy, Matplotlib.
-I recommend the use of Anaconda, which will install all of these easily.
+I recommend the use of Anaconda, which will install all of these packages easily.
 You'll need a fortran compiler as well - I use gfortran.
 
 You can simply clone this repository to your local filesystem.
-Then I simply use 'set.sh' to install.
-But one can also do followings
+I usually use 'set.sh' to install. But one can also do followings
 
 ```
 python setup.build
 python setup.py install --user
 ```
 
-After a successful installation, consider testing pole-figure plotting feature as below.
-In the prompt, enter ipython interpreter.
+After a successful installation, consider testing pole-figure plotting feature.
+In the prompt, enter IPython interpreter.
 ```
 ipython --pylab
 ```
 
-In Python, follow below snippet to draw (100), (110) and (111) pole figures of random texture consisting of 1000 random grains.
+In IPython, you can test if you can draw (100), (110) and (111) pole figures of a texture consisting of 1000 random grains as below.
 ```
 from TX import upf
 mypolefigure = upf.polefigure(csym='cubic')
