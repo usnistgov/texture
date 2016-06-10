@@ -1024,16 +1024,11 @@ class polefigure:
         if type(grains)==type(None) and type(filename)==type(None)\
            and type(epf)==type(None):
             print " ****************************** "
-            print " Since no argument is passed,"
-            print " 100 random grains are created"
+            print " Since no argument is passed,   "
+            print " 1000 random grains are created "
             print " ****************************** \n"
-            a  = re(ngrain=ngrain)
-            gr = np.array(a.euler).transpose()
-            gr = np.array([gr[1],gr[2],gr[3]]).transpose()
-            temp = []
-            for i in xrange(len(gr)):
-                temp.append([gr[i][0],gr[i][1],gr[i][2],0.01])
-            self.gr = np.array(temp)
+            from cmb import random
+            self.gr = random(phi1=360,phi2=360,phi=90,ngrain=1000,iplot=False)
 
         self.epf = epf # global
 

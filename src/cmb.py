@@ -121,6 +121,10 @@ def random(phi1=90, phi2=90, phi=90,
     ngrain   = 1000
     iplot    = False
     filename = None
+
+    Return
+    ------
+    gr
     """
 
     print 'phi1, phi, phi2', phi1, phi, phi2
