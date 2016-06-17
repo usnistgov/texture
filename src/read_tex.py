@@ -32,19 +32,14 @@ def block2gr(block):
     return grs
 
 def main(fn='TEX_PH1.OUT',csym='cubic',**kwargs):
-         # poles=[[1,0,0],[1,1,0],[1,1,1]],
-         # mn=None,mx=None,nlev=5):
     """
+    Save pole figures to a series of files <pf_%i.pdf>
+
     Arguments
     =========
     fn    = 'TEX_PH1.OUT'
     csym  = 'cubic'
-    poles = [[1,0,0],[1,1,0],[1,1,1]]
-    mn    = None
-    mx    = None
-    nlev  = 5
-
-    Save pole figures to a series of files <pf_%i.pdf>
+    **kwargs: key-worded arguments to upf.pf_new
     """
     blocks = read(fn)
     figs=[]
@@ -52,10 +47,6 @@ def main(fn='TEX_PH1.OUT',csym='cubic',**kwargs):
         gr=block2gr(blocks[i])
         mypf=upf.polefigure(grains=gr,csym=csym)
         fig=mypf.pf_new(**kwargs)
-            # ifig=None,poles=poles,
-            #             dth=15,dph=15,
-            #             mn=None,mx=None,
-            #             nlev=nlev)
         figs.append(fig)
     return figs
 
