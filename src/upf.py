@@ -2212,7 +2212,7 @@ class polefigure:
 
         et = time.time()-t0
         # uet(et,head='Elapsed time for calling cells_pf')
-        print
+        # print
 
         x_node = np.arange(-180.,180.+tiny,dth)
         y_node = np.arange(   0., 90.+tiny,dph)
@@ -2243,8 +2243,8 @@ class polefigure:
                 axs.append(_ax_)
 
 
-            if lev_opt==0:
-                mx = N[i].flatten().max()
+            #if lev_opt==0:
+            #mx = N[i].flatten().max()
 
             if lev_norm_log:
                 levels = np.logspace(

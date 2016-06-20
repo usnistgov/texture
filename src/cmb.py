@@ -104,6 +104,26 @@ def steglich_format(filename=None):
                         k*5., j*5., i*5., temp[i][j][k]))
     return rst
 
+
+def randomGrain(phi1,phi2,phi):
+    """
+    Generate a single 'randomly' oriented
+    grain and return its 'rotation' matrix
+
+    Argument
+    --------
+    ## maximum bounds of the thee euler angles.
+    phi1
+    phi2
+    phi
+    """
+    from euler import euler
+    cp1 = rand() * phi1  #phi1
+    cp2 = rand() * phi2  #phi2
+    cp = rand() # 0~1
+    cp = math.acos(cp) * 180./math.pi
+    return euler(ph=cp1,th=cp,tm=cp2,echo=False)
+
 def random(phi1=90, phi2=90, phi=90,
            ngrain=1000, iplot=False,
            filename=None):

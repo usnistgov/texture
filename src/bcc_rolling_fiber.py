@@ -21,15 +21,17 @@ from sym import __mmm__ as mmm
 def rolling(fibers=['gamma','alpha','eta','epsilon','sigma'],
             wgts=[0.7,0.1,0.1,0.1],ifig=3,sigma=15,
             ngr=100):
+    """
+    """
     fn='rolling_texture_%s.cmb'%str(ngr).zfill(5)
     f = open(fn,'w')
     f.writelines('Artifical rolling texture for bcc\n')
     f.writelines('Combinations of:')
-    for i in range(len(fibers)):
+    for i in xrange(len(fibers)):
         f.writelines('%3i)  %s; '%(i+1,fibers[i]))
     f.writelines('\n')
     f.writelines('weigts of comp :')
-    for i in range(len(fibers)):
+    for i in xrange(len(fibers)):
         f.writelines('%3.1f;  '%wgts[i])
     f.writelines('\n')
 
@@ -40,18 +42,18 @@ def rolling(fibers=['gamma','alpha','eta','epsilon','sigma'],
 
     total_pop = []
 
-    for i in range(len(fibers)):
+    for i in xrange(len(fibers)):
         gr = main(ngrains=ngr/len(fibers),sigma=sigma,
                   iopt=1,iexit=True,fiber=fibers[i])
         grt=gr.T
         grt[-1] = grt[-1] * wgts[i]
         gr = grt.T
-        for j in range(len(gr)):
+        for j in xrange(len(gr)):
             total_pop.append(gr[j])
     total_pop = np.array(total_pop)
 
     f.writelines('B %i\n'%len(total_pop))
-    for i in range(len(total_pop)):
+    for i in xrange(len(total_pop)):
         f.writelines('%+7.3f %+7.3f %+7.3f %+13.4e\n'%(
             total_pop[i][0], total_pop[i][1], total_pop[i][2], 1./len(total_pop)))
 
@@ -67,16 +69,26 @@ def main(ngrains=100,sigma=5.,iopt=1,ifig=1,fiber='gamma',
     sigma   = 5.
     iopt    = 1 (1: gauss (recommended); 2: expov; 3: logno; 4: norma)
     ifig    = 1
-    fiber   = 'gamma', 'alpha', 'eta', 'epsilon', 'sigma'
+    fiber   = 'gamma', 'alpha', 'eta', 'epsilon', 'sigma', 'random'
+
+    Returns
+    -------
+    It returns the poly-crystal aggregate in the form of numpy's ndarray.
     """
     import upf
     import matplotlib.pyplot as plt
-    h = mmm()
+    import cmb
+    # h = mmm() ## m-m-m sample symmetry is applied.
+    h = [np.identity(3)]
     gr = []
-    for i in range(ngrains):
+    for i in xrange(ngrains):
         dth = random.uniform(-180., 180.)
-        g = gen_gr_fiber(dth,sigma,iopt,fiber)
-        for j in range(len(h)):
+        if fiber in ['gamma','alpha', 'eta', 'epsilon', 'sigma']:
+            g = gen_gr_fiber(dth,sigma,iopt,fiber)
+        elif fiber=='random':
+            g = cmb.randomGrain(360,360,360)
+
+        for j in xrange(len(h)):
             temp = np.dot(g,h[j].T)
             phi1,phi,phi2 = euler(a=temp, echo=False)
             gr.append([phi1,phi,phi2,1./ngrains])
@@ -94,7 +106,7 @@ def main(ngrains=100,sigma=5.,iopt=1,ifig=1,fiber='gamma',
     if iopt==4: f.writelines(' norma')
     f.writelines('\n')
     f.writelines('B %i\n'%ngrains)
-    for i in range(len(gr)):
+    for i in xrange(len(gr)):
         f.writelines('%+7.3f %+7.3f %+7.3f %+13.4e\n'%(
             gr[i][0], gr[i][1], gr[i][2], 1./len(gr)))
 
@@ -103,6 +115,7 @@ def main(ngrains=100,sigma=5.,iopt=1,ifig=1,fiber='gamma',
     mypf1.pf_new(poles=[[1,0,0],[1,1,0],[1,1,1]],ix='RD',iy='TD')
     fig=plt.gcf()
     fig.tight_layout()
+    print 'aggregate saved to %s'%fn
     fig.savefig(
         '%s_contf.pdf'%(fn.split('.cmb')[0]),
         bbox_inches='tight')
@@ -114,6 +127,12 @@ def main(ngrains=100,sigma=5.,iopt=1,ifig=1,fiber='gamma',
     return np.array(gr)
 
 def gen_gr_fiber(th,sigma,iopt,fiber='gamma'):
+    """
+    Generate rotation matrix and
+    'perturb' the orientation following the
+    given 'distribution' function <iopt>
+    with the given standard deviation <sigma>
+    """
     from text import miller2mat, miller2mat_RT
     if fiber=='gamma':
         hkl, uvw = hkl_gamma()
@@ -193,8 +212,8 @@ def vector_ang(u,th):
     st = np.sin(th*np.pi/180.)
     cm = crossop(u) # cross product operator
     r = np.zeros((3,3))
-    for i in range(3):
-        for j in range(3):
+    for i in xrange(3):
+        for j in xrange(3):
             r[i,j] = idx[i,j] * ct + st * cm[i,j] + \
                      (1. - ct ) * u[i] * u[j]
     return r
