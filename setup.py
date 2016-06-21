@@ -2,15 +2,15 @@
 from distutils.core import setup
 from numpy.distutils.core import setup as setup_numpy
 from distutils.extension import Extension
-from Cython.Build import cythonize
-from Cython.Distutils import build_ext
+# from Cython.Build import cythonize
+# from Cython.Distutils import build_ext
 from numpy.distutils.core import Extension
 
 cmdclass = {}
 ext_modules = []
-ext_modules += [
-    Extension("proj_cy",["src/proj.pyx"] ),]
-cmdclass.update({'build_ext': build_ext})
+# ext_modules += [
+#     Extension("proj_cy",["src/proj.pyx"] ),]
+# cmdclass.update({'build_ext': build_ext})
 
 setup(name='TEXTURE_personal_lib',
       version='0.0',
