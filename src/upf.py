@@ -588,6 +588,15 @@ def duplicate0_360(phi, data):
         print "No duplicated axis is found"
         return phi, data
 
+def pole2f(poles_sa,poles_wgt,dth,dph,f):
+    tiny = 1e-9
+    for i in xrange(len(poles_sa)):
+        theta,phi = cart2sph(poles_sa[i])
+        ix = int((theta*180./np.pi+180)/dth-tiny)
+        iy = int(  (phi*180./np.pi)    /dph-tiny)
+        f[ix,iy]=f[ix,iy]+poles_wgt[i]
+    return f
+
 def cart2polar(x,y):
     """
     cartesian to polar coordinate
@@ -2256,8 +2265,8 @@ class polefigure:
                     n_rim = n_rim))
 
         et = time.time()-t0
-        # uet(et,head='Elapsed time for calling cells_pf')
-        # print
+        uet(et,head='Elapsed time for calling cells_pf')
+        print
 
         x_node = np.arange(-180.,180.+tiny,dth)
         y_node = np.arange(   0., 90.+tiny,dph)
@@ -2275,8 +2284,8 @@ class polefigure:
 
         nArray=np.array(N)
         xyCoords=np.array([x,y])
-        print xyCoords.shape ## (2,     x_node, y_node)
-        print nArray.shape   ## (npole, y_node, y_node)
+        # print xyCoords.shape ## (2,     x_node, y_node)
+        # print nArray.shape   ## (npole, y_node, y_node)
 
 
         ## determine maximum and minimum levels.
@@ -2494,29 +2503,26 @@ def cells_pf(
     """
     tiny = 1e-9
     ## Find poles in sa [pole_sa]
-    phs, ths, wgts = [], [], []
+    # phs, ths, wgts = [], [], []
+
+    ## Set of equivalent vectors based on crystal symmetry
     p0 = __equiv__(miller=pole_ca,csym=csym,
                    cdim=cdim,cang=cang)
-    poles_ca=[]
-    for i in xrange(len(p0)):
-        poles_ca.append( p0[i])
-        poles_ca.append(-p0[i])
-
-    for j in xrange(len(poles_ca)):
-        poles_ca[j] = poles_ca[j] /\
-                      (np.sqrt((poles_ca[j]**2).sum()))
+    poles_ca=np.zeros((len(p0)*2,3))
+    poles_ca[:len(p0),:] = p0[:,:]
+    poles_ca[len(p0):,:] =-p0[:,:]
+    poles_ca = poles_ca / np.sqrt((poles_ca**2).sum())
 
     nx,ny = len(grains), len(poles_ca)
-
     poles_sa  = np.zeros((nx,ny,3))
     poles_wgt = np.zeros((nx,ny))
 
-    i_for=True
+    i_for=True ## use fortran version
     #i_for=False # debug
     if i_for:
         poles_sa, poles_wgt = gr2psa(
             ngr= len(grains),grains=grains,
-            npol=len(poles_ca),poles_ca=np.array(poles_ca))
+            npol=len(poles_ca),poles_ca=poles_ca) #np.array(poles_ca))
     else:
         for i in xrange(len(grains)):
             phi1,phi,phi2,wgt = grains[i]
@@ -2526,10 +2532,8 @@ def cells_pf(
                 poles_sa[i,j,:] = np.dot(amat.T,poles_ca[j])
                 poles_wgt[i,j]  = wgt
 
-
     poles_sa  = poles_sa.reshape( (len(grains)*len(poles_ca),3))
     poles_wgt = poles_wgt.reshape((len(grains)*len(poles_ca)))
-
 
     ## Full Sphere
     x = np.arange(-180., 180.+tiny, dth)
@@ -2543,28 +2547,16 @@ def cells_pf(
     nx_node = len(x_node); ny_node = len(y_node)
     nodes = np.zeros((nx_node,ny_node))
 
-    for i in xrange(len(poles_sa)):
-        X,Y = proj_f(poles_sa[i])
-        r,th = cart2polar(X,Y)
-
-        theta,phi = cart2sph(poles_sa[i])
-        wgts.append(poles_wgt[i])
-        phs.append(phi); ths.append(theta)
-
-        x_,y_ = theta*180./np.pi, phi*180/np.pi
-        ix = int((x_+180)/dth-tiny)
-        iy = int(      y_/dph-tiny)
-        f[ix,iy]=f[ix,iy]+poles_wgt[i]
+    f = pole2f(poles_sa,poles_wgt,dth,dph,f.copy())
 
     ## Normalization (m.u.r)
     fsum=f[:,:int(ny/2)].flatten().sum()
     z = np.zeros((ny+1))
     for i in xrange(ny+1): z[i] = np.pi/float(ny)*i
-    dx_ = 2.*np.pi/nx
-    for ix in xrange(nx):
-        for iy in xrange(ny):
-            fnorm = (np.cos(z[iy])-np.cos(z[iy+1])) * dx_ / (2.*np.pi)
-            f[ix,iy] = f[ix,iy]/fnorm/fsum
+    dx_   = 2.*np.pi/nx
+    dcosz = -np.diff(np.cos(z))
+    fnorm = dcosz*dx_/(2*np.pi)
+    f     = f/fnorm/fsum
 
     ## Extension of f_bounds - see algorithm ipynb
     f_bounds = np.zeros((nx+2,ny+2))
@@ -2576,13 +2568,10 @@ def cells_pf(
     f_bounds[  -1,   0]=f_bounds[-1,-2]
     f_bounds[   :,  -1]=f_bounds[ :, 1]
 
-    ## Average of four adjacent neighbours
+    ## Use average of the four adjacent neighbouring nodes
     for i in xrange(len(nodes)):
         for j in xrange(len(nodes[i])):
-            nodes[i][j] = (
-                f_bounds[i][j]  +f_bounds[i+1][j]+
-                f_bounds[i][j+1]+f_bounds[i+1][j+1])
-            nodes[i][j] = nodes[i][j]/4.
+            nodes[i,j] = (f_bounds[i:i+2,j:j+2]).sum()/4.
 
     ## Centeral region is using an avergage around the rim
     for i in xrange(n_rim):
@@ -2629,8 +2618,9 @@ def __equiv__(miller=None, csym=None,
         #H = sym_cy.hexag(1) #cython compiled
         H = sym.hexag() #operators
         v = cv(pole=vect, cdim=cdim, cang=cang)
-        for i in xrange(len(H)):
-            sneq.append(np.dot(H[i], v))
+        sneq = np.tensordot(H,vect,axes=[-1,0])
+        # for i in xrange(len(H)):
+        #     sneq.append(np.dot(H[i], v))
     elif csym=='None':
         #H = [np.identity(3)]
         sneq = [vect]
@@ -2644,7 +2634,7 @@ def __equiv__(miller=None, csym=None,
     #print 'elapsed time during v calculation: %8.6f'%
     #(time.time()-start)
     #####-------------------------------
-    start = time.time()
+    # start = time.time()
     stacked = [] #empty unique vectors
             # is cH in the already existing stacked list?
             # yes: pass
