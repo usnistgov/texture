@@ -2136,26 +2136,71 @@ class polefigure:
 
     def pf_new(
             self,ifig=None,poles=[[1,0,0],[1,1,0]],ix='1',iy='2',
+            mode='line',
             dth=10,dph=10,n_rim=2,cdim=None,ires=True,mn=None,mx=None,
-            lev_opt=0,lev_norm_log=True,nlev=7,cmap='viridis',
-            ncol=1,rot=0.,iline_khi80=False):
+            lev_norm_log=True,nlev=7,cmap='magma',
+            rot=0.,iline_khi80=False):
         """
-        poles
-        ix
-        iy
-        dph  = 7.5. (tilting angle : semi-sphere 0, +90 or full-sphere 0, +180)
-        dth  = 7.5. (rotation angle: -180,+180)
-        n_rim
-        cdim
-        ires = True;  If True, indicate the grid
-        mn    = minimum level of contour
-        mx    = maximum level of contour
-        lev_opt=0 (0: individual, 1: shared between poles)
-        lev_norm_log=False (If True, use logarithmic scales)
-        nlev = 7
-        cmap ='viridis'
-        ncol = 1 (1: single graph, 1: 4 graphs)
-        iline_khi80 = False
+        New version of pf that will succeed upf.polefigure.pf
+
+        Arguments
+        ---------
+        <poles>
+           For cubics, three digits; for hexagonals four digits
+
+        <ix>, <iy>
+           x and y tick labels appended to each pole figure
+
+        <dph>:
+            (tilting angle : semi-sphere 0, +90 or full-sphere 0, +180)
+        <dth>:
+            (rotation angle: -180,+180)
+
+        <n_rim>:
+             The number of 'central' rims to be *averaged*.
+             For better understandings, see the algorithm notebook
+             located in
+                ./ipynb/UPF_Algorithm.ipynb
+
+        <cdim>:  crystal dimension
+           For cubic, [1,1,1]
+           For a particularly AZ31 sheet, it is [1,1,1.6235]
+           Users should know what is the lattice dimension for the crystal
+           structure of which he/she plots the pole figures.
+
+        <ires>  = True;
+           If True, indicate the grid
+           If <mode> is 'fill' and ires is True, overlay the resolution
+              all over the pole.
+           if <mode> is 'line' and ires is True, only the spots lower than
+              minimum level of contour is plotted.
+
+        <mn>,<mx>
+          minimum and maximum levels of contour
+          If not specified, mn and mx is determined using levels of
+          calculated contours
+          if <mode> is 'fill', <mn> is overriden by the levels of
+          calculated contours.
+
+        <lev_norm_log>
+           If True, use logarithmic scales. If False, linear scale.
+        <nlev> = 7
+           Level of iso contour bins.
+           The total number of lines will be nlev+1
+        <cmap>
+           Color map used to color-code the contour levels.
+           Refer to 'http://matplotlib.org/users/colormaps.html'
+           for more color-map options.
+        <iline_khi80> = False
+           Whether or not to draw a line of chi=80 in experimental
+           pole figure plot. - I usually obtain incomplete pole figure
+           upto a tilting <chi> of 80.
+        <mode>
+           Contour model: 'line' or 'fill'
+
+        Returns
+        -------
+        fig: matplotlib.figure.Figure
         """
         ##################################################
         ## PF plots for experimental pole figure is
@@ -2228,24 +2273,33 @@ class polefigure:
         PHI    = PHI + rot ## default: rot=0.
         x      = R*np.cos(PHI); y = R*np.sin(PHI)
 
-        if type(mx)==type(None): mx = np.array(N).flatten().max()
+        nArray=np.array(N)
+        xyCoords=np.array([x,y])
+        print xyCoords.shape ## (2,     x_node, y_node)
+        print nArray.shape   ## (npole, y_node, y_node)
+
+
+        ## determine maximum and minimum levels.
+        if type(mx)==type(None): mx = nArray.flatten().max()
         if mx>100: mx=99.
-        if type(mn)==type(None): mn = 0.5
+
+        if type(mn)==type(None) and mode!='fill': mn = 0.5
+        else: mn = nArray.flatten().min()
+
 
         if type(ifig)==type(None):
-            fig = plt.figure(figsize=(3.3*len(poles),3.0*ncol))
+            fig = plt.figure(figsize=(3.3*len(poles),3.0))
         else:
-            fig = plt.figure(ifig,figsize=(3.3*len(poles),3.0*ncol))
+            fig = plt.figure(ifig,figsize=(3.3*len(poles),3.0))
+
+        ##
+        axs=[]
         for i in xrange(len(poles)):
-            axs=[]
-            for n in xrange(ncol):
-                _ax_ = fig.add_subplot(ncol,len(poles),i+1+ncol*n)
-                axs.append(_ax_)
+            _ax_ = fig.add_subplot(1,len(poles),i+1)
+            axs.append(_ax_)
+        plt.subplots_adjust(left=0,right=0.8)#, bottom=None, right=None, top=None, wspace=None, hspace=None)
 
-
-            #if lev_opt==0:
-            #mx = N[i].flatten().max()
-
+        for i in xrange(len(poles)):
             if lev_norm_log:
                 levels = np.logspace(
                     np.log10(mn),np.log10(mx),nlev)
@@ -2254,47 +2308,30 @@ class polefigure:
                 levels = np.linspace(mn,mx,nlev)
                 norm = None
 
-            if ncol==4:
-                cnt1 = axs[0].contour(x,y,N[i],levels=levels,cmap=cmap,norm=norm)
-                cnt2 = axs[1].contour(x,y,N[i],levels=levels,cmap='rainbow',norm=norm)
-                cnt3 = axs[2].contourf(x,y,N[i],levels=levels,cmap=cmap,norm=norm)
-                cnt4 = axs[3].contourf(x,y,N[i],levels=levels,cmap='gray_r',norm=norm)
-                cnts=[cnt1,cnt2,cnt3,cnt4]
-            elif ncol==1:
-                cnts=[axs[0].contour(x,y,N[i],levels=levels,cmap=cmap,norm=norm)]
+            if   mode=='line':
+                func = axs[i].contour
+            elif mode=='fill':
+                func = axs[i].contourf
 
-            xs=[];ys=[]
+            cnts=func(x,y,nArray[i],levels=levels,
+                      cmap=cmap,norm=norm,zorder=10)
 
+            if ires and mode!='fill':
+                xs=[];ys=[]
+                filt = nArray[i,:,:]<levels[0]
+                xs=x[filt]; ys=y[filt]
+                if len(xs)>0:
+                    axs[i].plot(
+                        xs,ys,'k.',
+                        alpha=0.17*len(poles),
+                        markersize=2.0)
+            if ires and mode=='fill': ## overlay the resolution
+                axs[i].plot(x,y,'k+',
+                            alpha=0.17*len(poles),
+                            markersize=2.0,zorder=100)
 
-            for j in xrange(len(x)-1):
-                for k in xrange(len(x[j])):
-                    if N[i][j,k]<levels[0]:
-                        for l in xrange(len(axs)):
-                            if k==0 and j>1:
-                                pass
-                            else:
-                                xs.append(x[j][k])
-                                ys.append(y[j][k])
-
-            if len(xs)>0:
-                axs[l].plot(
-                    xs,ys,'k.',
-                    alpha=0.17*len(poles),
-                    markersize=2.0)
-
-
-            for j in xrange(ncol):
-                if j in [0,1]: sl=True
-                else: sl=False
-                if lev_opt==0:
-                    deco_pf(axs[j],cnts[j],miller[i],lev_opt,
-                            iskip_last=sl,ix=ix,iy=iy)
-                elif lev_opt==1 and i==len(poles)-1:
-                    deco_pf(axs[j],cnts[j],miller[i],0,
-                            iskip_last=sl,ix=ix,iy=iy)
-                elif lev_opt==1 and i!=len(poles)-1:
-                    deco_pf(axs[j],cnts[j],miller[i],1,
-                            iskip_last=sl,ix=ix,iy=iy)
+            deco_pf(axs[i],cnts,miller[i],0,
+                    iskip_last=False,ix=ix,iy=iy)
         return fig
         #--------------------------------------------------#
 
