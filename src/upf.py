@@ -1048,7 +1048,7 @@ class polefigure:
         elif type(epf)!=type(None): # None is the default for epf
             """
             experimental pole figures..
-             # available format:
+             # available formats:
                  - UXD
                  - steglich
                  - bruker
@@ -1117,16 +1117,6 @@ class polefigure:
         if epf==None:
             dat = self.gr.transpose()
             phi1 = dat[0]; phi = dat[1]; phi2 = dat[2]
-
-            # print 'phi1: %i ~ %i'%(
-            #     int(round(min(dat[0]/90.)))*90, int(
-            #         round(max(dat[0]/90.)))*90)
-            # print 'phi:  %i ~ %i'%(
-            #     int(round(min(dat[1]/90.)))*90, int(
-            #         round(max(dat[1]/90.)))*90)
-            # print 'phi2: %i ~ %i'%(
-            #     int(round(min(dat[2]/90.)))*90, int(
-            #         round(max(dat[2]/90.)))*90)
             ph1min, ph1max= int(
                 round(min(dat[0]/90.)))*90, int(
                 round(max(dat[0]/90.)))*90
@@ -2143,6 +2133,18 @@ class polefigure:
         print 'Elapsed time in self.core after cells:', t2s(time.time()-t0)
         return f, nodes
 
+    def define_axes(self):
+        """
+        convert three bases vectors (i.e., [1,0,0], [0,1,0], [0,0,1]
+        And find to which direction they are pointing at in the final
+        pole figure projection.
+        """
+        self.bases = np.identity(3)
+        x,y,z = self.bases[0,:], self.bases[1,:], self.bases[2,:]
+        ## Very often, x/y/z are aligned with RD/TD/ND.
+        ## Note that self.bases are referenced in the laboratory axes.
+
+
     def pf_new(
             self,ifig=None,poles=[[1,0,0],[1,1,0]],ix='1',iy='2',
             mode='line',
@@ -2219,7 +2221,6 @@ class polefigure:
                                 cmap=cmap,
                                 nlev=nlev, mn=mn, mx=mx,
                                 rot=rot,iline_khi80=iline_khi80)
-
         ##################################################
 
         nlev = nlev + 1 ##
@@ -2274,7 +2275,8 @@ class polefigure:
 
         #--------------------------------------------------#
         ## plotting / resolution
-        nm = (360.0 - 0.)/dth; nn = (180. - 90.)/dph
+        nm     = (360.0 - 0.)/dth;
+        nn     = (180. - 90.)/dph
         theta  = np.linspace(pi, pi/2., nn+1)
         phi    = np.linspace(0., 2.*pi, nm+1)
         r      = np.sin(theta)/(1-np.cos(theta))
@@ -2293,7 +2295,10 @@ class polefigure:
         if mx>100: mx=99.
 
         if type(mn)==type(None) and mode!='fill': mn = 0.5
-        else: mn = nArray.flatten().min()
+        elif type(mn).__name__=='float':
+            pass
+        else:
+            mn = nArray.flatten().min()
 
 
         if type(ifig)==type(None):
