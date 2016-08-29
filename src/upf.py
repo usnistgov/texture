@@ -2149,7 +2149,7 @@ class polefigure:
             self,ifig=None,poles=[[1,0,0],[1,1,0]],ix='1',iy='2',
             mode='line',
             dth=10,dph=10,n_rim=2,cdim=None,ires=True,mn=None,mx=None,
-            lev_norm_log=True,nlev=7,cmap='magma',
+            lev_norm_log=True,nlev=7,ilev=1,cmap='magma',
             rot=0.,iline_khi80=False):
         """
         New version of pf that will succeed upf.polefigure.pf
@@ -2208,6 +2208,9 @@ class polefigure:
            upto a tilting <chi> of 80.
         <mode>
            Contour model: 'line' or 'fill'
+        <ilev>
+           level option: 0 commonly contour levels for all poles generated
+                         1 individual levels applied for individual poles
 
         Returns
         -------
@@ -2217,9 +2220,7 @@ class polefigure:
         ## PF plots for experimental pole figure is
         ## separately conducted by epfplot function
         if type(self.epf).__name__!='NoneType':
-            return self.epfplot(ifig=ifig,
-                                cmap=cmap,
-                                nlev=nlev, mn=mn, mx=mx,
+            return self.epfplot(ifig=ifig,cmap=cmap,nlev=nlev, mn=mn, mx=mx,
                                 rot=rot,iline_khi80=iline_khi80)
         ##################################################
 
@@ -2229,7 +2230,6 @@ class polefigure:
 
         if type(cdim)!=type(None): self.cdim=cdim
         ## 4 digits miller indices are used for hexagon and trigo
-
         if self.csym=='hexag' or self.csym=='trigo':
             pole_=[]
             for i in xrange(len(poles)):
@@ -2244,7 +2244,7 @@ class polefigure:
             poles = pole_[::]
 
         tiny = 1.e-9
-        N = []
+        N=[]
         t0=time.time()
         # is_joblib=False ## Debug
         if is_joblib and len(poles)>1:
@@ -2254,7 +2254,6 @@ class polefigure:
                     csym=self.csym,cang=self.cang,cdim=self.cdim,
                     grains=self.gr,n_rim = n_rim) \
                 for i in xrange(len(poles)))
-
             for i in xrange(len(rst)):
                 N.append(rst[i])
         else:
@@ -2286,47 +2285,35 @@ class polefigure:
 
         nArray=np.array(N)
         xyCoords=np.array([x,y])
-        # print xyCoords.shape ## (2,     x_node, y_node)
-        # print nArray.shape   ## (npole, y_node, y_node)
 
+        mns, mxs = self.calcMXN(nArray,mx,mn,mode,ilev)
 
-        ## determine maximum and minimum levels.
-        if type(mx)==type(None): mx = nArray.flatten().max()
-        if mx>100: mx=99.
-
-        if type(mn)==type(None) and mode!='fill': mn = 0.5
-        elif type(mn).__name__=='float':
-            pass
-        else:
-            mn = nArray.flatten().min()
-
-
-        if type(ifig)==type(None):
-            fig = plt.figure(figsize=(3.3*len(poles),3.0))
-        else:
-            fig = plt.figure(ifig,figsize=(3.3*len(poles),3.0))
+        if type(ifig)==type(None): fig = plt.figure(figsize=(3.3*len(poles),3.0))
+        else: fig = plt.figure(ifig,figsize=(3.3*len(poles),3.0))
 
         ##
         axs=[]
         for i in xrange(len(poles)):
             _ax_ = fig.add_subplot(1,len(poles),i+1)
             axs.append(_ax_)
-        plt.subplots_adjust(left=0,right=0.8)#, bottom=None, right=None, top=None, wspace=None, hspace=None)
+        plt.subplots_adjust(left=0,right=0.8)
 
         for i in xrange(len(poles)):
             if lev_norm_log:
+                ## To prevent log (0) -> np.nan
+                ## hardwire minimum value
+                if mns[i]==0: mns[i] = 0.5
                 levels = np.logspace(
-                    np.log10(mn),np.log10(mx),nlev)
+                    np.log10(mns[i]),np.log10(mxs[i]),nlev)
                 norm = LogNorm()
             else:
-                levels = np.linspace(mn,mx,nlev)
+                levels = np.linspace(mns[i],mxs[i],nlev)
                 norm = None
 
-            if   mode=='line':
-                func = axs[i].contour
-            elif mode=='fill':
-                func = axs[i].contourf
+            if   mode=='line': func = axs[i].contour
+            elif mode=='fill': func = axs[i].contourf
 
+            ## contour plot
             cnts=func(x,y,nArray[i],levels=levels,
                       cmap=cmap,norm=norm,zorder=10)
 
@@ -2348,6 +2335,54 @@ class polefigure:
                     iskip_last=False,ix=ix,iy=iy)
         return fig
         #--------------------------------------------------#
+
+    def calcMXN(self,nArray=None,mx=None,mn=None,mode='line',ilev=0):
+        """
+        Arguments
+        ---------
+        nArray: ndarray that contains all pole figure nodes.
+        mx
+        mn
+        mode
+        ilev  : option (0: common mx and mn, 1: individual mx and mn)
+        """
+        npole = nArray.shape[0]
+        mxs=np.zeros(npole)
+        mns=np.zeros(npole)
+
+        if ilev==0:
+            ## determine maximum and minimum levels.
+            if type(mx)==type(None): mx = nArray.flatten().max()
+            if mx>100: mx=99.
+
+            if type(mn)==type(None) and mode!='fill': mn = 0.5
+            elif type(mn).__name__=='float':
+                pass
+            else:
+                mn = nArray.flatten().min()
+            ## commonly assigned
+            mxs[:] = mx
+            mns[:] = mn
+        elif ilev==1:
+            for ipole in xrange(npole):
+                if type(mx)==type(None):
+                    mx_ = nArray[ipole].flatten().max()
+                else:
+                    mx_ = mx*1.
+
+                if mx_>100: mx_ = 99.
+
+                if type(mn)==type(None) and mode!='fill':
+                    mn_ = nArray[ipole].flatten().min()
+                else:
+                    mn_ = mn*1.
+
+                mxs[ipole]=mx_
+                mns[ipole]=mn_
+        else:
+            raise IOError
+        return mns, mxs
+
 
     def dotplot(self, pole=None, ifig=None, npole=1,
                 ipole=1, alpha=1.0, color='k',
