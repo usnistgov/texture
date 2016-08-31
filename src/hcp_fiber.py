@@ -47,12 +47,16 @@ def basal_fib(iopt=0):
     """
     if iopt==0:
         hkl = [0,0,1] ## major (basal) // ND
-        uvw = [0,1,0] ## minor         // RD
+        uvw = [0,1,0] ## minor         // TD
         return hkl, uvw
     elif iopt==1:
         uvw = [0,0,1] ## major // ED
         xyz = [1,1,0] ## minor // TD
         return xyz, uvw
+    elif iopt==2:
+        hkl = [0,0,1] ## major (basal) // ND
+        uvw = [1,0,0] ## minor         // RD
+        return hkl, uvw
 
 def gen_gr_fiber(th,sigma,mu,iopt,tilt):
     """

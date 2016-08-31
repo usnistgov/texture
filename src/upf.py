@@ -2317,19 +2317,21 @@ class polefigure:
             cnts=func(x,y,nArray[i],levels=levels,
                       cmap=cmap,norm=norm,zorder=10)
 
-            if ires and mode!='fill':
+            if ires:# and mode!='fill':
                 xs=[];ys=[]
                 filt = nArray[i,:,:]<levels[0]
+                filt[0,1:]=False
+                filt[1:,0]=False
                 xs=x[filt]; ys=y[filt]
                 if len(xs)>0:
                     axs[i].plot(
                         xs,ys,'k.',
                         alpha=0.17*len(poles),
                         markersize=2.0)
-            if ires and mode=='fill': ## overlay the resolution
-                axs[i].plot(x,y,'k+',
-                            alpha=0.17*len(poles),
-                            markersize=2.0,zorder=100)
+            # if ires and mode=='fill': ## overlay the resolution
+            #     axs[i].plot(x,y,'k+',
+            #                 alpha=0.17*len(poles),
+            #                 markersize=2.0,zorder=100)
 
             deco_pf(axs[i],cnts,miller[i],0,
                     iskip_last=False,ix=ix,iy=iy)
@@ -2373,6 +2375,8 @@ class polefigure:
                 if mx_>100: mx_ = 99.
 
                 if type(mn)==type(None) and mode!='fill':
+                    mn_ = nArray[ipole].flatten().min()
+                elif type(mn)==type(None) and mode=='fill':
                     mn_ = nArray[ipole].flatten().min()
                 else:
                     mn_ = mn*1.
