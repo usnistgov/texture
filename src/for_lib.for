@@ -42,13 +42,13 @@ Cf2py intent(out) pole_sa
          ra(i,j) = r(j,i)
  10   continue
       norm = 0.
-      do i=1,3
+      do 12 i=1,3
          norm = norm + pole_ca(i)**2
-      enddo
+ 12   continue
       norm = sqrt(norm)
-      do i=1,3
+      do 15 i=1,3
          pole_ca(i) = pole_ca(i) / norm
-      enddo
+ 15   continue
       pole_sa(:) = 0.
       do 20 i=1,3
       do 20 j=1,3
