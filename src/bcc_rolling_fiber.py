@@ -45,7 +45,7 @@ def rolling(fibers=['gamma','alpha','eta','epsilon','sigma'],
     for i in xrange(len(fibers)):
         gr = main(ngrains=ngr/len(fibers),sigma=sigma,
                   iopt=1,iexit=True,fiber=fibers[i])
-        grt=gr.T
+        grt = gr.T
         grt[-1] = grt[-1] * wgts[i]
         gr = grt.T
         for j in xrange(len(gr)):
@@ -61,7 +61,7 @@ def rolling(fibers=['gamma','alpha','eta','epsilon','sigma'],
     return total_pop
 
 def main(ngrains=100,sigma=5.,iopt=1,ifig=1,fiber='gamma',
-         iexit=False):
+         iexit=False,ipfplot=False):
     """
     Arguments
     =========
@@ -70,6 +70,7 @@ def main(ngrains=100,sigma=5.,iopt=1,ifig=1,fiber='gamma',
     iopt    = 1 (1: gauss (recommended); 2: expov; 3: logno; 4: norma)
     ifig    = 1
     fiber   = 'gamma', 'alpha', 'eta', 'epsilon', 'sigma', 'random'
+    ipfplot = False
 
     Returns
     -------
@@ -110,21 +111,22 @@ def main(ngrains=100,sigma=5.,iopt=1,ifig=1,fiber='gamma',
         f.writelines('%+7.3f %+7.3f %+7.3f %+13.4e\n'%(
             gr[i][0], gr[i][1], gr[i][2], 1./len(gr)))
 
-    # upf.cubgr(gr=gr,ifig=2*ifig,mode='contourf',ix='RD',iy='TD')
-    mypf1 = upf.polefigure(grains=gr,csym='cubic')
-    mypf1.pf_new(poles=[[1,0,0],[1,1,0],[1,1,1]],ix='RD',iy='TD')
-    fig=plt.gcf()
-    fig.tight_layout()
-    print 'aggregate saved to %s'%fn
-    fig.savefig(
-        '%s_contf.pdf'%(fn.split('.cmb')[0]),
-        bbox_inches='tight')
-    fig.savefig(
-        '%s_contf.png'%(fn.split('.cmb')[0]),
-        bbox_inches='tight')
-    fig.clf()
-    plt.close(fig)
-    return np.array(gr)
+    if ipfplot:
+        mypf1 = upf.polefigure(grains=gr,csym='cubic')
+        mypf1.pf_new(poles=[[1,0,0],[1,1,0],[1,1,1]],ix='RD',iy='TD')
+        fig=plt.gcf()
+        fig.tight_layout()
+        print 'aggregate saved to %s'%fn
+        fig.savefig(
+            '%s_contf.pdf'%(fn.split('.cmb')[0]),
+            bbox_inches='tight')
+        fig.savefig(
+            '%s_contf.png'%(fn.split('.cmb')[0]),
+            bbox_inches='tight')
+        fig.clf()
+        plt.close(fig)
+
+    return np.array(gr),fn
 
 def gen_gr_fiber(th,sigma,iopt,fiber='gamma'):
     """
