@@ -70,7 +70,7 @@ examples
 ..
  >>> cnts = mypf.pf()
 """
-#print __doc__
+# print __doc__
 """
 Updates
   # 1
@@ -129,9 +129,7 @@ import os, glob, math
 from randomEuler import randomEuler as re
 from euler import euler # in euler module def euler:
                         # A-matrix and Euler angles
-import time
-import random
-
+import time,random
 
 try:
     import MP
@@ -154,12 +152,21 @@ else:
 # euler_f   = for_lib.euler
 # gr2psa    = for_lib.grain2pole_sa
 
-import pf_for_lib
-agr2pol_f = pf_for_lib.agr2pol
-proj_f    = pf_for_lib.projection
-euler_f   = pf_for_lib.euler
-gr2psa    = pf_for_lib.grain2pole_sa
-
+try:
+    import pf_for_lib
+    agr2pol_f = pf_for_lib.agr2pol
+    proj_f    = pf_for_lib.projection
+    euler_f   = pf_for_lib.euler
+    gr2psa    = pf_for_lib.grain2pole_sa
+    i_for=True
+except:
+    i_for=False
+    print '----------------------------------------------------'
+    print '     pf_for_lib is not available in the system'
+    print '   pf_for_lib is a fortran binary that is loaded'
+    print '   in Python using f2py, which may be helpful to '
+    print '         speed-up calculations in upf.py'
+    print '----------------------------------------------------'
 
 ## Cython modules
 # import proj
@@ -249,6 +256,7 @@ def pfnorm(data):
 
     a = 0.
     b = 0.
+    ## below needs vectorization
     for i in xrange(len(data)):
         for j in xrange(len(data[0])):
             a = a + np.sin(dkhi*j)
@@ -1832,8 +1840,10 @@ class polefigure:
             elif proj=='pf':
                 ag = agrain[:3].copy()
                 _np_eq_=npeq[ip]
-                p = agr2pol_f(ag, _np_eq_)
-
+                if i_for:
+                    p = agr2pol_f(ag, _np_eq_)
+                else:
+                    p = agr2pol(ag, _np_eq_,proj=proj)
             # p = agr2pol(agrain=agrain, miller=npeq[ip], proj=proj)
 
             t_agr2pol = t_agr2pol + time.time()-t_1
@@ -1843,8 +1853,12 @@ class polefigure:
                 #else:
                 POLE.append(p)
                 t_1=time.time()
-                # xy.append(projection(pole=p))
-                xy.append(proj_f(p[:3]))
+
+
+                if i_for:
+                    xy.append(proj_f(p[:3]))
+                else:
+                    xy.append(projection(pole=p))
 
                 t_proj = t_proj + time.time()-t_1
             elif proj=='ipf': # p is in ca
@@ -1868,8 +1882,11 @@ class polefigure:
 
                 else: npoles=[p]
                 for npp in xrange(len(npoles)):
-                    #prj_xy = projection(pole=npoles[npp])
-                    prj_xy = proj_f(npoles[npp][:3])
+
+                    if i_for:
+                        prj_xy = proj_f(npoles[npp][:3])
+                    else:
+                        prj_xy = projection(pole=npoles[npp])
                     xy.append(prj_xy)
                     POLE.append(npoles[npp])
                 pass # if over 'pf' or 'ipf'
@@ -2474,7 +2491,7 @@ def cells_pf(
     poles_sa  = np.zeros((nx,ny,3))
     poles_wgt = np.zeros((nx,ny))
 
-    i_for=True
+
     #i_for=False # debug
     if i_for:
         poles_sa, poles_wgt = gr2psa(
@@ -2483,8 +2500,9 @@ def cells_pf(
     else:
         for i in xrange(len(grains)):
             phi1,phi,phi2,wgt = grains[i]
-            arg = euler_f(2,phi1,phi,phi2,np.zeros((3,3))) ## ca<-sa
-            amat = arg[-1]
+            ## arg = euler_f(2,phi1,phi,phi2,np.zeros((3,3))) ## ca<-sa
+            ## amat = arg[-1]
+            amat = euler(phi1,phi,phi2,a=None,echo=False)
             for j in xrange(len(poles_ca)):
                 poles_sa[i,j,:] = np.dot(amat.T,poles_ca[j])
                 poles_wgt[i,j]  = wgt
@@ -2507,7 +2525,10 @@ def cells_pf(
     nodes = np.zeros((nx_node,ny_node))
 
     for i in xrange(len(poles_sa)):
-        X,Y = proj_f(poles_sa[i])
+        if i_for:
+            X,Y = proj_f(poles_sa[i])
+        else:
+            X,Y = projection(poles_sa[i])
         r,th = cart2polar(X,Y)
 
         theta,phi = cart2sph(poles_sa[i])
