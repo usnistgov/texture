@@ -35,7 +35,7 @@ c          rot_(coordinate2<-coordinate1) # sa<-ca
       subroutine matrot66(a,rot,b)
       implicit none
       real*8 a(6,6),rot(3,3),b(6,6),b3333(3,3,3,3),aux33(3,3),aux6(6),
-     $     aux66(6,6),aux3333(3,3,3,3),dummy
+     $     aux3333(3,3,3,3),dummy
       integer i,j,k,l,i1,j1,k1,l1
       call voigt(aux6, aux33, a, aux3333, 3)
       b(:,:) = 0.d0
@@ -330,10 +330,8 @@ c     1). Orthogonality: A^T = A^-1                                    c
 c     2). Det(A) = 1.                                                  c
       logical function isrotmat(a, n)
       implicit none
-      integer i, j, k, l, m, n, irst
-      real*8 a(n, n), inva(n, n), tiny, detmnt, dum(n,n),
-     $     idx(3,3), det, dum02(n,n)
-      logical ismateq
+      integer i, j, k, l, m, n
+      real*8 a(n, n), inva(n, n), tiny, detmnt, det
 cf2py intent(in) a, n
 cf2py intent(out) a
       isrotmat = .true.

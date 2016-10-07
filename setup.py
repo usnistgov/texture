@@ -29,7 +29,7 @@ ext_modules += [
     Extension(
         name="pf_for_lib",
         sources=['src/for_lib.for','src/cs.f'],
-        extra_compile_args=['-O3']
+        ## extra_compile_args=['-O3']
     )]
 
 setup_numpy(ext_modules=ext_modules)

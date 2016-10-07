@@ -94,33 +94,6 @@ Updates
   Cython part having been used for 'sym.py' has been removed.
 """
 #----------------------------------------------------------------------c
-########################################################################
-# For developing the ultimate pole figure plotting software            #
-# which can be alternative to the pole8 program by Dr. Tome.           #
-# After been tried so many times to wrap the code with f2py            #
-# decided to make my own rather than being desperated by the           #
-# trivial problems raised during making the legacy code more           #
-# objective-oriented.                                                  #
-#                                                                      #
-# Need a exemplary texture file along with the consideration that the  #
-# equivalent information can be given by arrays of grains.             #
-#                                                                      #
-# EITHER FILE OR ARRAY -- This is going to be start.                   #
-# can be given as experimental pole figure or texture file style.      #
-# I want to start with texture file style. Let's go for it (2011-02-23)#
-#                                                                      #
-# A stable and decent version now completed. A contour type of pole    #
-# figure is plottable, whereas inverse pole figure does not come along #
-# with the contour type. (2011-03-13)                                  #
-#                                                                      #
-#                                                                      #
-# inverse and pole figure seems to be working properly. The symmetry   #
-# operations is not completed yet. As of now (2011-05-Mar) only cubic  #
-# crystal symmetry is considered.                                      #
-#                                                                      #
-# Symmetry operation has been working fine.                            #
-#                                                                      #
-########################################################################
 ## import library blocks
 import numpy as np
 import matplotlib.pyplot as plt
@@ -145,13 +118,10 @@ else:
     uet = progress_bar.update_elapsed_time
 
 
-## Fortran modules
-# import for_lib
-# agr2pol_f = for_lib.agr2pol
-# proj_f    = for_lib.projection
-# euler_f   = for_lib.euler
-# gr2psa    = for_lib.grain2pole_sa
 
+## Compiling fortran modules has been very very tricky
+# If cannot import for_lib correctly, upf will use
+# corresponding python modules/functions/methods
 try:
     import pf_for_lib
     agr2pol_f = pf_for_lib.agr2pol
@@ -167,9 +137,6 @@ except:
     print '   in Python using f2py, which may be helpful to '
     print '         speed-up calculations in upf.py'
     print '----------------------------------------------------'
-
-## Cython modules
-# import proj
 
 try:
     import joblib

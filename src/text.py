@@ -12,12 +12,7 @@ Youngung Jeong
 
 youngung.jeong@gmail.com
 """
-
-
-import random
-import math
-import os
-import upf
+import random,math,os,upf
 from euler import euler as eul
 gauss = random.gauss
 sin = math.sin
@@ -28,7 +23,7 @@ asin = math.asin
 acos = math.acos
 pi = math.pi
 sqrt = math.sqrt
-#coef= math.atan(1.0)/45. #*math.pi/180.
+# coef= math.atan(1.0)/45. #*math.pi/180.
 
 def pn(n,b):
     from cs import uniqpnset# f2py-wrapped binary module.

@@ -108,11 +108,11 @@ c *****************************************************************************
       subroutine grain2pole_sa(
      $     ngr,grains,npol,poles_ca,
      $     poles_sa,poles_wgt)
-      integer ngr,npole,i,j,igr,n
+      integer ngr,npol,i,j,igr,n
       real*8 grains(ngr,4),poles_ca(npol,3),
      $     poles_sa(ngr,npol,3),poles_wgt(ngr,npol)
       real*8 phi1,phi,phi2,ag(3,3),aux3(3),agt(3,3)
-cf2py intent(in) ngr, grains, npole, poles_ca
+cf2py intent(in) ngr, grains, npol, poles_ca
 cf2py intent(out) poles_sa,poles_wgt
       do 10 igr=1,ngr
          phi1 = grains(igr,1)

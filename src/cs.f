@@ -808,7 +808,7 @@ c     n returns the kinds of the transformation matrix h.
 c     - mirror plane at 30 deg with respect to x1
 c     - rotation of 2*pi/6 around axis <001>
       implicit none
-      real*8 h0(3,3), dum(3,3), h(3,3,24), ang, pi, hrot(3,3,5)
+      real*8 h0(3,3), h(3,3,24), ang, pi, hrot(3,3,5)
       integer i,j,k,n,nr,mn,ns
 c- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - c
       pi = dacos(0.d0) * 2.d0
@@ -892,7 +892,7 @@ c     verbose: logical flag to decide if more information to print out.
       integer icrysym, i, j
       logical verbose
       character*80 fsx
-      real*8 miller(3), vector(3),angs(3), cdim(3), r(3,3), cd(3), pi,
+      real*8 miller(3), vector(3),angs(3), cdim(3), r(3,3), pi,
      $     a, b, c, al, be, ga, cvol
 cf2py intent(in) miller, icrysym, angs, cdim, verbose
 cf2py intent(out) vector
@@ -1166,7 +1166,7 @@ c     |  0  0 -1 |
       subroutine central(r)
       implicit none
       real*8 r(3,3)
-      integer i,j
+      integer i
       call zmat(r)
       do 100 i=1,3
          r(i,i) = -1.d0
@@ -1177,7 +1177,6 @@ c     calculate the improper mirror rotation matrix
       subroutine reflect(r, th)
       implicit none
       real*8 r(3,3), th, pi, c2t, s2t
-      integer i, j
 cf2py intent(in) th
 cf2py intent(out) r
       pi = dacos(0.d0) * 2.d0
