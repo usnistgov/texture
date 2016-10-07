@@ -23,13 +23,13 @@ setup(name='TEXTURE_personal_lib',
       ext_modules=ext_modules)
 
 
-## Fortran subroutines with f2py
-ext_modules = []
-ext_modules += [
-    Extension(
-        name="pf_for_lib",
-        sources=['src/for_lib.for','src/cs.f'],
-        ## extra_compile_args=['-O3']
-    )]
 
-setup_numpy(ext_modules=ext_modules)
+# ## Fortran subroutines with f2py
+# ext_modules = []
+# ext_modules += [
+#     Extension(
+#         name="pf_for_lib",
+#         sources=['src/for_lib.for','src/cs.f'],
+#         ## extra_compile_args=['-O3']
+#     )]
+# setup_numpy(ext_modules=ext_modules)

@@ -469,10 +469,18 @@ class RVE:
                      grs[i][3]))
 
     def plot(self,csym='cubic',**kwargs):
+        """
+        Plot pole figure
+        Arguments
+        ---------
+        csym : crystal symmetry
+        **kwargs: kw arguments to be passed to pf_new
+        """
         import upf,time
         mypf = upf.polefigure(grains =  self.rve, csym=csym)
-        mypf.pf_new(**kwargs)
+        fig=mypf.pf_new(**kwargs)
         plt.show()
+        return fig
 
     def reflect(self,th):
         import math
@@ -494,7 +502,6 @@ class RVE:
     def sample_sym_ortho(self):
         """
         Application of sample symmetry
-
 
         'mmm' operation (orthorhombic sample symmetry operation
         """
