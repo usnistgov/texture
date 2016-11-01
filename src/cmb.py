@@ -20,7 +20,6 @@ check if update is followed by submodule?
 check if update is followed by cloning?
 """
 
-
 import matplotlib.pyplot as plt
 import numpy as np
 import math
@@ -30,9 +29,13 @@ randi = np.random.random_integers
 def steglich_format(filename=None):
     """
     2011-Sept-21
-    Convert Dr. Steglich's OCD format into LABOTEX's
+    Convert Dr. Steglich's COD format into LABOTEX's
 
     Reference file: 'ODF numerisch.txt'
+
+    Argument
+    --------
+    filename
     """
     f = open(filename, 'r')
     contents = f.read()
@@ -48,20 +51,15 @@ def steglich_format(filename=None):
     axis_p2 = []
     cod = []
 
-    for i in range(len(planes)): #each block of phi=constant plane
+    for i in xrange(len(planes)): #each block of phi=constant plane
         clines = planes[i].split('\n')
         block = clines[1:][:-1:] #tail off
         block = np.array(block)
         dum = []
-        for i in range(len(block)): #phi2
+        for i in xrange(len(block)): #phi2
             if i!=0 and len(block[i]) > 3: #PHI
                 dum.append(
-                    map(float,
-                        block[i].split()[1:]
-                        )
-                    ) #remove the first row
-                pass
-            pass
+                    map(float,block[i].split()[1:])) #remove the first row
         dum = np.array(dum) # dum: (phi2, PHI)
         dum = dum.T         # dum: (PHI, phi2)
         # dum = dum[0:]
@@ -70,17 +68,14 @@ def steglich_format(filename=None):
         pass
 
     rst = np.zeros((len(cod), len(cod[0]), len(cod[0][0])))
-    for i in range(len(cod)): #phi1
-        for j in range(len(cod[i])): #PHI
-            for k in range(len(cod[i][j])): #phi2
+    for i in xrange(len(cod)): #phi1
+        for j in xrange(len(cod[i])): #PHI
+            for k in xrange(len(cod[i][j])): #phi2
                 rst[i][j][k] = cod[i][j][k]
-                pass
-            pass
-        pass
+
     print 'rst shape:', rst.shape
 
     ## write this into LABOTEX descrete COD format file
-
     ##  phi1 phi phi2 COD
     ##   0   0    0    0.002
     ##   5   0    0    0.012
