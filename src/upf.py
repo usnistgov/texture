@@ -142,12 +142,12 @@ try:
     import joblib
 except:
     is_joblib = False
-    print 'joblib was not found.'
-    print '-'*60
-    print 'One might improve the speed by installing joblib'
-    print 'JOBLIB is to run embarrasingly parallel runs for multiple poles'
-    print "Find about joblib in  https://github.com/joblib/joblib"
-    print '-'*60
+    print '** joblib was not found - will not be used in TX.upf'
+    # print '-'*60
+    # print 'One might improve the speed by installing joblib'
+    # print 'JOBLIB is to run embarrasingly parallel runs for multiple poles'
+    # print "Find about joblib in  https://github.com/joblib/joblib"
+    # print '-'*60
 else:
     is_joblib = True
     from joblib import Parallel, delayed
@@ -747,6 +747,8 @@ def deco_pf(ax,cnt,miller=[0,0,0],
             iopt=0,iskip_last=False,
             ix='1',iy='2'):
     """
+    Decorate matplotlib.pyplot.axes used for plotting pole figures
+
     iopt==1: skip level lines
 
     Arguments
@@ -773,9 +775,16 @@ def deco_pf(ax,cnt,miller=[0,0,0],
     elif iopt==0:
         for i in xrange(nlev):
             cc = tcolors[i][0][0:3]
-            ax.plot([1.30, 1.37],
-                    [1. - i * 0.2, 1. - i * 0.2],
-                    color=cc)
+
+            x=[1.30,1.37]
+            y=[1. - i * 0.2, 1. - i * 0.2]
+
+            if not(iskip_last) and i==nlev-1:
+                ax.plot((x[0]+x[1])/2.,(y[0]+y[1])/2.,
+                        '+',mew=2.,color=cc)
+            else:
+                ax.plot(x,y,color=cc)
+
             ## level text
             if clev[i]<10: s='  %4.2f'%clev[i]
             else:          s='%5.2f'%clev[i]
@@ -2130,22 +2139,27 @@ class polefigure:
 
 
     def pf_new(
-            self,ifig=None,poles=[[1,0,0],[1,1,0]],ix='1',iy='2',
+            self,ifig=None,axs=None,
+            poles=[[1,0,0],[1,1,0]],ix='1',iy='2',
             mode='line',
             dth=10,dph=10,n_rim=2,cdim=None,ires=True,mn=None,mx=None,
             lev_norm_log=True,nlev=7,ilev=1,cmap='magma',
             rot=0.,iline_khi80=False):
         """
         New version of pf that will succeed upf.polefigure.pf
+        Note that upf.polefigure.pf is deprecated and will be deleted soon.
 
         Arguments
         ---------
+        <ifig> or <axs>
+            <ifig> and <axs> should be mutually exclusive.
+            It is acceptable for both to be *not* specified.
+            However, it is unacceptable for both to be specified.
+
         <poles>
            For cubics, three digits; for hexagonals four digits
-
         <ix>, <iy>
            x and y tick labels appended to each pole figure
-
         <dph>:
             (tilting angle : semi-sphere 0, +90 or full-sphere 0, +180)
         <dth>:
@@ -2200,6 +2214,13 @@ class polefigure:
         -------
         fig: matplotlib.figure.Figure
         """
+        import MP.lib.mpl_lib
+
+
+        ## check mutually exclusive arguments (ifig and axs)
+        if type(ifig)!=type(None) and type(axs)!=type(None):
+            raise IOError, '** Err: ifig and axs are mutually exclusive'
+
         ##################################################
         ## PF plots for experimental pole figure is
         ## separately conducted by epfplot function
@@ -2270,7 +2291,11 @@ class polefigure:
         nArray=np.array(N)
         xyCoords=np.array([x,y])
 
-        mns, mxs = self.calcMXN(nArray,mx,mn,mode,ilev)
+        mns, mxs, indices_mx = self.calcMXN(nArray,mx,mn,mode,ilev)
+
+        # ## normalized color map
+        # mpl_cmap, cm_func, cm_norm = MP.lib.mpl_lib.norm_cmap(
+        #     mx=mx,mn=mn,cm_name=cmap,inorm=True)
 
         if type(ifig)==type(None): fig = plt.figure(figsize=(3.3*len(poles),3.0))
         else: fig = plt.figure(ifig,figsize=(3.3*len(poles),3.0))
@@ -2294,12 +2319,25 @@ class polefigure:
                 levels = np.linspace(mns[i],mxs[i],nlev)
                 norm = None
 
+            import matplotlib.cm
+            cmap_mpl = matplotlib.cm.get_cmap(cmap)
+            color_mapping = matplotlib.cm.ScalarMappable(
+                norm=norm,cmap=cmap_mpl)
+
             if   mode=='line': func = axs[i].contour
             elif mode=='fill': func = axs[i].contourf
 
             ## contour plot
             cnts=func(x,y,nArray[i],levels=levels,
                       cmap=cmap,norm=norm,zorder=10)
+
+            ## x, y coordinates of maximum intensity in grid
+            i0,j0 = indices_mx[i]
+            mx_coord_x = x[i0,j0]
+            mx_coord_y = y[i0,j0]
+
+            axs[i].plot(mx_coord_x,mx_coord_y,'+',mew=2,
+                        color=color_mapping.to_rgba(levels[-1]))
 
             if ires:# and mode!='fill':
                 xs=[];ys=[]
@@ -2331,6 +2369,10 @@ class polefigure:
         mn
         mode
         ilev  : option (0: common mx and mn, 1: individual mx and mn)
+
+        Returns
+        -------
+        mns, mxs, indices_mx
         """
         npole = nArray.shape[0]
         mxs=np.zeros(npole)
@@ -2369,8 +2411,16 @@ class polefigure:
                 mns[ipole]=mn_
         else:
             raise IOError
-        return mns, mxs
 
+        ## Find coordinates of 'maximum' intensity
+        indices_mx=[]
+        for ipole in xrange(npole):
+            indx_mx=np.unravel_index(nArray[ipole,:,:].argmax(),
+                                     nArray[ipole,:,:].shape)
+            ## indx_mx = np.argmax(nArray[ipole,:,:],axis=1)
+            indices_mx.append(indx_mx)
+        indices_mx=np.array(indices_mx)
+        return mns, mxs, indices_mx
 
     def dotplot(self, pole=None, ifig=None, npole=1,
                 ipole=1, alpha=1.0, color='k',

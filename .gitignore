@@ -1,3 +1,6 @@
+*.gif
+*.mpg
+*.cmb
 archive
 *ipynb_checkpoints*
 *.png
