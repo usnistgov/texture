@@ -745,7 +745,7 @@ def __circle__(center=[0,0], r=1.):
 
 def deco_pf(ax,cnt,miller=[0,0,0],
             iopt=0,iskip_last=False,
-            ix='1',iy='2'):
+            ix='1',iy='2',mode='line'):
     """
     Decorate matplotlib.pyplot.axes used for plotting pole figures
 
@@ -780,8 +780,13 @@ def deco_pf(ax,cnt,miller=[0,0,0],
             y=[1. - i * 0.2, 1. - i * 0.2]
 
             if not(iskip_last) and i==nlev-1:
-                ax.plot((x[0]+x[1])/2.,(y[0]+y[1])/2.,
-                        '+',mew=2.,color=cc)
+                if mode=='line':
+                    ax.plot((x[0]+x[1])/2.,(y[0]+y[1])/2.,
+                            '+',mew=2.,color=cc)
+                ## Give a contrasting color in case 'fill'
+                elif mode=='fill':
+                    ax.plot((x[0]+x[1])/2.,(y[0]+y[1])/2.,
+                            '+',mew=2.,color=tcolors[0][0][0:3])
             else:
                 ax.plot(x,y,color=cc)
 
@@ -2356,7 +2361,7 @@ class polefigure:
             #                 markersize=2.0,zorder=100)
 
             deco_pf(axs[i],cnts,miller[i],0,
-                    iskip_last=False,ix=ix,iy=iy)
+                    iskip_last=False,ix=ix,iy=iy,mode=mode)
         return fig
         #--------------------------------------------------#
 
