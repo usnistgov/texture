@@ -745,7 +745,7 @@ def __circle__(center=[0,0], r=1.):
 
 def deco_pf(ax,cnt,miller=[0,0,0],
             iopt=0,iskip_last=False,
-            ix='1',iy='2'):
+            ix='1',iy='2',mode='line'):
     """
     Decorate matplotlib.pyplot.axes used for plotting pole figures
 
@@ -761,6 +761,7 @@ def deco_pf(ax,cnt,miller=[0,0,0],
                 iso-contour line or level)
     ix     (xlabel, i.e., horizontal axis label)
     iy     (ylabel, i.e., vertial axis label)
+    mode   pole figure plotting mode (line or fill)
     """
     ## fontsize of appended text to pole figures will be 4*fact
     fact = 2.5
@@ -779,7 +780,7 @@ def deco_pf(ax,cnt,miller=[0,0,0],
             x=[1.30,1.37]
             y=[1. - i * 0.2, 1. - i * 0.2]
 
-            if not(iskip_last) and i==nlev-1:
+            if not(iskip_last) and i==nlev-1 and mode=='line':
                 ax.plot((x[0]+x[1])/2.,(y[0]+y[1])/2.,
                         '+',mew=2.,color=cc)
             else:
@@ -2336,8 +2337,9 @@ class polefigure:
             mx_coord_x = x[i0,j0]
             mx_coord_y = y[i0,j0]
 
-            axs[i].plot(mx_coord_x,mx_coord_y,'+',mew=2,
-                        color=color_mapping.to_rgba(levels[-1]))
+            if mode=='line':
+                axs[i].plot(mx_coord_x,mx_coord_y,'+',mew=2,
+                            color=color_mapping.to_rgba(levels[-1]))
 
             if ires:# and mode!='fill':
                 xs=[];ys=[]
@@ -2356,7 +2358,7 @@ class polefigure:
             #                 markersize=2.0,zorder=100)
 
             deco_pf(axs[i],cnts,miller[i],0,
-                    iskip_last=False,ix=ix,iy=iy)
+                    iskip_last=False,ix=ix,iy=iy,mode=mode)
         return fig
         #--------------------------------------------------#
 
