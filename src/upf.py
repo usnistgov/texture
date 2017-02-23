@@ -251,6 +251,7 @@ def epfformat(mode=None, filename=None):
       "steglich"
       "bruker"  *.uxd file
       "epf" (2011-Oct-6) epf popLA experimental pole figure format
+      "xpc" (2017-Feb) xcp format compliant with MAUD
 
     Returns the pole figure data as
     the standard format (m x n numpy array)
@@ -273,6 +274,12 @@ def epfformat(mode=None, filename=None):
     =========
     mode     = None
     filename = None
+
+    Returns
+    =======
+    data
+    max_khi
+    hkl
     """
 
     ## steglich's format
@@ -447,7 +454,7 @@ def epfformat(mode=None, filename=None):
         return data, max_khi, hkl
 
     elif mode=='xpc':
-    """
+        """
         Adapted .xpc format parser, from
         https://github.com/usnistgov/texture
         commit 9c0ac85
@@ -462,34 +469,34 @@ def epfformat(mode=None, filename=None):
             msg  = '%s \n %s'%(msg1,msg2)
             raise IOError, msg
             # blocks = parse_epf(filename)
+
         npf = len(blocks)
         if npf==0: raise IOError, 'No pf block found.'
-                                                    
+
         datasets = []; max_khi = []
         if  npf>1: hkls=["HKL"] ## multiple number of pole figures in a file
-            
+
         for part in blocks:
             line=part.split('\n')
-            #print len(line)
-            
+            # print len(line)
+
             #header lines
-            structureline=ff.FortranRecordReader('(6f10.4,1x,i4,1x,i4)')
-            [a,b,c,alpha,beta,gamma,crystalclass,something]=structureline.read(line[1])
+            structureline=ff.FortranRecordReader('(6f10.4,1x,i4,1x,i4)') # the head-line in each data block
+            [a,b,c,alpha,beta,gamma,crystalclass,something] \
+                =structureline.read(line[1])
             pfDefline=ff.FortranRecordReader('(1x,3i3,6f5.1,2i2)')
-            [h,k,l,unknown1,tilt,tiltinc,unknown2,rotation,rotationinc,unknown3,unknown4]=pfDefline.read(line[2])
-                                                                                    
-                                                                                    
+            [h,k,l,unknown1,tilt,tiltinc,unknown2,rotation,\
+             rotationinc,unknown3,unknown4]=pfDefline.read(line[2])
+
             #for the rest of the lines, do the following
             dataline=ff.FortranRecordReader('(1x,18i4)')
-                                                                                        
+
             # Pretty ugly code, but works...
             grouping=[[3,4,5,6],[7,8,9,10],[11,12,13,14],[15,16,17,18],[19,20,21,22],[23,24,25,26], \
                      [27,28,29,30],[31,32,33,34],[35,36,37,38],[39,40,41,42],[43,44,45,46],[47,48,49,50], \
                      [51,52,53,54],[55,56,57,58],[59,60,61,62],[63,64,65,66],[67,68,69,70],[71,72,73,74], \
                      [75,76,77,78]]
-                                                                                            
-                                                                                            
-                                                                                            
+
             #dataset=np.array([])
             dataset=[]
             for item in grouping:
@@ -499,34 +506,40 @@ def epfformat(mode=None, filename=None):
                 parsed.extend(dataline.read(line[item[2]]))
                 parsed.extend(dataline.read(line[item[3]]))
                 dataset.append(parsed)
+
             #print dataset
-                                                                                                                        
+
             #now saves as a dataframe, and wraps 360 to 0 degrees
             #row and column indexes are by degrees
             df=pd.DataFrame(dataset, index=np.arange(0,91,5))
             df.columns=[np.arange(0,360,5)]
             df[360]=df.ix[:,0]
             #print df.ix[:,0]
-                                                                                                                                    
+
             #df["Tilt Angle"] =np.arange(0,92,5)
             #df.index.names=[np.transpose(np.arange(0,90,5))]
             #print df
-                                                                                                                                    
+
             hkl = [h,k,l] #hkl
             #hkl = map(int, [hkl[0],hkl[1],hkl[2]])
             #print hkl
             hkls.append(hkl)
-                                                                                                                                            
-                                                                                                                                            
             datasets.append(df)
             #max_khi.append(mxk)
 
-                                                                                                                                                
-                                                                                                                                                
         #print hkls
         print "number of pole figures:", len(datasets)
-            
-        return datasets, hkls
+
+        ### convert the panda data frame to numpy
+        npf=len(datasets)
+        datasets_compliant=np.zeros((npf,72,19))
+        for i in xrange(npf):
+            array = datasets[i].values
+            arrayt = array.T
+            ## ignore the last phi axis as it is repeated (phi360=phi0)
+            datasets_compliant[i,:,:]=arrayt[:72,:]
+
+        return datasets_compliant, hkls
 
     else: raise IOError, 'Unexpected mode is given'
 
@@ -1123,6 +1136,7 @@ class polefigure:
                  - steglich
                  - bruker
                  - epf*
+                 - xpc
             """
             if type(epf).__name__=='list': self.epf_fn = epf
             elif type(epf).__name__=='str': self.epf_fn = [epf]
@@ -1148,9 +1162,9 @@ class polefigure:
             if type(epf_mode)==type(None):
                 print "Type the experimental polfe figure mode"
                 print "Available options:", #continuation
-                print "bruker, steglich, epf (default: %s)"%'epf'
+                print "bruker, steglich, epf, xpc (default: %s)"%'epf'
                 epf_mode = raw_input(" >>>" )
-                if len(epf_mode)==0: epf_mode='epf'
+                if len(epf_mode)==0: epf_mode='epf' # default
             ##---------------------------------------------------------
 
             self.grid = []; self.hkl = []
@@ -1169,7 +1183,14 @@ class polefigure:
                         self.max_khi.append(maxk[i])
                         self.hkl.append(hkl[i])
                     npole_per_file.append(len(data)) # of pole per a file
-
+                elif epf_mode=='xpc':
+                    data, hkl = epfformat(
+                        mode=epf_mode,
+                        filename=self.epf_fn[i])
+                    for i in xrange(len(data)):
+                        self.grid.append(data[i])
+                        # self.max_khi.append(90.)
+                        self.hkl.append(hkl[i])
                 else:
                     data = epfformat(
                         mode=epf_mode,
@@ -1181,8 +1202,8 @@ class polefigure:
             self.epf_mode=epf_mode
 
         ## EXPERIMENTAL POLE FIGURE
-        ## ---------------------------------------------------------- ##
-        ## POLE FIGURES BINNINGED FROM THE POLYCRYSTALLINE AGGREGATES ##
+        ## ------------------------------------------------------- ##
+        ## POLE FIGURES BINNED FROM THE POLYCRYSTALLINE AGGREGATES ##
 
         if epf==None:
             dat = self.gr.transpose()
