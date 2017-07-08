@@ -1,3 +1,6 @@
+"""
+
+"""
 ## parsing texture file consisting of multiple blocks.
 import numpy as np
 from TX import upf
@@ -9,15 +12,27 @@ def read(fn='TEX_PH1.OUT'):
 
     Argument
     --------
-    fn='TEX_PH1.OUT'
+    fn='TEX_PH1.OUT' ; or tarfile object
 
     Returns
     -------
     blocks
     """
-    with open(fn,'r') as fo:
-        blocks=fo.read().split('TEXTURE')[1:]
-    return blocks
+
+    if type(fn).__name__ in ['TarFile','ExFileObject']:
+        return read_fo(fn)
+    elif type(fn).__name__=='str':
+        with open(fn,'r') as fo:
+            blocks = read_fo(fo)
+        return blocks
+    else:
+        raise IOError, 'unexpected type of fn given;'
+
+def read_fo(fo):
+    """
+    Read from object.
+    """
+    return fo.read().split('TEXTURE')[1:]
 
 def block2gr(block):
     """
@@ -37,7 +52,7 @@ def main(fn='TEX_PH1.OUT',csym='cubic',**kwargs):
 
     Arguments
     =========
-    fn    = 'TEX_PH1.OUT'
+    fn    = 'TEX_PH1.OUT' or tarfile object
     csym  = 'cubic'
     **kwargs: key-worded arguments to upf.pf_new
     """
@@ -51,7 +66,7 @@ def main(fn='TEX_PH1.OUT',csym='cubic',**kwargs):
     return figs
 
 if __name__=='__main__':
-    import argparse    
+    import argparse
     parser = argparse.ArgumentParser()
 
     parser.add_argument(

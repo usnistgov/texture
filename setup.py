@@ -19,6 +19,7 @@ setup(name='TEXTURE_personal_lib',
       author_email='youngung.jeong@gmail.com',
       packages=['TX'],
       package_dir={'TX':'src'},
+      install_requires=['fortranformat'],
       cmdclass=cmdclass,
       ext_modules=ext_modules)
 
