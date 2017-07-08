@@ -1784,7 +1784,7 @@ class polefigure:
             #return phi, r, Z
         pass
 
-    def ipf(self, pole=None, color='k', ifig=4, mode='dot'):
+    def ipf(self, pole=None,ifig=4,mode='dot', **kwargs):
         """
         Given the pole plot the dot inverse pole figure.
         **The contour version of the inverse pole
@@ -1794,18 +1794,18 @@ class polefigure:
         Arguments
         ---------
         pole  = [1,0,0]
-        color = 'k'
         ifig  = 1
         mode  = 'dot', 'contour'
+        **kwargs - key-worded argument passed to plots.
         """
-        if pole==None:
+        if type(pole)==type(None):
             print 'miller index of the pole should be given'
             raise IOError
         if mode=='dot':
             temp = []
             for i in xrange(len(self.gr)):
                 tm = self.dotplot(proj='ipf',agrain=self.gr[i],
-                                  pole=pole, ifig=ifig, color=color)
+                                  pole=pole, ifig=ifig, **kwargs)
                 temp.append(tm)
             #self.dotplot(proj='ipf',
             #agrain=self.gr[i], pole=[0,1,0], ifig=5)
@@ -2531,12 +2531,15 @@ class polefigure:
         return mns, mxs, indices_mx
 
     def dotplot(self, pole=None, ifig=None, npole=1,
-                ipole=1, alpha=1.0, color='k',
-                marker='.', proj='ipf', csym='cubic',
+                ipole=1,
+                proj='ipf', csym='cubic',
                 ssym='tric', agrain=None,
                 isym=True, irdc=True,
                 cdim=[1.,1.,1.],
                 cang=[90.,90.,90.], mode='trace', # or None
+                deco=True,
+                **kwargs
+                # alpha=1.0, color='k',
                 ):
         """
         Plots the individual poles. No contour.
@@ -2548,9 +2551,6 @@ class polefigure:
         ifig  = None
         npole = 1
         ipole = 1
-        alpha = 1.0
-        color = 'k'
-        marker = '.'
         proj = 'pf' or 'ipf'
         csym = 'cubic' Crystal symmetry
         ssym = 'tric'  Sample symmetry
@@ -2560,6 +2560,8 @@ class polefigure:
         cdim = [1., 1., 1.]
         cang = [90.,90.,90.]
         mode = 'trace'
+        deco = True
+        **kwargs
         """
         if pole==None:
             print "Pole must be given"
@@ -2568,9 +2570,9 @@ class polefigure:
         ## If a grain is assigned,
         ## Operations are carried on it, instead of on
         ## Global grains.
-        if color==None:
-            print 'Default color is black'; color='k'
-        if agrain!=None:
+        # if color==None:
+        #     print 'Default color is black'; color='k'
+        if type(agrain)!=type(None):
             "* a grains' euler angle is given"
             "* dot plotting is performed on a grain"
             agr = np.array([agrain]) #p1,p,p2, inten
@@ -2580,22 +2582,25 @@ class polefigure:
         #print "------------------------------------"
         XY = []; polz = []
         ## Draws the boundary of inverse and normal pole figures
-        if ifig==None: pass
+        if type(ifig)==type(None):
+            pass
         else:
             fact = 3.
             figsize=(npole*fact, 1*fact)
             fig = plt.figure(ifig, figsize=figsize)
             ax = fig.add_subplot(1,npole,ipole)
             ax.set_axis_off(); ax.set_aspect('equal')
-            ax.text(x=-0.05, y= 1.05, s='1', fontsize=4.*fact)
-            ax.text(x= 1.05, y= 0.  , s='2', fontsize=4.*fact)
-            ax.text(x=0.5, y=-1.05, s='(%i%i%i)'%
-                    (pole[0],pole[1],pole[2]), fontsize=3. * fact)
-            if proj=='pf':
+            if deco:
+                ax.text(x=-0.20, y= 0, s='(100)', fontsize=4.*fact, transform=ax.transAxes)
+                ax.text(x=0.85, y= 0, s='(110)', fontsize=4.*fact, transform=ax.transAxes)
+                ax.text(x=0.75, y= 0.8, s='(111)', fontsize=4.*fact, transform=ax.transAxes)
+                # ax.text(x=0.5, y=-1.05, s='(%i%i%i)'%
+                #         (pole[0],pole[1],pole[2]), fontsize=3. * fact,transform=ax.transAxes)
+            if proj=='pf' and deco:
                 rx, ry = __circle__(center=[0,0], r=1)
                 ax.plot(rx, ry, color='grey')
                 ax.set_xlim(-1.2, 1.2); ax.set_ylim(-1.2, 1.2)
-            elif proj=='ipf':
+            elif proj=='ipf' and deco:
                 # in ipfline module, projection can be
                 # changed into equal area type
                 cxy = ipfline(center=[0,0], csym=csym)
@@ -2646,14 +2651,13 @@ class polefigure:
                                            agr[i][3]])
                                    #x, y, intensity of the grain
 
-        if ifig!=None:
+        if type(ifig)!=type(None):
             # plotting --------------------
             try:
                 XY = np.array(XY)
                 xxx = XY.copy().transpose()[0]
                 yyy = XY.copy().transpose()[1]
-                ax.plot(xxx,yyy,ls='None', marker=marker,color=color,
-                        ms=1)
+                ax.plot(xxx,yyy,ls='None', **kwargs)
                 if proj=='pf':
                     ax.set_xlim(-1.1,1.1)
                     ax.set_ylim(-1.1,1.1)
@@ -2789,7 +2793,7 @@ def __equiv__(miller=None, csym=None,
     import sym    #python compiled
     #import sym_cy #cython compiled
     #from sym.py cvec, cubic, and hexgonal modules are brought in
-    if miller==None: raise IOError, \
+    if type(miller)==type(None): raise IOError, \
        "Miller index should be given"
 
     vect = np.array(miller)
