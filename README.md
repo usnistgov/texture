@@ -112,6 +112,6 @@ This software is distributed in the hope that it will be useful but without any 
 
 # Contact information
 Youngung Jeong
-International Center for Automotive Research, Clemson University
-youngung.jeong@gmail.com
-younguj@clemson.edu
+Materials Science and Engineering
+Changwon National University
+yjeong@changwon.ac.kr
