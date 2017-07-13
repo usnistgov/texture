@@ -1784,7 +1784,7 @@ class polefigure:
             #return phi, r, Z
         pass
 
-    def ipf(self, pole=None,ifig=4,mode='dot', **kwargs):
+    def ipf(self, pole=None,ifig=4,mode='dot',deco=True,**kwargs):
         """
         Given the pole plot the dot inverse pole figure.
         **The contour version of the inverse pole
@@ -1796,16 +1796,24 @@ class polefigure:
         pole  = [1,0,0]
         ifig  = 1
         mode  = 'dot', 'contour'
+        deco  = True
         **kwargs - key-worded argument passed to plots.
         """
         if type(pole)==type(None):
-            print 'miller index of the pole should be given'
-            raise IOError
+            raise IOError, 'miller index of the pole should be given'
+
         if mode=='dot':
             temp = []
             for i in xrange(len(self.gr)):
-                tm = self.dotplot(proj='ipf',agrain=self.gr[i],
-                                  pole=pole, ifig=ifig, **kwargs)
+                if deco==True and i==0:
+                    _deco_=True
+                else:
+                    _deco_=False
+
+                tm, fig = self.dotplot(proj='ipf',csym=self.csym,
+                                       agrain=self.gr[i],
+                                       pole=pole, ifig=ifig, deco=_deco_,
+                                       **kwargs)
                 temp.append(tm)
             #self.dotplot(proj='ipf',
             #agrain=self.gr[i], pole=[0,1,0], ifig=5)
@@ -2561,7 +2569,7 @@ class polefigure:
         cang = [90.,90.,90.]
         mode = 'trace'
         deco = True
-        **kwargs
+        **kwargs : matplotlib pyplot key-worded arguments
         """
         if pole==None:
             print "Pole must be given"
@@ -2583,17 +2591,27 @@ class polefigure:
         XY = []; polz = []
         ## Draws the boundary of inverse and normal pole figures
         if type(ifig)==type(None):
+            fig=None
             pass
         else:
+            ## if plt.figure(ifig) is present, use it
+            ## otherwise, create one.
+
             fact = 3.
-            figsize=(npole*fact, 1*fact)
-            fig = plt.figure(ifig, figsize=figsize)
-            ax = fig.add_subplot(1,npole,ipole)
-            ax.set_axis_off(); ax.set_aspect('equal')
+            figsize = (npole*fact, 1.*fact)
+            if plt.fignum_exists(ifig):
+                fig=plt.figure(ifig)
+            else:
+                fig = plt.figure(ifig, figsize=figsize)
+
+            ax  = fig.add_subplot(1,npole,ipole)
+
             if deco:
-                ax.text(x=-0.20, y= 0, s='(100)', fontsize=4.*fact, transform=ax.transAxes)
-                ax.text(x=0.85, y= 0, s='(110)', fontsize=4.*fact, transform=ax.transAxes)
-                ax.text(x=0.75, y= 0.8, s='(111)', fontsize=4.*fact, transform=ax.transAxes)
+                ax.set_axis_off(); ax.set_aspect('equal')
+                ax.text(x=-0.08, y=-0.07, s='(100)', font
+                        size=4.*fact, transform=ax.transAxes)
+                ax.text(x=0.7, y= -0.07, s='(110)', fontsize=4.*fact, transform=ax.transAxes)
+                ax.text(x=0.65, y= 0.8, s='(111)', fontsize=4.*fact, transform=ax.transAxes)
                 # ax.text(x=0.5, y=-1.05, s='(%i%i%i)'%
                 #         (pole[0],pole[1],pole[2]), fontsize=3. * fact,transform=ax.transAxes)
             if proj=='pf' and deco:
@@ -2605,6 +2623,7 @@ class polefigure:
                 # changed into equal area type
                 cxy = ipfline(center=[0,0], csym=csym)
                 ax.plot(cxy[0], cxy[1], color='grey', alpha=0.1)
+
         ## add poles
         for i in xrange(len(agr)):
             ### crystallographically equivalent poles are calculated.
@@ -2615,8 +2634,8 @@ class polefigure:
             xy, POLE = self.core(
                 pole=pole, proj=proj, csym=csym,
                 agrain=agr[i], isym=isym, cdim=cdim,
-                cang=cang,
-                equivp = npeq)
+                cang=cang,equivp = npeq)
+
             ##### POLE FIGURE PROJECTIN #####
             if proj=='pf':
                 for j in xrange(len(xy)):
@@ -2633,7 +2652,7 @@ class polefigure:
                     else:
                         ### reduced region filter
                         ### must be applied here.
-                        #y must be positive.
+                        # y must be positive.
                         tiny = 0.
                         phi = math.atan2(xy[j][1],xy[j][0])
                         phi = phi * 180.0 / math.pi
@@ -2662,13 +2681,17 @@ class polefigure:
                     ax.set_xlim(-1.1,1.1)
                     ax.set_ylim(-1.1,1.1)
                 elif proj=='ipf':
-                    ax.set_xlim(-0.02, 0.5)
+                    ax.set_xlim(-0.02,0.5)
                     ax.set_ylim(-0.02,0.5)
             except:
-                if len(XY)==0: print 'Empty XY is returned'
-                else: print "Unexpected Error"; raw_input()
+                if len(XY)==0:
+                    pass
+                    #   print 'Empty XY is returned'
+                else:
+                    raise IOError, "Unexpected Error";
+                    # raw_input()
             #-------------------------------
-        return np.array(XY)
+        return np.array(XY),fig
 
 def cells_pf(
         pole_ca=[1,0,0],dph=7.5,
