@@ -2608,8 +2608,7 @@ class polefigure:
 
             if deco:
                 ax.set_axis_off(); ax.set_aspect('equal')
-                ax.text(x=-0.08, y=-0.07, s='(100)', font
-                        size=4.*fact, transform=ax.transAxes)
+                ax.text(x=-0.08, y=-0.07, s='(100)', fontsize=4.*fact, transform=ax.transAxes)
                 ax.text(x=0.7, y= -0.07, s='(110)', fontsize=4.*fact, transform=ax.transAxes)
                 ax.text(x=0.65, y= 0.8, s='(111)', fontsize=4.*fact, transform=ax.transAxes)
                 # ax.text(x=0.5, y=-1.05, s='(%i%i%i)'%
