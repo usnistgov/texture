@@ -112,6 +112,9 @@ This software is distributed in the hope that it will be useful but without any 
 
 # Contact information
 Youngung Jeong
+
 Materials Science and Engineering
+
 Changwon National University
-yjeong@changwon.ac.kr
+
+[yjeong@changwon.ac.kr](mailto:yjeong@changwon.ac.kr)
