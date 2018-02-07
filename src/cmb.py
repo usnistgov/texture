@@ -310,7 +310,19 @@ class RVE:
             self.p2max = max(self.codt[1])  #phi2
             self.p3max = max(self.codt[2])  #phi
         elif fmt=='mtex':
-            nhead = 4
+            ## determine the number of head lines:
+            with open(odf,'r') as fo:
+                ibreak=False
+                nhead=0
+                while(not(ibreak)):
+                    try:
+                        map(float,fo.readline().split())
+                    except:
+                        nhead=nhead+1
+                    else:
+                        ibreak=True
+
+            # nhead = 4
             F     = np.loadtxt(odf,skiprows=nhead)
             Ft    = F.T
             p1mx  = Ft[0,-1]#max(Ft[0]) # phi1
