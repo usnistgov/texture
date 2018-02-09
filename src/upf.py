@@ -183,7 +183,7 @@ def cubgr(gr=None,ifig=3,poles=[[1,0,0],[1,1,0],[1,1,1]]):
     poles
     """
     mypf = polefigure(grains=gr, csym='cubic')
-    fig = mypf.pf_new(poles=poles,ncol=1,cmap='jet')
+    fig = mypf.pf_new(poles=poles,cmap='jet')
     return fig
 
 def pfnorm(data):
@@ -408,8 +408,13 @@ def epfformat(mode=None, filename=None):
             msg1 = 'epf parser in upf assumes that hkl is embraced by paratheses'
             msg2 = ' %s has no paranthesis that embraces hkl was found'%filename
             msg  = '%s \n %s'%(msg1,msg2)
-            raise IOError, msg
-            # blocks = parse_epf(filename)
+            print '-'*52
+            print msg
+            #raise IOError, msg
+            print 'upf will keep proceding with using upf.parse_epf method with n_unit=79'
+            print '-'*52
+            blocks = parse_epf(filename)
+
         npf = len(blocks)
         if npf==0: raise IOError, 'No pf block found.'
 
