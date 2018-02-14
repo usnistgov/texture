@@ -43,6 +43,8 @@ def reader(fn=None,nomen='b'):
 
 def readblock(block,nomen='b'):
     """
+    Use this method for the results obtained through 'Harmonics' method.
+
     Read a block and returns
     1) section's intensity mesh
     2) Phi  max
