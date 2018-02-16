@@ -378,8 +378,6 @@ def make_blocks(filename='as_R.UXD', sep = '; (Data for Range number'):
     blocks = source.split(sep)
     return blocks
 
-
-
 def block_in(dum):
     """
     splits the bulky dum into lined dum and returns it
@@ -489,6 +487,15 @@ class pf:
                  mode='pf', bgmode='manual', monitoring = False,
                  sep = "; (Data for Range number",dfc=None):
         """
+        Arguments
+        ---------
+        filename
+        echo
+        mode
+        bgmode
+        monitoring
+        sep
+        dfc
         """
         if mode == 'pf':
             print ''
@@ -513,18 +520,25 @@ class pf:
 
         print '** Total number of data blocks: ', len(self.data_block)
 
-
         self.th2s = []
         set_2thet = set()
-        for i in range(len(self.data_block)):
+        # print '%5s %5s %5s %5s'%('2th','khi','time','size')
+        for i in xrange(len(self.data_block)):
             cb = self.data_block[i] #cb : current block
             info = self.block_info(block=cb, echo=echo)
-            # _2theta, _khi, _steptime, _stepsize
+
+            _2theta, _khi, _steptime, _stepsize = map(float,info[:4])
+            # print '%5.3f %5.1f %5.2i %5.2i'%(_2theta, _khi, _steptime, _stepsize)
             set_2thet.add(round(float(info[0]), 3))
 
             _2th_ = round(float(info[0]),3)
             if _2th_ in self.th2s: pass
             else: self.th2s.append(_2th_)
+
+        # print '-----------'
+        # raise IOError, 'debug'
+
+
 
         # th2 = set_2thet.copy()
         th2 = self.th2s
@@ -533,14 +547,25 @@ class pf:
         #print th2"
         #if raw_input()=='q': raise IOError"
 
-        print 'Kinds of _2theta are printed out'
-        for i in range(len(th2)):
-            print th2[i], '',
+        # print 'Kinds of _2theta are printed out'
+        # for i in range(len(th2)):
+        #     print th2[i], '',
+        # print
+
+        set_2thet=list(set_2thet)
+        set_2thet=np.array(set_2thet,dtype='float')
+        set_2thet=np.sort(set_2thet)
+        for i in xrange(len(set_2thet)):
+            print '%2.2i'%i,set_2thet[i]
+
+        # raise IOError, 'Debug: 2set_2thet'
 
         # while True:
         #     try:
         #         print set_2thet.pop(),' ',
         #     except: break
+        # print
+
 
         # self.listh2 = []
         # while True:
@@ -548,7 +573,7 @@ class pf:
         #     except: break
 
         self.pfs = []
-        for i in range(len(self.listh2)):
+        for i in xrange(len(self.listh2)):
             self.pfs.append(self.lookfor(th2=self.listh2[i]))
 
         ###################################
@@ -556,15 +581,17 @@ class pf:
         ###################################
         self.polefigures=[]
         self.backgrounds=[]
-        for i in range(len(self.pfs)):
-            if self.bg_or_pf(self.pfs[i], condition = 'digits')=='pf':
+        # bg_determine_condition='digits'
+        bg_determine_condition='short'
+
+        for i in xrange(len(self.pfs)):
+            if   self.bg_or_pf(self.pfs[i], condition = bg_determine_condition)=='pf':
                 self.polefigures.append(self.pfs[i])
-            elif self.bg_or_pf(self.pfs[i], condition = 'digits') =='bg':
+            elif self.bg_or_pf(self.pfs[i], condition = bg_determine_condition)=='bg':
                 self.backgrounds.append(self.pfs[i])
 
-
         print '\n'
-        for i in range(len(self.polefigures)):
+        for i in xrange(len(self.polefigures)):
             print 'PF #',i+1
             _2th, _st, _sz, d_alpha, d_khi, _khis = self.pf_info(self.polefigures[i])
             print 'peak at Bragg the 2theta of ', round(_2th,3)
@@ -604,7 +631,8 @@ class pf:
         # Recommends sets of polefigure and its background measure
         #----------------------------------------------------------
         self.__pf_bg_sets__(bgmode = bgmode)
-            #access the combination set by self.combi_pf_bg
+        #access the combination set by self.combi_pf_bg
+
         """
         Note that if bgmode is None, background is not subtracted
         in the final end. This Ipf = Ipf - dI is not performed in the
@@ -1204,22 +1232,20 @@ class pf:
         """
         if condition == 'digits':
             set_2thet = set()
-            for i in range(len(pfs)):
+            for i in xrange(len(pfs)):
                 info = self.block_info(block=pfs[i], echo=False)
                 set_2thet.add(info[0])
-
                 th2 = float(set_2thet.pop())
                 if abs(th2 - int(th2)) > 0.0001: return 'pf'
                 else: return 'bg'
         if condition == 'short':
             nint = []
-            for i in range(len(pfs)):
-                cpfs = pfs[i]
-                intensities = th2count(block = cpfs)
-                nint.append(len(intensities))
-            if all(nint[i]==1 for i in range(len(nint[i]))): return 'bg'
-            if all(nint[i]>10 for i in range(len(nint[i]))): return 'pf'
-
+            for i in xrange(len(pfs)):
+                info = self.block_info(block=pfs[i],echo=False)
+                _steptime=float(info[2])
+                if _steptime>3:
+                    return 'bg'
+                else: return 'pf'
 
     def lookfor(self, th2 = None, echo = False):
         """
