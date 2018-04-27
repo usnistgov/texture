@@ -875,6 +875,9 @@ def deco_pf(ax,cnt,miller=[0,0,0],
     if iskip_last: nlev = len(tcolors)-1
     else:  nlev = len(tcolors)
 
+    # print 'len(tcolors):',len(tcolors)
+    # print 'nlev in deco_pf:',nlev
+
     if iopt==1: pass
     elif iopt==0:
         for i in xrange(nlev):
@@ -1241,7 +1244,7 @@ class polefigure:
             self.cdim = cdim
             self.cang = cang
 
-    def epfplot(self, ifig, cmap,  nlev, mn, mx, rot, iline_khi80):
+    def epfplot(self,ifig,cmap,nlev,mn,mx,ix,iy,rot,iline_khi80):
         """
         This function is expected to be called
         within self.pf or self.pf_new
@@ -1259,18 +1262,29 @@ class polefigure:
         ifig
         cmap    ## color map, e.g., 'jet' or 'gray_r'
         nlev
+        mn
+        mx
+        ix
+        iy
         rot
         iline_khi80
         """
         from matplotlib.colors import LogNorm
         print 'List of files:'
         for f in self.epf_fn: print '%s '%f
-        #print 'dimension of self.grid:', self.grid.shape
+        print 'dimension of self.grid:', self.grid.shape
         print 'ifig=',ifig
 
         fact = 2.
         nrow = len(self.grid)
         fig = plt.figure(figsize=(3.3*nrow,3.0))
+
+
+        print 'self.grid.shape:',self.grid.shape
+        mns,mxs,indices_mx = self.calcMXN(self.grid,mx,mn,'line',1)
+
+        # print 'mns:',mns
+        # print 'mxs:',mxs
 
         ## loop over each of pole figures
         for ip in xrange(len(self.grid)): #upon each of self.eps_fn
@@ -1282,15 +1296,20 @@ class polefigure:
                     pf[i,j] = self.grid[ip][i][j]
                     pf[-1,j] = self.grid[ip][0][j]
 
-            if type(mx).__name__=='NoneType':
-                mx = np.array(pf).flatten().max()
-            if type(mn).__name__=='NoneType':
-                mn = np.array(pf).flatten().min()
-            if mn==0: mn=0.5
-            if mx>100: mx=99.
+            # if type(mx).__name__=='NoneType':
+            #     mx = np.array(pf).flatten().max()
+            # if type(mn).__name__=='NoneType':
+            #     mn = np.array(pf).flatten().min()
 
+            # if mn==0: mn=0.5
+            # if mx>100: mx=99.
+            # levels = np.logspace(
+            #     np.log10(mn),np.log10(mx),nlev)
+
+            if mns[ip]==0: mns[ip]=0.5
             levels = np.logspace(
-                np.log10(mn),np.log10(mx),nlev)
+                np.log10(mns[ip]),np.log10(mxs[ip]),nlev)
+
             norm = LogNorm()
 
             nm = len(pf); nn = len(pf[0]) #phi, khi
@@ -1303,11 +1322,14 @@ class polefigure:
 
             x = R*np.cos(PHI); y = R*np.sin(PHI)
 
-            cnt=ax.contour(
+            print 'levels in epfplot:'
+            print levels
+
+            #cnt=ax.contour(
+            cnt=ax.contourf(
                 x,y,pf,levels=levels,
                 cmap=cmap,norm=norm)
-            deco_pf(ax,cnt,self.hkl[ip])
-
+            deco_pf(ax=ax,cnt=cnt,miller=self.hkl[ip],ix=ix,iy=iy)
 
             ## dots like in pf_new.
             xs=[];ys=[]
@@ -2336,7 +2358,6 @@ class polefigure:
         """
         import MP.lib.mpl_lib
 
-
         ## check mutually exclusive arguments (ifig and axs)
         if type(ifig)!=type(None) and type(axs)!=type(None):
             raise IOError, '** Err: ifig and axs are mutually exclusive'
@@ -2345,8 +2366,10 @@ class polefigure:
         ## PF plots for experimental pole figure is
         ## separately conducted by epfplot function
         if type(self.epf).__name__!='NoneType':
-            return self.epfplot(ifig=ifig,cmap=cmap,nlev=nlev, mn=mn, mx=mx,
-                                rot=rot,iline_khi80=iline_khi80)
+            print 'Writing Experimental pole figures'
+            return self.epfplot(
+                ifig=ifig,cmap=cmap,nlev=nlev, mn=mn, mx=mx,
+                ix=ix,iy=iy,rot=rot,iline_khi80=iline_khi80)
         ##################################################
 
         nlev = nlev + 1 ##
@@ -2410,6 +2433,8 @@ class polefigure:
 
         nArray=np.array(N)
         xyCoords=np.array([x,y])
+
+        # print 'nArray.shape:',nArray.shape
 
         mns, mxs, indices_mx = self.calcMXN(nArray,mx,mn,mode,ilev)
 

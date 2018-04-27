@@ -12,7 +12,7 @@ ext_modules = []
 #     Extension("proj_cy",["src/proj.pyx"] ),]
 # cmdclass.update({'build_ext': build_ext})
 
-setup(name='TEXTURE_personal_lib',
+setup(name='TEXTURElib',
       version='0.0',
       description='Collection of texture related modules',
       author='Youngung Jeong',
@@ -22,8 +22,6 @@ setup(name='TEXTURE_personal_lib',
       install_requires=['fortranformat'],
       cmdclass=cmdclass,
       ext_modules=ext_modules)
-
-
 
 ## Fortran subroutines with f2py
 ext_modules = []
