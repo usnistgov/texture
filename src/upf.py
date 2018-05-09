@@ -95,6 +95,9 @@ Updates
 """
 #----------------------------------------------------------------------c
 ## import library blocks
+import warnings
+warnings.filterwarnings("ignore")
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib #matplotlib as raw
