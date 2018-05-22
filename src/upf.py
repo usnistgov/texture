@@ -96,7 +96,8 @@ Updates
 #----------------------------------------------------------------------c
 ## import library blocks
 import warnings
-warnings.filterwarnings("ignore")
+#warnings.filterwarnings("ignore")
+warnings.filterwarnings("error")
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -107,7 +108,7 @@ from euler import euler # in euler module def euler:
                         # A-matrix and Euler angles
 import time,random
 import fortranformat as ff
-import pandas as pd
+
 
 try:
     import MP
@@ -468,6 +469,7 @@ def epfformat(mode=None, filename=None):
         commit 9c0ac85
         based on ready made popLA epf format parser
         """
+        import pandas as pd
         print 'You are now reading experimental pole figure(s) :%s'%filename
         blocks = open(filename, 'rU').read().split('\n\n\n\n')[1:]
         print 'There are %s blocks of data found'%len(blocks)
@@ -2425,8 +2427,8 @@ class polefigure:
 
         #--------------------------------------------------#
         ## plotting / resolution
-        nm     = (360.0 - 0.)/dth;
-        nn     = (180. - 90.)/dph
+        nm     = int((360.0 - 0.)/dth)
+        nn     = int((180. - 90.)/dph)
         theta  = np.linspace(pi, pi/2., nn+1)
         phi    = np.linspace(0., 2.*pi, nm+1)
         r      = np.sin(theta)/(1-np.cos(theta))
@@ -2476,6 +2478,8 @@ class polefigure:
             elif mode=='fill': func = axs[i].contourf
 
             ## contour plot
+            nArray[i][np.isnan(nArray[i])]=0.
+            nArray[i][nArray[i]<=0]=1e-4
             cnts=func(x,y,nArray[i],levels=levels,
                       cmap=cmap,norm=norm,zorder=10)
 

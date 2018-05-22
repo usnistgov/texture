@@ -19,7 +19,7 @@ setup(name='TEXTURElib',
       author_email='youngung.jeong@gmail.com',
       packages=['TX'],
       package_dir={'TX':'src'},
-      install_requires=['fortranformat'],
+      install_requires=['fortranformat','pandas','matplotlib','numpy'],
       cmdclass=cmdclass,
       ext_modules=ext_modules)
 
