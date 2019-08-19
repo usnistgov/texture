@@ -177,7 +177,7 @@ def gr2f(gr=None, header=None, filename=None):
     import numpy as np
     gr = np.array(gr)
     f = open(filename, 'w')
-    if header==None: f.write('dum\ndum\ndum\nB %i\n'%len(gr))
+    if header is None: f.write('dum\ndum\ndum\nB %i\n' % len(gr))
     else: f.write('%s\ndum\ndum\nB %i\n'%(header, len(gr)))
         
     for i in range(len(gr)):
@@ -240,7 +240,7 @@ def main(component='cube', ngrain=100, w0=10, ifig=1):
         myx = textur(p1=angs[i][0], p=angs[i][1], p2=angs[i][2], w0=w0,
                ngrain = ngrain/len(angs), filename='dum',
                iplot=False)
-        myx.gr
+        # myx.gr
 
         for j in range(len(myx.gr)):
             xtal.append(myx.gr[j])
@@ -300,7 +300,7 @@ class textur:
             self.gr.append([angle[0],angle[1],angle[2], 0.1])
 
         f.close()
-        if iplot==True:
+        if iplot:
             mypf = upf.polefigure(filename=filename, csym='cubic')
             mypf.pf(pole=pole, mode=mode, ifig=ifig)
 
