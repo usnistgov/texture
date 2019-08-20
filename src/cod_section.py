@@ -17,7 +17,7 @@ Youngung Jeong, 2011-May 27~ Jun 10
 """
 
 import math
-import euler
+from . import euler
 
 euler = euler.euler
 import numpy as np
@@ -143,8 +143,8 @@ def main(phi1=None, phi2=None, phi=None,
     gr = np.array(gr).T
     wgt = gr[3].sum()
     if echo:
-        print '***  number of grain: %i  ***' % ngrain
-        print 'Total volume: %3.1f' % wgt
+        print('***  number of grain: %i  ***' % ngrain)
+        print('Total volume: %3.1f' % wgt)
 
     # self.gr  # grains
     # gr = self.gr.transpose() #phi1, phi, phi2, volume fraction
@@ -154,15 +154,15 @@ def main(phi1=None, phi2=None, phi=None,
     factor = 90.  # common factor
     mx = np.array([max(gr[0]), max(gr[1]), max(gr[2])])
     mn = np.array([min(gr[0]), min(gr[1]), min(gr[2])])
-    mx = np.array(map(round, mx / factor), dtype='int') * factor
-    mn = np.array(map(round, mn / factor), dtype='int') * factor
+    mx = np.array(list(map(round, mx / factor)), dtype='int') * factor
+    mn = np.array(list(map(round, mn / factor)), dtype='int') * factor
 
     if any(mx[i] == mn[i] for i in range(3)):
-        raise IOError, 'Too narrow spectrum along one axis'
+        raise IOError('Too narrow spectrum along one axis')
 
     if echo:
-        print 'max:  %3.1f %3.1f %3.1f' % (mx[0], mx[1], mx[2])
-        print 'min:  %3.1f %3.1f %3.1f' % (mn[0], mn[1], mn[2])
+        print('max:  %3.1f %3.1f %3.1f' % (mx[0], mx[1], mx[2]))
+        print('min:  %3.1f %3.1f %3.1f' % (mn[0], mn[1], mn[2]))
 
     ## -------------------------------------------------------- ##
 
@@ -203,14 +203,14 @@ def main(phi1=None, phi2=None, phi=None,
 
     FUL = abs(del_ph1 * del_ph * del_ph2)
     if echo:
-        print 'FULL INTEGRATION VALUE: %3.1f * pi * pi' % (FUL / pi / pi)
+        print('FULL INTEGRATION VALUE: %3.1f * pi * pi' % (FUL / pi / pi))
 
     ## -------------------------------------------------------- ##
 
     ## x, y, z axis insertion & rdi calculation --------------- ##
     if None in (phi1, phi2, phi):
         if phi1 is not None:
-            if echo: print 'section at phi1 = %4.1f' % phi1
+            if echo: print('section at phi1 = %4.1f' % phi1)
 
             x_axis = gr[2]  # phi2
             y_axis = gr[1]  # phi
@@ -225,7 +225,7 @@ def main(phi1=None, phi2=None, phi=None,
             rdi = del_ph2 * del_ph * (resolution * rad)
 
         elif phi is not None:
-            if echo: print 'section at phi = %4.1f' % phi
+            if echo: print('section at phi = %4.1f' % phi)
             x_axis = gr[0]  # phi1
             y_axis = gr[2]  # phi2
             z_axis = gr[1]
@@ -241,7 +241,7 @@ def main(phi1=None, phi2=None, phi=None,
                 (phi + resolution / 2.) * rad)
 
         elif phi2 is not None:
-            if echo: print 'section at phi2 = %4.1f' % phi2
+            if echo: print('section at phi2 = %4.1f' % phi2)
             x_axis = gr[0]  # phi1
             y_axis = gr[1]  # phi
             z_axis = gr[2]
@@ -256,7 +256,7 @@ def main(phi1=None, phi2=None, phi=None,
 
         rdi = abs(rdi)
         rdi = rdi  # / FUL #= abs(del_ph1 * del_ph * del_ph2)
-        if echo: print 'rdi: %f' % rdi
+        if echo: print('rdi: %f' % rdi)
 
     else:
         raise IOError
@@ -275,9 +275,9 @@ def main(phi1=None, phi2=None, phi=None,
     mz = round(max(z_axis) / factor) * factor
     nz = round(min(z_axis) / factor) * factor
     if echo:
-        print 'x: %3.1f ~ %3.1f' % (nx, mx)
-        print 'y: %3.1f ~ %3.1f' % (ny, my)
-        print 'z: %3.1f ~ %3.1f' % (nz, mz)
+        print('x: %3.1f ~ %3.1f' % (nx, mx))
+        print('y: %3.1f ~ %3.1f' % (ny, my))
+        print('z: %3.1f ~ %3.1f' % (nz, mz))
 
     # if (z + resolution/2.) > mz: raise IOError
     # if (z - resolution/2.) < nz: raise IOError
@@ -287,7 +287,7 @@ def main(phi1=None, phi2=None, phi=None,
 
     # The cubic cell in the Euler space
     f = np.zeros((nnx, nny))
-    print 'nnx, nny, and f.shape', nnx, nny, f.shape
+    print('nnx, nny, and f.shape', nnx, nny, f.shape)
     ## -------------------------------------------------------- ##
 
     ## Assigns the volume fraction to each of the cubic celll - ##
@@ -567,7 +567,7 @@ def main(phi1=None, phi2=None, phi=None,
             tick.label1On = False
             tick.label2On = False
 
-        if echo: print 'xmax: %f xmin: %f' % (xmax, xmin)
+        if echo: print('xmax: %f xmin: %f' % (xmax, xmin))
 
     else:
         ax.set_ylim(ymax, ymin)
@@ -582,7 +582,7 @@ def main(phi1=None, phi2=None, phi=None,
     #     cc = tcolors[i][0][0:3]
 
     ## ----------------------------------------- ##
-    if echo: print 'levels: ', level
+    if echo: print('levels: ', level)
     ## ------------------------------------------ ##
 
     return x, y, nodes, ax, axt, level
@@ -644,17 +644,17 @@ def cod(phi1=None, phi2=None, phi=None,
     gr0 = gr.copy()
     gr = np.array(gr).transpose()
     wgt = gr[3].sum()
-    print 'Total volume: %3.1f' % wgt
+    print('Total volume: %3.1f' % wgt)
 
     ## Boundary of the Euler space in which the COD is sampled. ##
     ## 90 is assumed to be common factor for the Euler space
     factor = 90  # common factor
     mx = np.array([max(gr[0]), max(gr[1]), max(gr[2])])
     mn = np.array([min(gr[0]), min(gr[1]), min(gr[2])])
-    mx = np.array(map(round, mx / factor), dtype='int') * factor
-    mn = np.array(map(round, mn / factor), dtype='int') * factor
-    print 'max:  %3.1f %3.1f %3.1f' % (mx[0], mx[1], mx[2])
-    print 'min:  %3.1f %3.1f %3.1f' % (mn[0], mn[1], mn[2])
+    mx = np.array(list(map(round, mx / factor)), dtype='int') * factor
+    mn = np.array(list(map(round, mn / factor)), dtype='int') * factor
+    print('max:  %3.1f %3.1f %3.1f' % (mx[0], mx[1], mx[2]))
+    print('min:  %3.1f %3.1f %3.1f' % (mn[0], mn[1], mn[2]))
 
     ## -------------------------------------------------------- ##
     del_ph1 = (mx[0] - mn[0]) * rad
@@ -666,7 +666,7 @@ def cod(phi1=None, phi2=None, phi=None,
     ## x, y, z axis insertion & rdi calculation --------------- ##
     if None in (phi1, phi2, phi):
         if phi1 is not None:
-            print 'section at phi1 = %4.1f' % phi1
+            print('section at phi1 = %4.1f' % phi1)
             x_axis = gr[2]  # phi2
             y_axis = gr[1]  # phi
             z_axis = gr[0]
@@ -685,7 +685,7 @@ def cod(phi1=None, phi2=None, phi=None,
             pass
 
         elif phi is not None:
-            print 'section at phi = %4.1f' % phi
+            print('section at phi = %4.1f' % phi)
             x_axis = gr[0]  # phi1
             y_axis = gr[2]  # phi2
             z_axis = gr[1]
@@ -705,7 +705,7 @@ def cod(phi1=None, phi2=None, phi=None,
             pass
 
         elif phi2 is not None:
-            print 'section at phi2 = %4.1f' % phi2
+            print('section at phi2 = %4.1f' % phi2)
             x_axis = gr[0]  # phi1
             y_axis = gr[1]  # phi
             z_axis = gr[2]
@@ -723,12 +723,12 @@ def cod(phi1=None, phi2=None, phi=None,
             pass
 
         else:
-            print phi1, phi2, phi
+            print(phi1, phi2, phi)
             raise IOError
 
         rdi = abs(rdi)
         rdi = rdi  # / FUL #= abs(del_ph1 * del_ph * del_ph2)
-        print 'rdi: %f' % rdi
+        print('rdi: %f' % rdi)
         pass
     ## -------------------------------------------------------- ##
 
@@ -737,7 +737,7 @@ def cod(phi1=None, phi2=None, phi=None,
     ## find relevant levels
     mxlev = 0.
     for v in zlin:
-        print 'value = ', v
+        print('value = ', v)
         if phi is not None:
             x, y, nodes, ax, axt, level = main(
                 phi1=phi1, phi2=phi2, phi=v,
@@ -774,7 +774,7 @@ def cod(phi1=None, phi2=None, phi=None,
     nmaster = []
 
     for v in zlin:
-        print 'value = ', v
+        print('value = ', v)
         if phi is not None:
             lang = r'\Phi'
             x, y, nodes, ax, axt, level = main(
@@ -861,7 +861,7 @@ def cod(phi1=None, phi2=None, phi=None,
     COL = []  # master level and col through out the section
 
     for i in range(len(zlin)):
-        print '%i th axis' % (i + 1)
+        print('%i th axis' % (i + 1))
         # Initiate the axis and allocate a region in the plt.figure object canvas.
         if i == len(zlin) - 1:
             ## --- an additional plt axis object for plotting iso-levels
@@ -954,8 +954,8 @@ if __name__ == '__main__':
     try:
         opts, args = getopt.getopt(
             sys.argv[1:], 'p:v:i:r:')
-    except getopt.GEtoptError, err:
-        print str(err)
+    except getopt.GEtoptError as err:
+        print(str(err))
         sys.exit(2)
 
     ## -------------------------------------------------- ##
@@ -1017,8 +1017,8 @@ def to909090(gr):
     # if gr[0]<0.:
     #     gr[0] = 360 + gr[0]
 
-    from sym import __mmm__ as mmm
-    from sym import cubic
+    from .sym import __mmm__ as mmm
+    from .sym import cubic
     sam = mmm()  # orthorhombic sample symmetry
     crm = cubic()  # cubic crystal symmetry
 

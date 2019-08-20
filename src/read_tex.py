@@ -27,7 +27,7 @@ def read(fn='TEX_PH1.OUT'):
             blocks = read_fo(fo)
         return blocks
     else:
-        raise IOError, 'unexpected type of fn given;'
+        raise IOError('unexpected type of fn given;')
 
 
 def read_fo(fo):
@@ -45,8 +45,8 @@ def block2gr(block):
     ngr = int(lines[3].split()[1])
     l = lines[4:4 + ngr]
     grs = np.zeros((ngr, 4))
-    for i in xrange(len(l)):
-        grs[i, :] = map(float, l[i].split())
+    for i in range(len(l)):
+        grs[i, :] = list(map(float, l[i].split()))
     return grs
 
 
@@ -62,7 +62,7 @@ def main(fn='TEX_PH1.OUT', csym='cubic', **kwargs):
     """
     blocks = read(fn)
     figs = []
-    for i in xrange(len(blocks)):
+    for i in range(len(blocks)):
         gr = block2gr(blocks[i])
         mypf = upf.polefigure(grains=gr, csym=csym)
         fig = mypf.pf_new(**kwargs)

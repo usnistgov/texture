@@ -53,15 +53,15 @@ def steglich_format(filename=None):
     axis_p2 = []
     cod = []
 
-    for i in xrange(len(planes)):  # each block of phi=constant plane
+    for i in range(len(planes)):  # each block of phi=constant plane
         clines = planes[i].split('\n')
         block = clines[1:][:-1:]  # tail off
         block = np.array(block)
         dum = []
-        for j in xrange(len(block)):  # phi2
+        for j in range(len(block)):  # phi2
             if j != 0 and len(block[j]) > 3:  # PHI
                 dum.append(
-                    map(float, block[j].split()[1:]))  # remove the first row
+                    list(map(float, block[j].split()[1:])))  # remove the first row
         dum = np.array(dum)  # dum: (phi2, PHI)
         dum = dum.T  # dum: (PHI, phi2)
         # dum = dum[0:]
@@ -70,12 +70,12 @@ def steglich_format(filename=None):
         pass
 
     rst = np.zeros((len(cod), len(cod[0]), len(cod[0][0])))
-    for i in xrange(len(cod)):  # phi1
-        for j in xrange(len(cod[i])):  # PHI
-            for k in xrange(len(cod[i][j])):  # phi2
+    for i in range(len(cod)):  # phi1
+        for j in range(len(cod[i])):  # PHI
+            for k in range(len(cod[i][j])):  # phi2
                 rst[i][j][k] = cod[i][j][k]
 
-    print 'rst shape:', rst.shape
+    print('rst shape:', rst.shape)
 
     ## write this into LABOTEX descrete COD format file
     ##  phi1 phi phi2 COD
@@ -90,7 +90,7 @@ def steglich_format(filename=None):
 
     # permute the rst(phi1, phi, phi2) -> temp(phi, phi2, phi1)
     temp = np.transpose(rst, (1, 2, 0))
-    print 'temp shape:', temp.shape
+    print('temp shape:', temp.shape)
     fout = open('%s_labo.txt' % filename.split('.')[0], 'w')
     fout.writelines('%s %s %s %s \n' % ('PHI1', 'PHI2', 'PHI', 'COD'))
     for i in range(len(temp)):  # phi
@@ -114,7 +114,7 @@ def randomGrain(phi1, phi2, phi):
     phi2
     phi
     """
-    from euler import euler
+    from .euler import euler
     cp1 = rand() * phi1  # phi1
     cp2 = rand() * phi2  # phi2
     cp = rand()  # 0~1
@@ -144,7 +144,7 @@ def random(phi1=90, phi2=90, phi=90,
     ------
     gr
     """
-    print 'phi1, phi, phi2', phi1, phi, phi2
+    print('phi1, phi, phi2', phi1, phi, phi2)
     gr = np.zeros((ngrain, 4))
     for i in range(ngrain):
         cp1 = rand() * phi1  # phi1
@@ -204,12 +204,12 @@ def rve_ortho(cod, rve):
     Monoclinic (phi1=180)
     None (Triclinic) (phi1=360)
     """
-    from euler import euler
+    from .euler import euler
 
     codt = cod.transpose()
     ## information ------------------
     p1max = max(codt[0])  # phi1
-    print 'p1max: %4.1f' % p1max
+    print('p1max: %4.1f' % p1max)
     # phi1 = codt[0]
     # phi2 = codt[1]
     # phi = cot[2]
@@ -222,8 +222,8 @@ def rve_ortho(cod, rve):
     elif p1max == 360:
         ssym = "Tric"
     else:
-        raise IOError, "Unexpected maximum phi1 anlge"
-    print 'symmetry: %s' % ssym
+        raise IOError("Unexpected maximum phi1 anlge")
+    print('symmetry: %s' % ssym)
 
     new_rve = []
     for igr in range(len(rve)):
@@ -328,7 +328,7 @@ class RVE:
                 nhead = 0
                 while not ibreak:
                     try:
-                        map(float, fo.readline().split())
+                        list(map(float, fo.readline().split()))
                     except:
                         nhead = nhead + 1
                     else:
@@ -348,11 +348,11 @@ class RVE:
                 self.resolution = 5.
                 self.inc = self.resolution
             else:
-                print 'phi1:', p1mx
-                print 'PHI :', pmx
-                print 'phi2:', p2mx
-                raise IOError, 'unexpected format' + \
-                               ' in the given mtex odf file'
+                print('phi1:', p1mx)
+                print('PHI :', pmx)
+                print('phi2:', p2mx)
+                raise IOError('unexpected format' + \
+                               ' in the given mtex odf file')
 
             res = 5
             nphi1 = 360 / res + 1
@@ -361,9 +361,9 @@ class RVE:
             cod_ = np.zeros((nphi1, nphi, nphi2))
 
             n = 0
-            for i in xrange(nphi2 - 1):
-                for j in xrange(nphi):
-                    for k in xrange(nphi1 - 1):
+            for i in range(nphi2 - 1):
+                for j in range(nphi):
+                    for k in range(nphi1 - 1):
                         cod_[k, j, i] = F[n][3]
                         n = n + 1
 
@@ -374,15 +374,15 @@ class RVE:
             cod_ = cod_.swapaxes(1, 2)  ## [phi1,phi2,phi]
             self.cod = np.zeros((nphi1 * nphi * nphi2, 4))
             n = 0
-            for i in xrange(nphi):
-                for j in xrange(nphi2):
-                    for k in xrange(nphi1):
+            for i in range(nphi):
+                for j in range(nphi2):
+                    for k in range(nphi1):
                         self.cod[n, :3] = k * 5., j * 5, i * 5
                         self.cod[n, 3] = cod_[k, j, i]
                         n = n + 1
             self.codt = self.cod.T
         else:
-            raise IOError, 'Unexpected file format requested'
+            raise IOError('Unexpected file format requested')
 
         self.ngrain = ngrain
         ## -------------------------------------------------- ##
@@ -396,20 +396,20 @@ class RVE:
         ## sample symmetry application (see def rve_orth above)
         ## -------------------------------------------------- ##
 
-        print 'max values %5.1f %5.1f %5.1f' % (
-            self.p1max, self.p3max, self.p2max)
+        print('max values %5.1f %5.1f %5.1f' % (
+            self.p1max, self.p3max, self.p2max))
         self.cmbfile = cmbfile
 
         ## isotropic sampling, to which the COD is mapped.
-        print 'maximum angles along each axis'
-        print 'phi1: %6.2f' % max(self.codt[0])
-        print 'phi2: %6.2f' % max(self.codt[1])
-        print 'phi : %6.2f' % max(self.codt[2])
+        print('maximum angles along each axis')
+        print('phi1: %6.2f' % max(self.codt[0]))
+        print('phi2: %6.2f' % max(self.codt[1]))
+        print('phi : %6.2f' % max(self.codt[2]))
 
-        print 'minimum angles along each axis'
-        print 'phi1: %6.2f' % min(self.codt[0])
-        print 'phi2: %6.2f' % min(self.codt[1])
-        print 'phi : %6.2f' % min(self.codt[2])
+        print('minimum angles along each axis')
+        print('phi1: %6.2f' % min(self.codt[0]))
+        print('phi2: %6.2f' % min(self.codt[1]))
+        print('phi : %6.2f' % min(self.codt[2]))
 
         # if ssym==0: ngrain = ngrain/2
         # elif ssym==1: ngrain = ngrain/4
@@ -419,9 +419,9 @@ class RVE:
         elif ssym is None:
             ngrain = ngrain
         else:
-            raise IOError, "Unexpected sample symmetry is given"
+            raise IOError("Unexpected sample symmetry is given")
 
-        print 'ssym:', ssym, 'ngrain=', ngrain
+        print('ssym:', ssym, 'ngrain=', ngrain)
 
         self.gr = random(
             phi1=max(self.codt[0]), phi2=max(self.codt[1]),
@@ -436,7 +436,7 @@ class RVE:
         elif ssym is None:
             pass
         else:
-            raise IOError, "Symm should be either 'mmm' or None"
+            raise IOError("Symm should be either 'mmm' or None")
 
         ## file output
         self.rve = np.array(self.rve)
@@ -463,8 +463,8 @@ class RVE:
         --------
         r
         """
-        from euler import euler
-        for i in xrange(len(self.rve)):
+        from .euler import euler
+        for i in range(len(self.rve)):
             a1, a2, a3 = self.rve[i][:3]
             rot = euler(a1, a2, a3, echo=False)  ## CA<-SA(old)
             rt = rot.T  ## SA<-CA
@@ -524,7 +524,7 @@ class RVE:
 
         'mmm' operation (orthorhombic sample symmetry operation
         """
-        from euler import euler
+        from .euler import euler
 
         m0 = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
         m1 = [[1, 0, 0], [0, -1, 0], [0, 0, -1]]
@@ -624,9 +624,9 @@ class RVE:
         Then, estimiates the volume fraction...
         """
         if phi1 > self.p1max or phi2 > self.p2max or phi > self.p3max:
-            print 'phi1, phi2, phi: %6.3f  %6.3f  %6.3f' % (
-                phi1, phi2, phi)
-            raise IOError, "The given angle is not available"
+            print('phi1, phi2, phi: %6.3f  %6.3f  %6.3f' % (
+                phi1, phi2, phi))
+            raise IOError("The given angle is not available")
 
         i = int(phi1 / self.resolution)
         j = int(phi2 / self.resolution)
@@ -725,7 +725,7 @@ def main(odf, ngrain, outputfile, iplot=True, irandom=False):
             pass
         FILE.close()
         # np.savetxt(filename, temp.gr)
-        print 'The random isotropic aggregate is written to %s' % filename
+        print('The random isotropic aggregate is written to %s' % filename)
         pass
     pass
 
@@ -737,8 +737,8 @@ if __name__ == '__main__':
         opts, args = getopt.getopt(sys.argv[1:],
                                    'i:n:o:sr')
         pass
-    except getopt.GetoptError, err:
-        print str(err)
+    except getopt.GetoptError as err:
+        print(str(err))
         sys.exit(2)
         pass
 
@@ -785,7 +785,7 @@ def random_gen(ngrain=100, mmm=False, phi1=360, phi2=360, phi=360):
     phi2
     phi
     """
-    import upf
+    from . import upf
     # if mmm:
     #     phi1 = 90.
     #     phi2 = 90.
@@ -800,5 +800,5 @@ def random_gen(ngrain=100, mmm=False, phi1=360, phi2=360, phi=360):
 
     filename = 'iso_%s.cmb' % str(ngrain).zfill(5)
     random(phi1, phi2, phi, ngrain, iplot=False, filename=filename)
-    print '%s has been created' % filename
+    print('%s has been created' % filename)
     upf.cub(filename, ifig=10)

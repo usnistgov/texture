@@ -1,7 +1,7 @@
 """
 rewriting the module text.
 """
-from euler import euler as eul
+from .euler import euler as eul
 import random, os, upf
 import numpy as np
 
@@ -124,9 +124,9 @@ def miller2mat(hkl, uvw):
     3 x 1 = 2
     """
     import numpy as np
-    from euler import euler
-    uvw = map(int, uvw)
-    hkl = map(int, hkl)
+    from .euler import euler
+    uvw = list(map(int, uvw))
+    hkl = list(map(int, hkl))
 
     uvw = np.array(uvw)
     hkl = np.array(hkl)
@@ -156,7 +156,7 @@ def rolling_fcc():
 
 
 def main(hkl, uvw, w0, ngr=1, ifig=10):
-    import upf
+    from . import upf
     import matplotlib.pyplot as plt
     phi1, phi, phi2 = miller2euler(hkl, uvw)
     mat0 = eul(phi1, phi, phi2, echo=False)  # ca<-sa
@@ -206,4 +206,4 @@ def main(hkl, uvw, w0, ngr=1, ifig=10):
             grs[i][0], grs[i][1], grs[i][2], 1. / ngr))
 
     f.close()
-    print '%s has created' % fn
+    print('%s has created' % fn)

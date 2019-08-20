@@ -4,7 +4,7 @@ Kernel density estimate module for pole figure plotting
 import numpy as np
 from scipy import stats
 import matplotlib.pyplot as plt
-import upf
+from . import upf
 
 
 def ex(fact=100, res=1.0, filename=None, ngrain=None):

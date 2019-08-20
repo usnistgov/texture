@@ -22,9 +22,9 @@ def __gen__(ext='*.epf'):
         # need to trim up until max_khi though ...
         for i in range(len(datasets)):
             if len(datasets[i]) != 19:
-                print 'The resolution along chi axis is not 5degree.'
-                print 'There is %i elements along the chi axis.' % len(datasets)
-                raw_input('>>>')
+                print('The resolution along chi axis is not 5degree.')
+                print('There is %i elements along the chi axis.' % len(datasets))
+                input('>>>')
                 raise IOError
             else:
                 dkhi = 5.
@@ -44,7 +44,7 @@ def __gen__(ext='*.epf'):
 
 def __read__(fn):
     """ read a epf file """
-    from upf import __epffiletrimmer__ as epfTrim
+    from .upf import __epffiletrimmer__ as epfTrim
     # Read blocks
     blocks = open(fn, 'rU').read().split('(')[1:]
     npf = len(blocks)
@@ -52,9 +52,9 @@ def __read__(fn):
     max_khi = []
     for i in range(len(blocks)):
         hkl = blocks[i][0:3]  # hkl
-        hkl = map(int, [hkl[0], hkl[1], hkl[2]])
+        hkl = list(map(int, [hkl[0], hkl[1], hkl[2]]))
         if blocks[i][3] != ')':
-            print 'Caution: unexpected hkl labeling format'
+            print('Caution: unexpected hkl labeling format')
             pass
         d, mxk = epfTrim(blocks[i])  # only for popLA epf format
         datasets.append(d)

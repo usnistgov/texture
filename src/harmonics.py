@@ -189,15 +189,15 @@ def harm_PF(PF, l=23):
             for l0 in range(l + 1):
                 ALP[a0, l0, m0] = polynomial[abs(ms[m0])]
 
-    print '%5.2f seconds elasped to calculate' % (time.time() - t0) + \
-          'Associated Legendre Polynomilal'
+    print('%5.2f seconds elasped to calculate' % (time.time() - t0) + \
+          'Associated Legendre Polynomilal')
 
     for l0 in range(l):
-        print 'l=', l0
-        print 'm=',
+        print('l=', l0)
+        print('m=', end=' ')
         ms = np.arange(-l0, l0 + 1)
         for m0 in range(len(ms)):
-            print ms[m0],
+            print(ms[m0], end=' ')
             # Plm should be [m0]
             # ALP is [a0, l0, m0]
             # ALP.swapaxes[0,2] -> [m0, l0, a0]
@@ -213,7 +213,7 @@ def harm_PF(PF, l=23):
                     dum = Q_lm * P_lm * \
                           np.exp(im * ms[m0] * bet)
                     PF_ab[b0, a0] = PF_ab[b0, a0] + dum
-        print '\n'
+        print('\n')
 
     return PF_ab
 
@@ -235,8 +235,8 @@ def harm_pf(grains=None, filename=None, l=2, dm=7.5, dn=7.5,
     csym     = 'cubic'
     """
     import numpy as np
-    import cmb
-    from upf import polefigure, circle
+    from . import cmb
+    from .upf import polefigure, circle
     pi = np.pi
 
     if grains is None and filename is None:
@@ -257,7 +257,7 @@ def harm_pf(grains=None, filename=None, l=2, dm=7.5, dn=7.5,
 
     for ip in range(len(pole)):
         extended_PF = extPF(mypf.pfnodes[ip])
-        print 'extended_PF.shape', extended_PF.shape
+        print('extended_PF.shape', extended_PF.shape)
         # dum = harm_PF(PF=mypf.pfnodes[ip], l=l)
         dum = harm_PF(PF=extended_PF, l=l)
         reduced_PF = redPF(dum)

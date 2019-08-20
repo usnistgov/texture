@@ -31,8 +31,8 @@ def euler(ph=None, th=None, tm=None, a=None, echo=True):
             iopt = 1
             pass
         else:
-            print 'Error: Unexpected Matrix a type'
-            print 'It should be numpy.ndarry!'
+            print('Error: Unexpected Matrix a type')
+            print('It should be numpy.ndarry!')
             raise IOError
 
     if iopt == 1:
@@ -42,9 +42,9 @@ def euler(ph=None, th=None, tm=None, a=None, echo=True):
             try:
                 th = math.acos(a[2, 2])  # Radian
             except:
-                print 'a[2,2] = %e' % a[2, 2]
-                print 'a[2,2] - 1.0: ', (a[2, 2] - 1.0)
-                print 'if a[2,2]-1.0 < 0.e-5', a[2, 2] - 1.0 < 0.e-5
+                print('a[2,2] = %e' % a[2, 2])
+                print('a[2,2] - 1.0: ', (a[2, 2] - 1.0))
+                print('if a[2,2]-1.0 < 0.e-5', a[2, 2] - 1.0 < 0.e-5)
                 raise IOError
 
         if abs(a[2, 2] > 0.99999):
@@ -63,7 +63,7 @@ def euler(ph=None, th=None, tm=None, a=None, echo=True):
     elif iopt == 2:
         angles = [ph, th, tm]
         if any(angles[i] is None for i in range(len(angles))):
-            print 'Angles must be give if iopt==2'
+            print('Angles must be give if iopt==2')
             raise IOError
 
         """ Convert the angle into Radian"""
@@ -89,9 +89,9 @@ def euler(ph=None, th=None, tm=None, a=None, echo=True):
         a[2, 2] = cth
 
         if echo:
-            print 'Matrix a is '
-            print a
+            print('Matrix a is ')
+            print(a)
         return a
 
     else:
-        print 'Error: Improper iopt input'; raise IOError
+        print('Error: Improper iopt input'); raise IOError

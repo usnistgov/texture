@@ -2,16 +2,16 @@
 Forked from var_gam_fiber.py to extend to more general BCC fibers.
 - gamma, alpha, eta, and epsilon fibers.
 
-## variable typical BCC rolling components
+# variable typical BCC rolling components
 
 # (hkl) // ND, random vector // RD
 # (uvw) // RD, random vector // ND
 # (xyz) // TD, random vector // RD
 
 
-## --------------------------------------------------------------- ##
+# --------------------------------------------------------------- ##
 # Addition of HCP ideal textures to study FLD of AZ31 (20151028)
-## --------------------------------------------------------------- ##
+# --------------------------------------------------------------- ##
 ** Casting leads to 'Basal' fiber
 ** Basal fiber -- [0,0,0,1] // ND fiber??
    (0,0,1) // ND
@@ -30,16 +30,16 @@ Ref #2 Communication with Dr. Dirk Steglich Oct 30, 2015
 
 import numpy as np
 import random, upf
-from euler import euler
+from .euler import euler
 
 gauss = random.gauss
 expov = random.expovariate
 logno = random.lognormvariate
 norma = random.normalvariate
-from sym import __mmm__ as mmm
-from bcc_rolling_fiber import gen_gr_fiber, \
+from .sym import __mmm__ as mmm
+from .bcc_rolling_fiber import gen_gr_fiber, \
     nd_rot, rd_rot, td_rot, rot_vectang
-from text import miller2mat, miller2mat_RT
+from .text import miller2mat, miller2mat_RT
 
 
 def basal_fib(iopt=0):
@@ -48,16 +48,16 @@ def basal_fib(iopt=0):
     Basal fibers along ED (extrusion)
     """
     if iopt == 0:
-        hkl = [0, 0, 1]  ## major (basal) // ND
-        uvw = [0, 1, 0]  ## minor         // TD
+        hkl = [0, 0, 1]  # major (basal) // ND
+        uvw = [0, 1, 0]  # minor         // TD
         return hkl, uvw
     elif iopt == 1:
-        uvw = [0, 0, 1]  ## major // ED
-        xyz = [1, 1, 0]  ## minor // TD
+        uvw = [0, 0, 1]  # major // ED
+        xyz = [1, 1, 0]  # minor // TD
         return xyz, uvw
     elif iopt == 2:
-        hkl = [0, 0, 1]  ## major (basal) // ND
-        uvw = [1, 0, 0]  ## minor         // RD
+        hkl = [0, 0, 1]  # major (basal) // ND
+        uvw = [1, 0, 0]  # minor         // RD
         return hkl, uvw
 
 
@@ -104,27 +104,27 @@ def main(ngrains=100, sigma=15., c2a=1.6235, mu=0.,
     else:
         h = np.array([np.identity(3)])
     gr = []
-    for i in xrange(ngrains):
+    for i in range(ngrains):
         dth = random.uniform(-180., 180.)
         if prc == 'cst':
             g = gen_gr_fiber(th=dth, sigma=sigma, mu=mu, tilt=tilt_1, iopt=0)  # Basal//ND
         elif prc == 'ext':
             g = gen_gr_fiber(th=dth, sigma=sigma, mu=mu, tilt=tilt_1, iopt=1)  # Basal//ED
         else:
-            raise IOError, 'Unexpected option'
-        for j in xrange(len(h)):
+            raise IOError('Unexpected option')
+        for j in range(len(h)):
             temp = np.dot(g, h[j].T)
 
-            ## tilts_about_ax1
+            # tilts_about_ax1
             if abs(tilts_about_ax1) > 0:
                 g_tilt = rd_rot(tilts_about_ax1)
                 temp = np.dot(temp, g_tilt.T)
-            ## tilts_about_ax2?
+            # tilts_about_ax2?
             elif abs(tilts_about_ax2) > 0:
                 g_tilt = td_rot(tilts_about_ax2)
                 temp = np.dot(temp, g_tilt.T)
             elif abs(tilts_about_ax2) > 0 and abs(tilts_about_ax2) > 0:
-                raise IOError, 'One tilt at a time is allowed.'
+                raise IOError('One tilt at a time is allowed.')
 
             phi1, phi, phi2 = euler(a=temp, echo=False)
             gr.append([phi1, phi, phi2, 1. / ngrains])
@@ -145,7 +145,7 @@ def gen_file(lab='', ngr=None):
 
 def write_gr(f, gr):
     f.write('B %i\n' % len(gr))
-    for i in xrange(len(gr)):
+    for i in range(len(gr)):
         f.writelines('%9.3f %9.3f %9.3f %13.4e\n' % (
             gr[i][0], gr[i][1], gr[i][2], gr[i][3]))
     f.close()
@@ -156,11 +156,11 @@ def app(ngr=100, c2a=1.6235):
     Application for FLD-Mg paper
     Create a set of polycrystals
 
-    ## ZE10
+    # ZE10
     1) Small doughnut
     2) Big dougnut
 
-    ## AZ31
+    # AZ31
     1) double let (tilt of 30 degree)
     1) double let (tilt of 50 degree)
 
@@ -171,7 +171,7 @@ def app(ngr=100, c2a=1.6235):
     """
     import matplotlib.pyplot as plt
 
-    ## small donuts
+    # small donuts
     # plt.gcf().clf()
     grs = main(mu=0, ngrains=ngr, tilt_1=30., sigma=15)
     plt.gcf().savefig('small_doughnut.pdf', bbox_inches='tight')
@@ -179,20 +179,20 @@ def app(ngr=100, c2a=1.6235):
     f = gen_file(lab='sm_doughnut', ngr=ngr)
     write_gr(f, grs)
 
-    ## Big donuts
+    # Big donuts
     grs = main(mu=0, ngrains=ngr, tilt_1=50., sigma=15)
     plt.gcf().savefig('big_doughnut.pdf', bbox_inches='tight')
     plt.gcf().clf()
     f = gen_file(lab='big_doughnut', ngr=ngr)
     write_gr(f, grs)
 
-    ## twin tilts (30).
+    # twin tilts (30).
     gr1 = main(mu=0, ngrains=ngr / 2, tilts_about_ax1=30., sigma=45)
     plt.gcf().clf()
     gr2 = main(mu=0, ngrains=ngr / 2, tilts_about_ax1=-30., sigma=45)
     plt.gcf().clf()
     grs = []
-    for i in xrange(len(gr1)):
+    for i in range(len(gr1)):
         grs.append(gr1[i])
         grs.append(gr2[i])
     grs = np.array(grs)
@@ -202,13 +202,13 @@ def app(ngr=100, c2a=1.6235):
     f = gen_file(lab='dbl_lets_30', ngr=ngr)
     write_gr(f, grs)
 
-    ## twin tilts (50).
+    # twin tilts (50).
     gr1 = main(mu=0, ngrains=ngr / 2, tilts_about_ax1=50., sigma=45)
     plt.gcf().clf()
     gr2 = main(mu=0, ngrains=ngr / 2, tilts_about_ax1=-50., sigma=45)
     plt.gcf().clf()
     gr = []
-    for i in xrange(len(gr1)):
+    for i in range(len(gr1)):
         gr.append(gr1[i])
         gr.append(gr2[i])
     gr = np.array(gr)

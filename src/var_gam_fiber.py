@@ -1,17 +1,17 @@
-## variable gamma fiber...
+# variable gamma fiber...
 
-## model creation of gamma fiber (111) // ND
+# model creation of gamma fiber (111) // ND
 # (hkl) // ND, random vector // RD
 
 import numpy as np
 import random
-from euler import euler
+from .euler import euler
 
 gauss = random.gauss
 expov = random.expovariate
 logno = random.lognormvariate
 norma = random.normalvariate
-from sym import __mmm__ as mmm
+from .sym import __mmm__ as mmm
 
 
 def main(ngrains=100, sigma=5., iopt=1, ifig=1):
@@ -23,7 +23,7 @@ def main(ngrains=100, sigma=5., iopt=1, ifig=1):
     iopt    = 1 (1: gauss (recommended); 2: expov; 3: logno; 4: norma)
     ifig    = 1
     """
-    import upf
+    from . import upf
     import matplotlib.pyplot as plt
     h = mmm()
     gr = []
@@ -67,9 +67,9 @@ def gen_gamma_gr(th=0., sigma=5., iopt=1):
     sigma    = 5.0
     iopt     = 1
     """
-    from text import miller2mat
+    from .text import miller2mat
 
-    ## gamma fiber: axisymmetry about ND
+    # gamma fiber: axisymmetry about ND
     hkl, uvw = hkl_gamma()
     g_casa = miller2mat(hkl, uvw)
     g_sasa = nd_rot(th)

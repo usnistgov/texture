@@ -11,13 +11,13 @@ Forked from var_gam_fiber.py to extend to more general BCC fibers.
 
 import numpy as np
 import random
-from euler import euler
+from .euler import euler
 
 gauss = random.gauss
 expov = random.expovariate
 logno = random.lognormvariate
 norma = random.normalvariate
-from sym import __mmm__ as mmm
+from .sym import __mmm__ as mmm
 
 
 def rolling(fibers=['gamma', 'alpha', 'eta', 'epsilon', 'sigma'],
@@ -29,33 +29,33 @@ def rolling(fibers=['gamma', 'alpha', 'eta', 'epsilon', 'sigma'],
     f = open(fn, 'w')
     f.writelines('Artifical rolling texture for bcc\n')
     f.writelines('Combinations of:')
-    for i in xrange(len(fibers)):
+    for i in range(len(fibers)):
         f.writelines('%3i)  %s; ' % (i + 1, fibers[i]))
     f.writelines('\n')
     f.writelines('weigts of comp :')
-    for i in xrange(len(fibers)):
+    for i in range(len(fibers)):
         f.writelines('%3.1f;  ' % wgts[i])
     f.writelines('\n')
 
-    import upf
+    from . import upf
     import matplotlib.pyplot as plt
     wgts = np.array(wgts)
     wgts = wgts / wgts.sum()
 
     total_pop = []
 
-    for i in xrange(len(fibers)):
+    for i in range(len(fibers)):
         gr = main(ngrains=ngr / len(fibers), sigma=sigma,
                   iopt=1, iexit=True, fiber=fibers[i])
         grt = gr.T
         grt[-1] = grt[-1] * wgts[i]
         gr = grt.T
-        for j in xrange(len(gr)):
+        for j in range(len(gr)):
             total_pop.append(gr[j])
     total_pop = np.array(total_pop)
 
     f.writelines('B %i\n' % len(total_pop))
-    for i in xrange(len(total_pop)):
+    for i in range(len(total_pop)):
         f.writelines('%+7.3f %+7.3f %+7.3f %+13.4e\n' % (
             total_pop[i][0], total_pop[i][1], total_pop[i][2], 1. / len(total_pop)))
 
@@ -79,20 +79,20 @@ def main(ngrains=100, sigma=5., iopt=1, ifig=1, fiber='gamma',
     -------
     It returns the poly-crystal aggregate in the form of numpy's ndarray.
     """
-    import upf
+    from . import upf
     import matplotlib.pyplot as plt
-    import cmb
+    from . import cmb
     # h = mmm() ## m-m-m sample symmetry is applied.
     h = [np.identity(3)]
     gr = []
-    for i in xrange(ngrains):
+    for i in range(ngrains):
         dth = random.uniform(-180., 180.)
         if fiber in ['gamma', 'alpha', 'eta', 'epsilon', 'sigma']:
             g = gen_gr_fiber(dth, sigma, iopt, fiber)
         elif fiber == 'random':
             g = cmb.randomGrain(360, 360, 360)
 
-        for j in xrange(len(h)):
+        for j in range(len(h)):
             temp = np.dot(g, h[j].T)
             phi1, phi, phi2 = euler(a=temp, echo=False)
             gr.append([phi1, phi, phi2, 1. / ngrains])
@@ -110,7 +110,7 @@ def main(ngrains=100, sigma=5., iopt=1, ifig=1, fiber='gamma',
     if iopt == 4: f.writelines(' norma')
     f.writelines('\n')
     f.writelines('B %i\n' % ngrains)
-    for i in xrange(len(gr)):
+    for i in range(len(gr)):
         f.writelines('%+7.3f %+7.3f %+7.3f %+13.4e\n' % (
             gr[i][0], gr[i][1], gr[i][2], 1. / len(gr)))
 
@@ -119,7 +119,7 @@ def main(ngrains=100, sigma=5., iopt=1, ifig=1, fiber='gamma',
         mypf1.pf_new(poles=[[1, 0, 0], [1, 1, 0], [1, 1, 1]], ix='RD', iy='TD')
         fig = plt.gcf()
         fig.tight_layout()
-        print 'aggregate saved to %s' % fn
+        print('aggregate saved to %s' % fn)
         fig.savefig(
             '%s_contf.pdf' % (fn.split('.cmb')[0]),
             bbox_inches='tight')
@@ -139,7 +139,7 @@ def gen_gr_fiber(th, sigma, iopt, fiber='gamma'):
     given 'distribution' function <iopt>
     with the given standard deviation <sigma>
     """
-    from text import miller2mat, miller2mat_RT
+    from .text import miller2mat, miller2mat_RT
     if fiber == 'gamma':
         hkl, uvw = hkl_gamma()
         g_casa = miller2mat(hkl, uvw)
@@ -227,8 +227,8 @@ def vector_ang(u, th):
     st = np.sin(th * np.pi / 180.)
     cm = crossop(u)  # cross product operator
     r = np.zeros((3, 3))
-    for i in xrange(3):
-        for j in xrange(3):
+    for i in range(3):
+        for j in range(3):
             r[i, j] = idx[i, j] * ct + st * cm[i, j] + \
                       (1. - ct) * u[i] * u[j]
     return r

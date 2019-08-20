@@ -4,7 +4,7 @@ except:
     import numpy as np
 from numpy import linalg as LA
 import math
-import euler
+from . import euler
 
 eul = euler.euler
 
@@ -19,14 +19,14 @@ def __inv__(a):
     if type(a).__name__ == 'ndarray':
         pass
     else:
-        print 'Error: Unexpected Matrix a type'
-        print 'It should be numpy.ndarry!'
+        print('Error: Unexpected Matrix a type')
+        print('It should be numpy.ndarry!')
         raise IOError
     ainv = LA.inv(a)
     if np.allclose(np.dot(ainv, a), np.eye(3)):
         return ainv
     else:
-        print'Error: problem in getting an inverse matrix'
+        print('Error: problem in getting an inverse matrix')
         raise IOError
 
 
@@ -36,8 +36,8 @@ def miso(a, b):
     """
     types = [type(a).__name__, type(b).__name__]
     if any(types[i] != 'ndarray' for i in range(2)):
-        print 'Error: Unexpected Matrix-a type'
-        print 'It should be numpy.ndarry!'
+        print('Error: Unexpected Matrix-a type')
+        print('It should be numpy.ndarry!')
         raise IOError
     dg = np.dot(a, __inv__(b))
     cth = (dg[0, 0] + dg[1, 1] + dg[2, 2] - 1) / 2.
@@ -80,11 +80,11 @@ def fibr(filename='texture/500.tex'):
         try:
             len(lines[iline])
         except IndexError:
-            print 'EOF';  break
+            print('EOF');  break
         else:
             grains.append([])
 
-        if len(lines[iline]) < 2: print 'EOF'; break
+        if len(lines[iline]) < 2: print('EOF'); break
 
         for i in range(4):
             cwl = lines[iline]
@@ -95,7 +95,7 @@ def fibr(filename='texture/500.tex'):
         for i in range(ngr):  # loop over grains
             cwl = lines[iline]
             grains[iblock].append([])
-            grains[iblock][i] = (map(float, cwl.split()))
+            grains[iblock][i] = (list(map(float, cwl.split())))
             iline = iline + 1
             pass
         iblock = iblock + 1
@@ -122,8 +122,8 @@ def interpolation(gr, origin):
     b = eul(ph=o[0], th=phi[1], ntm=phi[2], echo=False)
     mis = miso(a, b)
     if mis < 0:
-        print "Warning: negative misorientation happens"
-        raw_input('Enter if you want to keep going on')
+        print("Warning: negative misorientation happens")
+        input('Enter if you want to keep going on')
 
     return vf, mis
 
@@ -145,7 +145,7 @@ def grid(phi1=None, phi=None, phi2=None, pmx=[180, 90, 90],
     """
     phi_ = [phi1, phi, phi2]
     if all(phi_[i] is None for i in range(3)):
-        print 'At least one of the Euler angles must be given'
+        print('At least one of the Euler angles must be given')
     else:
         pass
 
@@ -155,8 +155,8 @@ def grid(phi1=None, phi=None, phi2=None, pmx=[180, 90, 90],
             inon = inon + 1
 
     if inon != 2:
-        print 'Only two of angles should be None'
-        print 'You must give one of three angles'
+        print('Only two of angles should be None')
+        print('You must give one of three angles')
         raise IOError
 
     # xyz = np.resize((),(pmx[0]/inc+1,pmx[1]/inc+1,pmx[2]/inc+1))
@@ -168,8 +168,8 @@ def grid(phi1=None, phi=None, phi2=None, pmx=[180, 90, 90],
         inctyp.append(type(pmx[i] / inc))
 
     if any(inctyp[i].__name__ != 'int' for i in range(len(inctyp))):
-        print 'increment does not produce a integer grid'
-        print 'consider to change this'
+        print('increment does not produce a integer grid')
+        print('consider to change this')
 
     if phi1 is not None:
         " x: phi2, y: phi"
@@ -232,7 +232,7 @@ def __a2i__(ang=5., inc=5, pm=90.):
     ang = int(ang)
     inc = int(inc)
     if ang > pm:
-        print 'Your angle is beyond the maximum'
+        print('Your angle is beyond the maximum')
         raise IOError
     #    if ang==pm:
     #        ang = 0
@@ -269,9 +269,9 @@ class distr:
                                   __a2i__(pmx[1], inc=inc, pm=pmx[1]) + 1,
                                   __a2i__(pmx[2], inc=inc, pm=pmx[2]) + 1))
 
-        print len(self.ODF)
-        print len(self.ODF[0])
-        print len(self.ODF[0][0])
+        print(len(self.ODF))
+        print(len(self.ODF[0]))
+        print(len(self.ODF[0][0]))
         # raw_input()
 
         phi1 = [];
@@ -309,7 +309,7 @@ class distr:
         p = [phi1, phi, phi2]
         nnone = 0
         if all(p[i] is None for i in range(len(p))):
-            print 'Wrong! one of the angles must be given'
+            print('Wrong! one of the angles must be given')
             raise IOError
         else:
             for i in range(len(p)):
@@ -345,7 +345,7 @@ class distr:
                         for j in range(len(self.ODF[i][j])):
                             FILE.writelines('%8.3f ' % (self.ODF[i][j][ind]))
             else:
-                print'Only one of the euler angles must be given'; raise IOError
+                print('Only one of the euler angles must be given'); raise IOError
 
             # temp = ODF[0][0][0] + ODF[-1][0][0]
             # ODF[0][0][0] = temp
@@ -369,15 +369,15 @@ class distr:
             try:
                 self.ODF[c[0]][c[1]][c[2]]
             except:
-                print ''
-                print 'Error Happened when c is below'
-                print c[0], c[1], c[2]
-                print ''
-                print len(self.ODF)
-                print len(self.ODF[0])
-                print len(self.ODF[0][0])
-                print grain
-                print ' '
+                print('')
+                print('Error Happened when c is below')
+                print(c[0], c[1], c[2])
+                print('')
+                print(len(self.ODF))
+                print(len(self.ODF[0]))
+                print(len(self.ODF[0][0]))
+                print(grain)
+                print(' ')
             else:
                 temp = grain[3]
                 self.ODF[c[0]][c[1]][c[2]] = self.ODF[c[0]][c[1]][c[2]] + temp

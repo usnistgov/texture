@@ -119,8 +119,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib  # matplotlib as raw
 import os, glob, math
-from randomEuler import randomEuler as re
-from euler import euler  # in euler module def euler : A-matrix and Euler angles
+from .randomEuler import randomEuler as re
+from .euler import euler  # in euler module def euler : A-matrix and Euler angles
 import time
 import random
 
@@ -140,21 +140,21 @@ def pfnorm(data):
     """
     # All angles are in radian
     if len(data) != 72:
-        print 'number of phi grid:  %i' % len(data)
-        raise IOError, 'Unexpected resolution along phi axis'
+        print('number of phi grid:  %i' % len(data))
+        raise IOError('Unexpected resolution along phi axis')
 
     dphi = 360. / len(data)
     dphi = dphi * np.pi / 180.  # dphi
     dkhi = 5. * np.pi / 180.  # dkhi
-    print 'dkhi, dphi', dphi * 180. / np.pi, dkhi * 180. / np.pi
+    print('dkhi, dphi', dphi * 180. / np.pi, dkhi * 180. / np.pi)
 
     nkhi = len(data[0])
     phi_i = 0.
     phi_f = np.pi * 2.
     khi_i = 0.
     khi_f = dkhi * (nkhi - 1)
-    print 'khi range', khi_i, khi_f * 180. / np.pi
-    print 'phi range', phi_i, phi_f * 180. / np.pi
+    print('khi range', khi_i, khi_f * 180. / np.pi)
+    print('phi range', phi_i, phi_f * 180. / np.pi)
     # spanned area, i.e., the area of incomplete hemisphere:
     # area = (np.cos(khi_f) - np.cos(khi_i)) * (phi_f - phi_i)
 
@@ -216,9 +216,9 @@ def epfformat(mode=None, filename=None):
     if mode == 'steglich':
         # Calculated or raw pole figure
         i = 0
-        print 'filename=', filename
+        print('filename=', filename)
         if not os.path.isfile(filename):
-            raise IOError, 'file is not available'
+            raise IOError('file is not available')
 
         while True:
             try:
@@ -227,9 +227,9 @@ def epfformat(mode=None, filename=None):
             except:
                 i = i + 1
             else:
-                print 'number of skipped rows: %i' % i
+                print('number of skipped rows: %i' % i)
                 break
-            if i > 1000: raise IOError, 'something is wrong'
+            if i > 1000: raise IOError('something is wrong')
             pass
 
         ## raw pole figure format
@@ -240,7 +240,7 @@ def epfformat(mode=None, filename=None):
             # upon each axis
             f = open(filename)
             temp = f.readlines()
-            khi = map(float, temp[nskip_raw - 1].split()[1:])
+            khi = list(map(float, temp[nskip_raw - 1].split()[1:]))
             khi = np.array(khi)
             khi = khi * np.pi / 180.
             phi = data[0]  # first column is for phi
@@ -265,13 +265,13 @@ def epfformat(mode=None, filename=None):
             tiny = 0.000001
             isincomplete = False
             if np.pi / 2. - khi[-1] > tiny:
-                print 'Incomplete pole figure'
-                print 'khi range: %3.2f ~%3.2f' % (
-                    khi[0] * 180. / np.pi, khi[-1] * 180. / np.pi)
+                print('Incomplete pole figure')
+                print('khi range: %3.2f ~%3.2f' % (
+                    khi[0] * 180. / np.pi, khi[-1] * 180. / np.pi))
                 isincomplete = True
 
                 ## normalization
-                if raw_input('y(norm), or n(no)>>>') == 'y':
+                if input('y(norm), or n(no)>>>') == 'y':
                     data = pfnorm(data)
                     pass
 
@@ -286,12 +286,12 @@ def epfformat(mode=None, filename=None):
 
         ## calculated pole figure format
         elif i == nskip_calc:  # He had two formats: raw and calculated.
-            print 'Calculated pole figure format'
+            print('Calculated pole figure format')
             # axes: (phi, khi)
             data = data.T  # (khi, phi)
             f = open(filename)
             temp = f.readlines()
-            khi = map(float, temp[nskip_calc - 1].split()[1:])
+            khi = list(map(float, temp[nskip_calc - 1].split()[1:]))
             khi = np.array(khi)
             khi = khi * np.pi / 180.
             phi = data[0]
@@ -316,13 +316,13 @@ def epfformat(mode=None, filename=None):
         ## make full use of existing uxd.py script
         ## --> normalization is missing...
         ## This must be completed!
-        import uxd
-        print 'You are now in the bruker mode under epfformat'
-        print 'given file name is %s' % filename
+        from . import uxd
+        print('You are now in the bruker mode under epfformat')
+        print('given file name is %s' % filename)
         myuxd = uxd.pf(filename=filename, mode='pf')
         if len(myuxd.polefigures) > 1:
-            print 'multiple pole figures are found'
-            raw_input()
+            print('multiple pole figures are found')
+            input()
         for i in range(len(myuxd.polefigures)):
             pf = myuxd.polefigures[i]
             pf = pfnorm(pf)  ##normalize
@@ -335,7 +335,7 @@ def epfformat(mode=None, filename=None):
         consider the possibility of multiple number of polefigure
         ## phi must be 0~355, khi must be 0~90 with 5 as an ang resolution
         """
-        print 'You are now reading %s' % filename
+        print('You are now reading %s' % filename)
         blocks = open(filename, 'rU').read().split('(')[1:]
 
         npf = len(blocks)
@@ -347,15 +347,15 @@ def epfformat(mode=None, filename=None):
             ## as well as maximum khi.
             ## --> modification (2011 NOV 8)
             hkl = blocks[i][0:3]  # hkl
-            hkl = map(int, [hkl[0], hkl[1], hkl[2]])
+            hkl = list(map(int, [hkl[0], hkl[1], hkl[2]]))
             if blocks[i][3] != ')':
-                print 'Caution: unexpected hkl labeling format'
+                print('Caution: unexpected hkl labeling format')
                 pass
             d, mxk = __epffiletrimmer__(blocks[i])  # only for popLA epf format
             datasets.append(d)
             max_khi.append(mxk)
             pass
-        print "number of pole figures:", len(datasets)
+        print("number of pole figures:", len(datasets))
 
         ## presumption of using 19x72 should be deprecated...
         data = np.zeros((len(datasets), 19, 72))  # npf, nphi, nkhi
@@ -374,7 +374,7 @@ def epfformat(mode=None, filename=None):
 
         return data, max_khi, hkl
     else:
-        raise IOError, 'Unexpected mode is given'
+        raise IOError('Unexpected mode is given')
     return data
 
 
@@ -406,9 +406,9 @@ def __epffiletrimmer__(block):
         pass
     pfdata = lines  # (maxkhi/dkhi + 1) * 4
     if len(pfdata) != 76:  # 76 =  ((90 / 5) + 1) * 4 (4lines for one khi level)
-        print 'len(pfdata) =', len(pfdata)
-        print pfdata
-        raise IOError, 'Unexpected pfdata format or type'
+        print('len(pfdata) =', len(pfdata))
+        print(pfdata)
+        raise IOError('Unexpected pfdata format or type')
 
     if True:
         for j in range(19):  # 90 / 5 + 1 #number of khi threads
@@ -450,15 +450,15 @@ def duplicate0_360(phi, data):
     tiny = 0.00000000001
     isallsame = True
     for i in range(len(data[0])):
-        print data[0, i]
-        print data[-1, i]
+        print(data[0, i])
+        print(data[-1, i])
     if any(abs(data[0, i] - data[-1, i]) > tiny for i in range(len(data[0]))):
-        print data[0, i]
-        print data[-1, i]
+        print(data[0, i])
+        print(data[-1, i])
         isallsame = False
 
     isphioverlapped = False
-    print abs(phi[0] - phi[-1] - 2. * np.pi)
+    print(abs(phi[0] - phi[-1] - 2. * np.pi))
     if abs(phi[0] - phi[-1] + 2. * np.pi) < tiny:
         isphioverlapped = True
 
@@ -469,16 +469,16 @@ def duplicate0_360(phi, data):
                 newdata[i, j] = data[i, j]
         return phi[:-1], newdata
     elif isphioverlapped and isallsame == False:
-        print "conflict results!"
-        print "phi=0, and 360 turned out to coexist but"
-        print "Values along these two axes are not equivalent"
+        print("conflict results!")
+        print("phi=0, and 360 turned out to coexist but")
+        print("Values along these two axes are not equivalent")
         raise IOError
     elif not isphioverlapped and isallsame:
-        print "Conflict results!"
-        print "Phi is overlapped but phi[0] and phi[-1] is same"
+        print("Conflict results!")
+        print("Phi is overlapped but phi[0] and phi[-1] is same")
         raise IOError
     else:
-        print "No duplicated axis is found"
+        print("No duplicated axis is found")
         return phi, data
 
 
@@ -626,9 +626,9 @@ def agr2pol(agrain=None, miller=None, proj=None):
     proj   = None
     """
     if proj is None:
-        print "argument proj should be given"; raise IOError
+        print("argument proj should be given"); raise IOError
     elif proj != 'pf' and proj != 'ipf':
-        print " proj should be either 'pf' or 'ipf'"
+        print(" proj should be either 'pf' or 'ipf'")
         raise IOError
     if type(miller).__name__ == 'list': miller = np.array(miller)
 
@@ -657,12 +657,12 @@ def agr2pol(agrain=None, miller=None, proj=None):
         elif miller[2] == 1:
             p_ca = 2
         else:
-            print"something is wrong"; raise IOError
+            print("something is wrong"); raise IOError
         # map the pole in the sample axes into the crystal axes
         "A_{ij} * V_{j}"
         return np.dot(amat, miller)  # sa to ca returns the pole in ca
     else:
-        print "projection should be pf or ipf"
+        print("projection should be pf or ipf")
         raise IOError
 
 
@@ -676,7 +676,7 @@ def ipfline(center=[0, 0], csym='cubic'):
     """
     xc = [];
     yc = []
-    if csym != 'cubic': print "Only Cubic!"; raise IOError
+    if csym != 'cubic': print("Only Cubic!"); raise IOError
     xc.append(center[0])
     yc.append(center[1])
 
@@ -754,10 +754,10 @@ class polefigure:
         # and returns its grains to the global gr variable.        #
 
         if grains is None and filename is None and epf is None:
-            print " ****************************** "
-            print " Since no argument is passed,"
-            print " 100 random grains are created"
-            print " ****************************** \n"
+            print(" ****************************** ")
+            print(" Since no argument is passed,")
+            print(" 100 random grains are created")
+            print(" ****************************** \n")
             a = re(ngrain=ngrain)
             gr = np.array(a.euler).transpose()
             gr = np.array([gr[1], gr[2], gr[3]]).transpose()
@@ -788,30 +788,30 @@ class polefigure:
                 self.epf_fn = [epf]
             elif epf:
                 fn = []  # list of file names
-                print 'type the experimental pole figure file names'
-                print "To finish input, press enter"
+                print('type the experimental pole figure file names')
+                print("To finish input, press enter")
                 while True:
-                    dum = raw_input(">>> ")
+                    dum = input(">>> ")
                     if len(dum) == 0: break
                     fn.append(dum)
                     pass
                 self.epf_fn = fn
                 pass
             else:
-                raise IOError, 'Unexpected epf type found'
+                raise IOError('Unexpected epf type found')
 
             ## check if the file name is correct ##
             for i in range(len(self.epf_fn)):
                 if not (os.path.isfile(self.epf_fn[i])):
-                    raise IOError, "Could not find %s" % self.epf_fn[i]
+                    raise IOError("Could not find %s" % self.epf_fn[i])
                 pass
             ## --------------------------------- ##
 
             ## POLE FIGURE MODE --------------------------------------
-            print "Type the experimental polfe figure mode"
-            print "Available options:",  # continuation
-            print "bruker, steglich, epf (default: %s)" % 'epf'
-            epf_mode = raw_input(" >>>")
+            print("Type the experimental polfe figure mode")
+            print("Available options:", end=' ')  # continuation
+            print("bruker, steglich, epf (default: %s)" % 'epf')
+            epf_mode = input(" >>>")
             if len(epf_mode) == 0:
                 epf_mode = 'steglich'
                 pass
@@ -858,15 +858,15 @@ class polefigure:
             phi = dat[1];
             phi2 = dat[2]
 
-            print 'phi1: %i ~ %i' % (
+            print('phi1: %i ~ %i' % (
                 int(round(min(dat[0] / 90.))) * 90, int(
-                    round(max(dat[0] / 90.))) * 90)
-            print 'phi:  %i ~ %i' % (
+                    round(max(dat[0] / 90.))) * 90))
+            print('phi:  %i ~ %i' % (
                 int(round(min(dat[1] / 90.))) * 90, int(
-                    round(max(dat[1] / 90.))) * 90)
-            print 'phi2: %i ~ %i' % (
+                    round(max(dat[1] / 90.))) * 90))
+            print('phi2: %i ~ %i' % (
                 int(round(min(dat[2] / 90.))) * 90, int(
-                    round(max(dat[2] / 90.))) * 90)
+                    round(max(dat[2] / 90.))) * 90))
             ph1min, ph1max = int(
                 round(min(dat[0] / 90.))) * 90, int(
                 round(max(dat[0] / 90.))) * 90
@@ -906,10 +906,10 @@ class polefigure:
           [i][j]: i-th pole's j-th phi segment's khi
           [i][j][k]: An intensity (count) at i-th pole's j-th phi sement at the k-th khi
         """
-        print 'List of files:'
-        for f in self.epf_fn: print '%s ' % f
+        print('List of files:')
+        for f in self.epf_fn: print('%s ' % f)
         # print 'dimension of self.grid:', self.grid.shape
-        print 'ifig=', ifig
+        print('ifig=', ifig)
 
         fact = 2.
         nrow = len(self.grid)
@@ -1018,9 +1018,9 @@ class polefigure:
             r0, t0 = cart2polar(x0, y0)
             if self.epf_mode == 'epf':
                 # if self.hkl[ip]==None:
-                hkl = raw_input(
+                hkl = input(
                     "Type the indices delimiter as a space (e.g. 1 1 1)>>>")
-                hkl = map(int, hkl.split())
+                hkl = list(map(int, hkl.split()))
                 # else: hkl = self.hkl[ip]
                 # (hkl)
                 index = '('
@@ -1031,10 +1031,10 @@ class polefigure:
                 pass
             else:
                 if self.hkl[ip] is None:
-                    hkl = raw_input(
+                    hkl = input(
                         "Type the indices delimiter" + \
                         " as a space (e.g. 1 1 1)>>>")
-                    hkl = map(int, hkl.split())
+                    hkl = list(map(int, hkl.split()))
                     pass
                 # (hkl)
                 index = '('
@@ -1142,7 +1142,7 @@ class polefigure:
                 p_ = pole[ip]
                 p = [0, 0, 0]
                 if len(pole[ip]) != 4:
-                    raw_input('pole must be four digit for hexag')
+                    input('pole must be four digit for hexag')
                     raise IOError
                 p[2] = p_[3]
                 p[0] = p_[0] - p_[2]
@@ -1229,10 +1229,10 @@ class polefigure:
 
                 N.append(nodes)
                 self.pfnode.append(nodes)
-                print 'node shape:', nodes.shape
+                print('node shape:', nodes.shape)
 
-            print "%5.2f seconds elapsed during calling" \
-                  " self.cells\n" % (time.time() - start)
+            print("%5.2f seconds elapsed during calling" \
+                  " self.cells\n" % (time.time() - start))
             del nodes
 
             ## resolution and pole figure plotting preferences
@@ -1373,14 +1373,14 @@ class polefigure:
             figsize = (len(pole) * 2. * fact, 1. * 2. * fact)
 
             if axes is not None:
-                raise IOError, "'im' mode does not support" \
-                               " imposition of axes"
+                raise IOError("'im' mode does not support" \
+                               " imposition of axes")
             fig = plt.figure(ifig, figsize=figsize)
             fig.clf()  # clear the figure
             nrow = len(pole)
             Zs = []
             start = time.time()
-            print'dm, dn:', dm, dn
+            print('dm, dn:', dm, dn)
             for ip in range(len(pole)):
                 f, Z = self.cells(
                     pole=pole[ip], ifig=None,
@@ -1390,8 +1390,8 @@ class polefigure:
                     nths=nths)
                 Zs.append(Z)
 
-            print "%5.2f seconds elapsed during" \
-                  " calling self.cells\n" % (time.time() - start)
+            print("%5.2f seconds elapsed during" \
+                  " calling self.cells\n" % (time.time() - start))
 
             del Z
             ## resolution and pole figure plotting preferences
@@ -1511,8 +1511,8 @@ class polefigure:
                 )
                 pass
             ##
-            print "A figure's been saved to pcm.pdf and .eps"
-            print 'each_axpcm_00.pdf and .eps'
+            print("A figure's been saved to pcm.pdf and .eps")
+            print('each_axpcm_00.pdf and .eps')
 
             fig.clf()
             # return phi, r, Z
@@ -1532,7 +1532,7 @@ class polefigure:
         ifig  = 1
         """
         if pole is None:
-            print 'miller index of the pole should be given'
+            print('miller index of the pole should be given')
             raise IOError
         temp = []
         for i in range(len(self.gr)):
@@ -1580,25 +1580,25 @@ class polefigure:
         xy = [];
         POLE = []
         if csym != 'cubic' and csym != 'hexag' and csym != 'None':
-            print "Other symmetries than cubic or hexag nor 'None' " \
-                  "is not prepared yet"
+            print("Other symmetries than cubic or hexag nor 'None' " \
+                  "is not prepared yet")
             raise IOError
         if proj != 'pf' and proj != 'ipf':
-            print "Other modes of projection than pf and " \
-                  "ipf is not prepared yet"
+            print("Other modes of projection than pf and " \
+                  "ipf is not prepared yet")
             raise IOError
         if agrain is None:
-            print "A grains must be given to the method"
+            print("A grains must be given to the method")
             raise IOError
         if pole is None:
-            print "Pole must be given to core"
+            print("Pole must be given to core")
             raise IOError
         if type(pole).__name__ == 'list':
             pole = np.array(pole)
         elif type(pole).__name__ == 'ndarray':
             pass
         else:
-            raise IOError, 'Unexpected type of the pole argument'
+            raise IOError('Unexpected type of the pole argument')
         temp = pole.copy()
         del pole;
         pole = temp
@@ -1625,18 +1625,18 @@ class polefigure:
         ## inverse pole figure
         elif proj == 'ipf':
             if abs(pole[0] ** 2 + pole[1] ** 2 + pole[2] ** 2 - 1) > 0.1 ** 6:
-                print "The pole must be one of principal axes of" \
-                      " the sample"
-                print "It should be among [1,0,0], [0,1,0], [0,0,1]"
-                print "current pole is as below\n", pole
-                raw_input()
+                print("The pole must be one of principal axes of" \
+                      " the sample")
+                print("It should be among [1,0,0], [0,1,0], [0,0,1]")
+                print("current pole is as below\n", pole)
+                input()
                 raise IOError
             npeq = [pole]  ## Note it is sample axis vector!
             # equivalent pole calculatation is deffered to
             # next for in block
         ## unexpected proj argument
         else:
-            print "It should be either pf or ipf"; raise IOError
+            print("It should be either pf or ipf"); raise IOError
 
         for ip in range(len(npeq)):
             ## 'pf':  converts ca pole to sa pole
@@ -1759,12 +1759,10 @@ class polefigure:
         # phi_angle = np.arange(-pi, pi)/dm + dm/2
         # theta_angle = np.arange( 0, pi/2.)/dn + dn/2
 
-        if np.mod(360., dm) != 0: raise IOError, \
-            'dm should be a devisor of 360.'
-        if np.mod(90., dn) != 0: raise IOError, \
-            'dn should be a devisor of 90.', dn
+        if np.mod(360., dm) != 0: raise IOError('dm should be a devisor of 360.')
+        if np.mod(90., dn) != 0: raise IOError('dn should be a devisor of 90.').with_traceback(dn)
 
-        f = np.zeros(map(int, [mgrid, ngrid]))  # central
+        f = np.zeros(list(map(int, [mgrid, ngrid])))  # central
         #  The mesh f is on the central point, 'x', of each grid as
         # depicted below:
         #
@@ -1808,20 +1806,20 @@ class polefigure:
             mi = int((phi + pi) / (dm * pi / 180.) - 0.1 ** 6)  # subtract tiny
             ni = int(theta / (dn * pi / 180.) - 0.1 ** 6)  # subtract tiny
             if mi < 0 or ni < 0:
-                raw_input('Negative index');
+                input('Negative index');
                 raise IOError
             # print 'phi, theta', phi/np.pi*180., theta/np.pi*180.
             # print 'mi, ni ', mi, ni
             elif mi > mgrid or ni > ngrid:
-                raw_input("Unexpected Error")
+                input("Unexpected Error")
                 raise IOError
             try:
                 f[mi, ni] = f[mi, ni] + pol[i][2]  # add pole intensity
             # accumulate the intensity
             except:
-                print phi * 180. / np.pi, theta * 180. / np.pi
-                raw_input('Error  raised >> ')
-                raise IOError, "Something wrong in the index for f[mi,ni]"
+                print(phi * 180. / np.pi, theta * 180. / np.pi)
+                input('Error  raised >> ')
+                raise IOError("Something wrong in the index for f[mi,ni]")
 
         ## ----------------------------------------
         """
@@ -1922,7 +1920,7 @@ class polefigure:
                     elif p < -pi:
                         p = p + 2. * pi
                     elif p == pi or p == -pi:
-                        print 'Unexpected..';
+                        print('Unexpected..');
                         raise IOError
                         pass
                     if t > pi / 2.:
@@ -1946,7 +1944,7 @@ class polefigure:
                     mi = int((p + pi) / (dm * pi / 180.) - 0.1 ** 6)
                     ni = int(t / (dn * pi / 180.) - 0.1 ** 6)
                     if mi < 0 or ni < 0:
-                        raw_input('Negative index')
+                        input('Negative index')
                         raise IOError
                     inten = inten + f[mi, ni]
                 nodes[m, n] = inten / 4.
@@ -1988,21 +1986,21 @@ class polefigure:
         irdc = True:   Reduction of inverse pole figure region
         """
         if pole is None:
-            print "Pole must be given"
+            print("Pole must be given")
             raise IOError
 
         ## If a grain is assigned,
         ## Operations are carried on it, instead of on
         ## Global grains.
         if color is None:
-            print 'Default color is black';
+            print('Default color is black');
             color = 'k'
         if agrain is not None:
             "* a grains' euler angle is given"
             "* dot plotting is performed on a grain"
             agr = np.array([agrain])  # p1,p,p2, inten
         else:
-            print 'Agrain must be asigned'
+            print('Agrain must be asigned')
             raise IOError
         # print "------------------------------------"
         XY = [];
@@ -2100,9 +2098,9 @@ class polefigure:
                     ax.set_ylim(-0.02, 0.5)
             except:
                 if len(XY) == 0:
-                    print 'Empty XY is returned'
+                    print('Empty XY is returned')
                 else:
-                    print "Unexpected Error"; raw_input()
+                    print("Unexpected Error"); input()
                 # -------------------------------
         return np.array(XY)
 
@@ -2121,14 +2119,14 @@ class polefigure:
         csym ='cubic'
         """
         start = time.time()
-        from sym import cv
-        from sym import cubic, hexag
+        from .sym import cv
+        from .sym import cubic, hexag
         # from sym_cy import cubic, hexag
-        import sym  # python compiled
+        from . import sym  # python compiled
         # import sym_cy #cython compiled
         # from sym.py cvec, cubic, and hexgonal modules are brought in
         if miller is None:
-            print "Miller index should be given"
+            print("Miller index should be given")
             raise IOError
         vect = np.array(miller)
         norm = 0.;
@@ -2162,8 +2160,8 @@ class polefigure:
             # H = [np.identity(3)]
             sneq = [vect]
         else:
-            print 'Given symmetry, %s is not prepared' % csym
-            raw_input('Enter to raise an error and quits the job')
+            print('Given symmetry, %s is not prepared' % csym)
+            input('Enter to raise an error and quits the job')
             raise IOError
 
         # print 'elapsed time during v calculation: %8.6f'%
@@ -2225,8 +2223,8 @@ if __name__ == "__main__":
     try:
         opts, args = getopt.getopt(sys.argv[1:],
                                    'm:i:o:c:s')  # , 'output=', 'csym='])
-    except getopt.GetoptError, err:
-        print str(err)
+    except getopt.GetoptError as err:
+        print(str(err))
         sys.exit(2)
         pass
     ## ----------------------------------------- ##

@@ -123,7 +123,7 @@ def __rot_nrot_001__(h, csym=None):
     elif csym == 'tetra':
         nrot = 4
     else:
-        print 'Unexpected Error'; raise IOError
+        print('Unexpected Error'); raise IOError
 
     cos = np.cos;
     sin = np.sin;

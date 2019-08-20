@@ -46,7 +46,7 @@ Exemplery use,
 >> plot(x,y) ...
 """
 #### prints out the documentation to the module.####
-print __doc__
+print(__doc__)
 ####################################################
 
 import numpy as np
@@ -56,16 +56,16 @@ import os
 try:
     from mpl_toolkits.mplot3d import Axes3D
 except:
-    print'Axes3D toolkit is not loaded '
+    print('Axes3D toolkit is not loaded ')
 try:
     import pylab
     from pylab import *
 except:
-    print 'pylab module could not be imported'
+    print('pylab module could not be imported')
 sort = np.sort
 mean = np.mean
 
-from upf import pfnorm  # pf normalize data
+from .upf import pfnorm  # pf normalize data
 
 
 def prof(filename=None):
@@ -79,7 +79,7 @@ def prof(filename=None):
     lines = lines[1:len(lines) - 1]
 
     ### 2theta-intensity profile
-    for i in range(len(lines)): lines[i] = map(float, lines[i].split())
+    for i in range(len(lines)): lines[i] = list(map(float, lines[i].split()))
     lines = np.array(lines)
     lines = lines.transpose()
     x = lines[0];
@@ -100,7 +100,7 @@ def profall(preppend):
     zs = []
     for i in files:
         tx, ty, kh = prof(filename=i)
-        intensities.append(zip(tx, ty))
+        intensities.append(list(zip(tx, ty)))
         zs.append(kh)
 
     # return intensities, zs
@@ -132,20 +132,20 @@ def pfsplot(pfs=None, ifig=6, idot=False, x0=0, y0=0):
     try:
         plt.figure(ifig)
     except:
-        print "TclError happened. This is probably because your terminal\n"
-        print "does not support DISPLAY as expected. ",
-        print "Please try fig.figure(3) and see if is true"
+        print("TclError happened. This is probably because your terminal\n")
+        print("does not support DISPLAY as expected. ", end=' ')
+        print("Please try fig.figure(3) and see if is true")
         return -1
     try:
         plt
     except:
-        print "plt module is not existed"
-    print "\n********** pole figure plot internal module ************\n"
+        print("plt module is not existed")
+    print("\n********** pole figure plot internal module ************\n")
     if pf is None:
-        print "\n*****************************************************"
-        print " Wrong argument type found. It must be a polefigure "
-        print "Will return -1"
-        print "*****************************************************\n"
+        print("\n*****************************************************")
+        print(" Wrong argument type found. It must be a polefigure ")
+        print("Will return -1")
+        print("*****************************************************\n")
         return -1
 
     ## loop over individual pole figure in the pfs block
@@ -161,8 +161,8 @@ def pfsplot(pfs=None, ifig=6, idot=False, x0=0, y0=0):
     pole = pfs
     TEMP = np.resize((), (17, 73))
     # pole = pole.transpose()       #pole.shape = [17,72]
-    print 'pole shape =', pole.shape
-    print 'temp shape =', TEMP.shape
+    print('pole shape =', pole.shape)
+    print('temp shape =', TEMP.shape)
     for i in range(len(pole)):
         for j in range(len(pole[i])):
             TEMP[i][j] = pole[i][j]
@@ -222,21 +222,21 @@ def __pf_plot__(intensity=None,
     try:
         plt.figure(ifig)
     except:
-        print "TclError happened. This is probably because your terminal\n"
-        print "does not support DISPLAY as expected. ",
-        print "Please try fig.figure(3) and see if is true"
+        print("TclError happened. This is probably because your terminal\n")
+        print("does not support DISPLAY as expected. ", end=' ')
+        print("Please try fig.figure(3) and see if is true")
         return -1
     try:
         plt
     except:
-        print "plt module is not existed"
+        print("plt module is not existed")
 
-    print "\n********** pole figure plot internal module ************\n"
+    print("\n********** pole figure plot internal module ************\n")
     if pf is None:
-        print "\n*****************************************************"
-        print " Wrong argument type found. It must be a polefigure "
-        print "Will return -1"
-        print "*****************************************************\n"
+        print("\n*****************************************************")
+        print(" Wrong argument type found. It must be a polefigure ")
+        print("Will return -1")
+        print("*****************************************************\n")
         return -1
 
     #########################################################
@@ -260,8 +260,8 @@ def __pf_plot__(intensity=None,
     phi_temp = np.linspace(0., 360, 360 / 5 + 1)
     R_TEMP, PHI_TEMP = np.meshgrid(r, phi_temp)
     TEMP = np.resize((), (pole.shape[1], pole.shape[0]))
-    print 'pole shape =', pole.shape
-    print 'temp shape =', TEMP.shape
+    print('pole shape =', pole.shape)
+    print('temp shape =', TEMP.shape)
     for i in range(len(pole)):
         for j in range(len(pole[i])):
             TEMP[i][j] = pole[i][j]
@@ -307,13 +307,13 @@ def xyz(intensity, ix, iy):
     if len(intensity) == 17:
         xgrid = 5
     else:
-        print 'Unexpected Khi step'
+        print('Unexpected Khi step')
         raise IOError
 
     if len(intensity[0]) == 72:
         ygrid = 5
     else:
-        print 'Unexpected phi step'
+        print('Unexpected phi step')
         raise IOError
 
     z = intensity[ix][iy]
@@ -371,7 +371,7 @@ def _info(block, name):
             # print 'cwl = ', cwl
             if cwl[0][0:len(name)] == name:
                 return cwl[1]
-    print 'Could not fine ', name, ' argument in the block'
+    print('Could not fine ', name, ' argument in the block')
     raise IOError
 
 
@@ -405,7 +405,7 @@ def determine_block_indicator(block):
     i = 0
     while True:
         try:
-            dat = map(float, block[i].split())
+            dat = list(map(float, block[i].split()))
             if len(dat) != 2: raise IOError
         except:
             i = i + 1
@@ -437,7 +437,7 @@ def th2count(block, block_indicator='_2THETACOUNTS'):
         else:
             if len(block[i]) < 3: return intensities, phi2
             try:
-                current_intensity = map(float, block[i].split())
+                current_intensity = list(map(float, block[i].split()))
             except ValueError:
                 # print block[i].split()
                 # raw_input()
@@ -514,15 +514,15 @@ class pf:
         dfc
         """
         if mode == 'pf':
-            print ''
-            print '---------------------------'
-            print 'POLE FIGURE AQUISITION MODE'
-            print '---------------------------\n'
+            print('')
+            print('---------------------------')
+            print('POLE FIGURE AQUISITION MODE')
+            print('---------------------------\n')
         elif mode == 'df':
-            print ''
-            print '---------------------------'
-            print 'DEFOCUS DATA AQUSITION MODE'
-            print '---------------------------\n'
+            print('')
+            print('---------------------------')
+            print('DEFOCUS DATA AQUSITION MODE')
+            print('---------------------------\n')
 
         blocks = make_blocks(filename=filename, sep=sep)
         self.blocks = blocks
@@ -534,16 +534,16 @@ class pf:
         for i in range(len(self.data_block)):
             self.data_block[i] = self.data_block[i][0:len(self.data_block[i]) - 1]
 
-        print '** Total number of data blocks: ', len(self.data_block)
+        print('** Total number of data blocks: ', len(self.data_block))
 
         self.th2s = []
         set_2thet = set()
         # print '%5s %5s %5s %5s'%('2th','khi','time','size')
-        for i in xrange(len(self.data_block)):
+        for i in range(len(self.data_block)):
             cb = self.data_block[i]  # cb : current block
             info = self.block_info(block=cb, echo=echo)
 
-            _2theta, _khi, _steptime, _stepsize = map(float, info[:4])
+            _2theta, _khi, _steptime, _stepsize = list(map(float, info[:4]))
             # print '%5.3f %5.1f %5.2i %5.2i'%(_2theta, _khi, _steptime, _stepsize)
             set_2thet.add(round(float(info[0]), 3))
 
@@ -573,8 +573,8 @@ class pf:
         set_2thet = list(set_2thet)
         set_2thet = np.array(set_2thet, dtype='float')
         set_2thet = np.sort(set_2thet)
-        for i in xrange(len(set_2thet)):
-            print '%2.2i' % i, set_2thet[i]
+        for i in range(len(set_2thet)):
+            print('%2.2i' % i, set_2thet[i])
 
         # raise IOError, 'Debug: 2set_2thet'
 
@@ -591,7 +591,7 @@ class pf:
         #     except: break
 
         self.pfs = []
-        for i in xrange(len(self.listh2)):
+        for i in range(len(self.listh2)):
             self.pfs.append(self.lookfor(th2=self.listh2[i]))
 
         ###################################
@@ -602,47 +602,47 @@ class pf:
         # bg_determine_condition='digits'
         bg_determine_condition = 'short'
 
-        for i in xrange(len(self.pfs)):
+        for i in range(len(self.pfs)):
             if self.bg_or_pf(self.pfs[i], condition=bg_determine_condition) == 'pf':
                 self.polefigures.append(self.pfs[i])
             elif self.bg_or_pf(self.pfs[i], condition=bg_determine_condition) == 'bg':
                 self.backgrounds.append(self.pfs[i])
 
-        print '\n'
-        for i in xrange(len(self.polefigures)):
-            print 'PF #', i + 1
+        print('\n')
+        for i in range(len(self.polefigures)):
+            print('PF #', i + 1)
             _2th, _st, _sz, d_alpha, d_khi, _khis = self.pf_info(self.polefigures[i])
-            print 'peak at Bragg the 2theta of ', round(_2th, 3)
-            print 'delta alpha  = ', d_alpha, ' delta khi = ', d_khi,
-            print '    step time :', _st,
-            print '    step size :', _sz
+            print('peak at Bragg the 2theta of ', round(_2th, 3))
+            print('delta alpha  = ', d_alpha, ' delta khi = ', d_khi, end=' ')
+            print('    step time :', _st, end=' ')
+            print('    step size :', _sz)
 
-        print '\n'
+        print('\n')
         for i in range(len(self.backgrounds)):
-            print 'BG #', i + 1
+            print('BG #', i + 1)
             _2th, _st, _sz, d_alpha, d_khis, _khis = self.pf_info(self.backgrounds[i])
-            print 'peak at Bragg the 2theta of ', round(_2th, 3)
-            if d_alpha != 'unknown': print 'delta alpha = ', d_alpha,
-            print ' delta khi   = ', d_khi,
-            print '    step time :', _st,
-            print '    step size :', _sz
+            print('peak at Bragg the 2theta of ', round(_2th, 3))
+            if d_alpha != 'unknown': print('delta alpha = ', d_alpha, end=' ')
+            print(' delta khi   = ', d_khi, end=' ')
+            print('    step time :', _st, end=' ')
+            print('    step size :', _sz)
 
-        raw_input(' Press Enter  >>> ')
+        input(' Press Enter  >>> ')
 
         self.__pf_selection__()
 
-        raw_input("Press enter if you'd like to proceed >> ")
+        input("Press enter if you'd like to proceed >> ")
 
         if os.name == 'nt':
             os.system('cls')
         elif os.name == 'posix':
             os.system('clear')
 
-        print "\n\n***************************************************************"
-        print "d_alpha is given to backgrounds, that's most probably because"
-        print "the backgrounds are measured only at along a certain phi angle"
-        print "In other words, it's been partially measured."
-        print "***************************************************************"
+        print("\n\n***************************************************************")
+        print("d_alpha is given to backgrounds, that's most probably because")
+        print("the backgrounds are measured only at along a certain phi angle")
+        print("In other words, it's been partially measured.")
+        print("***************************************************************")
 
         "Combines a certain set of pole figure and backgrounds"
 
@@ -685,10 +685,10 @@ class pf:
                     os.system('clear')
                 elif os.name == 'nt':
                     os.system('cls')
-                print " You chose not to subtract the backgrounds"
-                print " Now you have %i polefigure(s) " % (len(self.polefigures))
-                print " Do you like to plot pole figures ? "
-                if raw_input('yes/no') == 'yes':
+                print(" You chose not to subtract the backgrounds")
+                print(" Now you have %i polefigure(s) " % (len(self.polefigures)))
+                print(" Do you like to plot pole figures ? ")
+                if input('yes/no') == 'yes':
                     for i in range(len(self.polefigures)):
                         __pf_plot__(intensity=polefigures[i], ifig=6 + i)
                     else:
@@ -711,19 +711,19 @@ class pf:
                     Ibgl = th2count(block=R_bg)[0]
                     Ibgr = th2count(block=L_bg)[0]
                     info_temp = self.block_info(C_pf, echo=False)
-                    info_temp = map(float, info_temp[0:4])
+                    info_temp = list(map(float, info_temp[0:4]))
                     pf_2th = info_temp[0]
                     pf_khi = info_temp[1]
                     pf_steptime = info_temp[2]
                     pf_stepsize = info_temp[3]
                     info_temp = self.block_info(L_bg, echo=False)
-                    info_temp = map(float, info_temp[0:4])
+                    info_temp = list(map(float, info_temp[0:4]))
                     L_bg_2th = info_temp[0]
                     L_bg_khi = info_temp[1]
                     L_bg_steptime = info_temp[2]
                     L_bg_stepsize = info_temp[3]
                     info_temp = self.block_info(R_bg, echo=False)
-                    info_temp = map(float, info_temp[0:4])
+                    info_temp = list(map(float, info_temp[0:4]))
                     R_bg_2th = info_temp[0]
                     R_bg_khi = info_temp[1]
                     R_bg_steptime = info_temp[2]
@@ -736,11 +736,11 @@ class pf:
                     if bgmode is not None:
                         bglr_len = [len(Ibgl), len(Ibgr)]
                         if any(bglr_len[k] != len(Ipf) for k in range(2)):
-                            print '** Partial background measured **'
+                            print('** Partial background measured **')
                             pass
 
                     elif bgmode is None:
-                        print '** No Background subtraction **'
+                        print('** No Background subtraction **')
 
                     for k in range(len(Ipf)):
                         """
@@ -761,11 +761,11 @@ class pf:
                         Ipf[k] = Ipf[k] - dI
                         if Ipf[k] < 0:
                             if iask:
-                                print 'Caution) Negative value from prior BG subtraction: ',
-                                print 'value = ', Ipf[k]
-                                print 'Do you want to keep on going(yes)?, or',
-                                print "Don't ask this to the end(ignore)"
-                                ans = raw_input('Type answer (yes/ignore) >>  ')
+                                print('Caution) Negative value from prior BG subtraction: ', end=' ')
+                                print('value = ', Ipf[k])
+                                print('Do you want to keep on going(yes)?, or', end=' ')
+                                print("Don't ask this to the end(ignore)")
+                                ans = input('Type answer (yes/ignore) >>  ')
                                 if len(ans) == 0:
                                     pass
                                 elif ans == 'yes':
@@ -773,18 +773,18 @@ class pf:
                                 elif ans == 'ignore':
                                     iask = False; pass
                                 elif ans == 'no':
-                                    print "\n******************************************"
-                                    print "There's no 'no' answer here"
-                                    print "Negative intensity is physically non-sense"
-                                    print "The code raises an error"
-                                    print "******************************************"
-                                    raw_input()
+                                    print("\n******************************************")
+                                    print("There's no 'no' answer here")
+                                    print("Negative intensity is physically non-sense")
+                                    print("The code raises an error")
+                                    print("******************************************")
+                                    input()
                                     raise IOError
                                 else:
                                     raise IOError
                                 Ipf[k] = 1
                             elif not iask:
-                                print "If negative intensity will be returned to be 1."
+                                print("If negative intensity will be returned to be 1.")
                                 Ipf[k] = 1
                         INTENSITIES[i][j].append(Ipf[k])
 
@@ -798,38 +798,38 @@ class pf:
                 dff = dfc
 
             if len(dff) == 0:
-                print 'You do not have any *.dfc file'
+                print('You do not have any *.dfc file')
             else:
-                print '*********************************************'
-                print '%15s\n' % 'Available FILES and its _2THETA'
-                print '%3s  %15s  %6s  %6s' % ('ID', 'FILENAME', 'PEAK_AT', 'COMMENT')
-                for i in xrange(len(dff)):
+                print('*********************************************')
+                print('%15s\n' % 'Available FILES and its _2THETA')
+                print('%3s  %15s  %6s  %6s' % ('ID', 'FILENAME', 'PEAK_AT', 'COMMENT'))
+                for i in range(len(dff)):
                     ff = open(dff[i], 'r')
                     lines = ff.readlines()
                     try:
                         float(lines[3].split('=')[1])
                     except:
-                        print 'Could not get %s file rightly.\n' % (dff[i])
-                        print '**************************************'
-                        print "Contents of the file is shown as below\n"
+                        print('Could not get %s file rightly.\n' % (dff[i]))
+                        print('**************************************')
+                        print("Contents of the file is shown as below\n")
                         if os.name == 'posix':
                             os.system('cat %s' % (dff[i]))
                         elif os.name == 'nt':
                             os.system('type %s' % (dff[i]))
-                        print '\n Please type enter to proceed';
-                        raw_input()
+                        print('\n Please type enter to proceed');
+                        input()
                         pass
                     else:
                         _2th = float(lines[3].split('=')[1])
                         comment = lines[2]
                         ff.close()
-                        print '%3i  %15s  %5.3f  %s' % (i, dff[i], _2th, comment)
+                        print('%3i  %15s  %5.3f  %s' % (i, dff[i], _2th, comment))
 
-                for i in xrange(len(self.INTENSITIES)):
-                    print '  Type the defocus correction file id (from 0)'
-                    print '  minus value (e.g. -1) will turn down ',
-                    print 'the defoucssing correction'
-                    id_dfc = raw_input(' >>>    ')
+                for i in range(len(self.INTENSITIES)):
+                    print('  Type the defocus correction file id (from 0)')
+                    print('  minus value (e.g. -1) will turn down ', end=' ')
+                    print('the defoucssing correction')
+                    id_dfc = input(' >>>    ')
                     id_dfc = int(id_dfc)
                     if id_dfc < 0:
                         pass
@@ -850,11 +850,11 @@ class pf:
                 os.system('cls')
             elif os.name == 'posix':
                 os.system('clear')
-            print "############################"
-            print "      WRITING ACTIVITY     "
-            print "############################\n"
-            print " available formats: epf(0), list(1), No file writing(-1)"
-            fileformat = raw_input("Type format flag(0,1,-1)(default=0) >>    ")
+            print("############################")
+            print("      WRITING ACTIVITY     ")
+            print("############################\n")
+            print(" available formats: epf(0), list(1), No file writing(-1)")
+            fileformat = input("Type format flag(0,1,-1)(default=0) >>    ")
             if len(fileformat) == 0:
                 fileformat = 'epf'
             else:
@@ -865,21 +865,21 @@ class pf:
                 elif fileformat == '-1':
                     fileformat = None
                 else:
-                    print 'Wrong fileformat input'; raise IOError
+                    print('Wrong fileformat input'); raise IOError
             if fileformat is None:
                 pass
             else:
-                print " Type the file name"
-                filename = raw_input(" >> ")
+                print(" Type the file name")
+                filename = input(" >> ")
                 self.write(filename=filename, mode=fileformat)
 
         elif mode == 'df':  # defocus correction curve making mode
             # --------------------------------
             # DEFOCUS CORRECTION CURVE FILE
             # --------------------------------
-            print "\n\n ****************************************"
-            print " * Defocus correction curve file maker *"
-            print " ****************************************\n"
+            print("\n\n ****************************************")
+            print(" * Defocus correction curve file maker *")
+            print(" ****************************************\n")
             for i in range(len(self.polefigures)):
                 self.defc(pfid=i, filename='dfc_' + str(i) + '.dfc', mode='avg')
 
@@ -888,7 +888,7 @@ class pf:
         Correct the defucussed error for given self.INTENSITIES[pf_id]
         """
         current_int = self.INTENSITIES[pf_id]
-        print 'Defocusing file name is =', filename
+        print('Defocusing file name is =', filename)
         # df_factor =
         FILE = open(filename, 'r')
 
@@ -907,9 +907,9 @@ class pf:
         if len(df_factor) == len(current_int):
             pass
         else:
-            print 'len(df_factor), len(current_int)', len(df_factor), len(current_int)
-            raw_input()
-            print "defocus file and given polefigure have different khi range"
+            print('len(df_factor), len(current_int)', len(df_factor), len(current_int))
+            input()
+            print("defocus file and given polefigure have different khi range")
             raise IOError
 
         for i in range(len(current_int)):  # khi
@@ -948,14 +948,14 @@ class pf:
 
         curve = []
         if pfid is None:
-            print 'You should input pole figure id',
-            print ' for your self.polefigures[i]'
+            print('You should input pole figure id', end=' ')
+            print(' for your self.polefigures[i]')
             return -1
 
         FILE = open(filename, 'w')
-        print '\nWrite your own comment which will be prepended '
-        print 'to your defocus file *.dfc'
-        comments = raw_input(' >> ')
+        print('\nWrite your own comment which will be prepended ')
+        print('to your defocus file *.dfc')
+        comments = input(' >> ')
         I_stand = self.INTENSITIES[pfid]
 
         info = self.pf_info(self.polefigures[pfid])
@@ -993,25 +993,25 @@ class pf:
         pass
 
     def __pf_selection__(self):
-        print " \n\n"
-        print " ****************************************"
-        print " *        POLE FIGURE SELECTION         *"
-        print " * Select only some of the pole figures *"
-        print " ****************************************\n\n"
+        print(" \n\n")
+        print(" ****************************************")
+        print(" *        POLE FIGURE SELECTION         *")
+        print(" * Select only some of the pole figures *")
+        print(" ****************************************\n\n")
 
-        print "**********************************"
-        print "*     list of pole figures       *"
-        print "**********************************\n"
+        print("**********************************")
+        print("*     list of pole figures       *")
+        print("**********************************\n")
 
-        print "%8s %7s\n" % ('PF id', '2theta')
+        print("%8s %7s\n" % ('PF id', '2theta'))
         pf_slc = []
         for i in range(len(self.polefigures)):
             _2th, _st, _sz, d_alpha, d_khi, _khis = self.pf_info(self.polefigures[i])
-            print "%8i %7.3f\n" % (i, _2th)
+            print("%8i %7.3f\n" % (i, _2th))
 
-        print "\nPlease type the id of your polefigure\n"
-        print "with delimiter as ',' e.g. 0,1,2\n"
-        pf_slc_id = map(int, raw_input(' >  ').split(','))
+        print("\nPlease type the id of your polefigure\n")
+        print("with delimiter as ',' e.g. 0,1,2\n")
+        pf_slc_id = list(map(int, input(' >  ').split(',')))
 
         temp_pf = []
         for ID in pf_slc_id:
@@ -1048,9 +1048,9 @@ class pf:
         mx = max(tmx)
 
         if mx > 9999.499:
-            print 'unexpected result in def _avg_out_'
-            print mx
-            raw_input()
+            print('unexpected result in def _avg_out_')
+            print(mx)
+            input()
             # raise IOError
 
     def write(self, filename='temp.pf', mode='list'):
@@ -1097,15 +1097,15 @@ class pf:
                 FILE.writelines('%s\n' % header)
                 # i: ID of pole figure self.polefigures[i]
                 info = self.pf_info(self.polefigures[i])
-                print 'The Bragg 2theta of pf', i + 1, '#',
-                print info[0]
-                print 'Type the indices of the current polefigure',
-                print 'with spacing'
-                index = raw_input(' >>>   ')
-                index = map(int, index.split())
+                print('The Bragg 2theta of pf', i + 1, '#', end=' ')
+                print(info[0])
+                print('Type the indices of the current polefigure', end=' ')
+                print('with spacing')
+                index = input(' >>>   ')
+                index = list(map(int, index.split()))
 
                 khi_inc = info[4]
-                khi_max = max(map(float, info[5]))
+                khi_max = max(list(map(float, info[5])))
                 phi_inc = info[3]
                 phi_max = 355.
                 FILE.writelines('(%1i%1i%1i)' % (index[0], index[1], index[2]))
@@ -1135,7 +1135,7 @@ class pf:
                     FILE.writelines('\n')
                 FILE.writelines('\n')
         else:
-            print "You typed wrong type flag";
+            print("You typed wrong type flag");
             return -1
 
     def __pf_bg_sets__(self, bgmode='manual'):
@@ -1145,22 +1145,22 @@ class pf:
         self.combi_pf_bg = []
         bg2ths = []
         th2_diff = []
-        print "\n\n ***  POLEFIGURES"
+        print("\n\n ***  POLEFIGURES")
         for i in range(len(self.polefigures)):
-            print 'PF #', i, "'s info"
-            print 'The Bragg 2theta = ', self.pf_info(self.polefigures[i])[0]
+            print('PF #', i, "'s info")
+            print('The Bragg 2theta = ', self.pf_info(self.polefigures[i])[0])
 
-        print "\n ***  BACKGROUNDS "
+        print("\n ***  BACKGROUNDS ")
         for i in range(len(self.backgrounds)):
-            print 'BG #', i, "'s info"
+            print('BG #', i, "'s info")
             bg2ths.append(self.pf_info(self.backgrounds[i])[0])
-            print 'The Bragg 2theta = ', bg2ths[i]
-        print '\n\n'
+            print('The Bragg 2theta = ', bg2ths[i])
+        print('\n\n')
 
         if bgmode == 'manual':
             for i in range(len(self.polefigures)):
-                answer = raw_input('Type the ' + str(i) + 'th PFs bg ids (eg. 0,2)')
-                self.combi_pf_bg.append(map(int, answer.split(',')))
+                answer = input('Type the ' + str(i) + 'th PFs bg ids (eg. 0,2)')
+                self.combi_pf_bg.append(list(map(int, answer.split(','))))
         else:
             if bgmode == 'auto':
                 for i in range(len(self.polefigures)):
@@ -1217,26 +1217,26 @@ class pf:
         if self.__isuniq__(peak_at):
             pass
         else:
-            print 'Positions of bragg peaks are not unique ',
-            print 'within the given pole figure'
+            print('Positions of bragg peaks are not unique ', end=' ')
+            print('within the given pole figure')
             raise IOError
         if self.__isuniq__(_steptime):
             pass
         else:
-            print '_STEPTIME is not unique ',
-            print 'within the given pole figure'
+            print('_STEPTIME is not unique ', end=' ')
+            print('within the given pole figure')
             raise IOError
         if self.__isuniq__(_stepsize):
             pass
         else:
-            print '_STEPSIZE is not unique ',
-            print 'within the given pole figure'
+            print('_STEPSIZE is not unique ', end=' ')
+            print('within the given pole figure')
             raise IOError
         if self.__isuniq__(_d_alpha):
             pass
         else:
-            print '_d_alpha is not unique ',
-            print 'within the given pole figure'
+            print('_d_alpha is not unique ', end=' ')
+            print('within the given pole figure')
             raise IOError
         return peak_at[0], _steptime[0], _stepsize[0], _d_alpha[0], _d_khi, _khis
 
@@ -1266,7 +1266,7 @@ class pf:
                 return False
 
         else:
-            print "length of given tuple variable must be exceeding 1"
+            print("length of given tuple variable must be exceeding 1")
             raise IOError
 
     def bg_or_pf(self, pfs, condition='digits'):
@@ -1288,7 +1288,7 @@ class pf:
         """
         if condition == 'digits':
             set_2thet = set()
-            for i in xrange(len(pfs)):
+            for i in range(len(pfs)):
                 info = self.block_info(block=pfs[i], echo=False)
                 set_2thet.add(info[0])
                 th2 = float(set_2thet.pop())
@@ -1298,7 +1298,7 @@ class pf:
                     return 'bg'
         if condition == 'short':
             nint = []
-            for i in xrange(len(pfs)):
+            for i in range(len(pfs)):
                 info = self.block_info(block=pfs[i], echo=False)
                 _steptime = float(info[2])
                 if _steptime > 3:
@@ -1323,7 +1323,7 @@ class pf:
             return rst
 
         else:
-            print 'th2 must be given'; raise IOError
+            print('th2 must be given'); raise IOError
 
     def block_info(self, block, echo=False):
         """
@@ -1344,17 +1344,17 @@ class pf:
         else:
             delta_alpha = 'unknown'
         if echo:
-            print "current block info"
-            print "** _2THETA   = ", _info(block, '_2THETA')
-            print "** _KHI      = ", _info(block, '_KHI')
-            print "** _STEPTIME = ", _info(block, '_STEPTIME')
-            print "** _STEPSIZE = ", _info(block, '_STEPSIZE')
-            print "** length of 2phi intensities = ", len(th2count(block))
-            print "_2theta, _khi, _steptime, _stepsize"
-            print "len(intensities) = ", len(intensities)
-            print "intensities[0] = ", intensities[0]
-            print "alpha[0] = ", alpha[0]
-            print "delta_alpha = ", delta_alpha
+            print("current block info")
+            print("** _2THETA   = ", _info(block, '_2THETA'))
+            print("** _KHI      = ", _info(block, '_KHI'))
+            print("** _STEPTIME = ", _info(block, '_STEPTIME'))
+            print("** _STEPSIZE = ", _info(block, '_STEPSIZE'))
+            print("** length of 2phi intensities = ", len(th2count(block)))
+            print("_2theta, _khi, _steptime, _stepsize")
+            print("len(intensities) = ", len(intensities))
+            print("intensities[0] = ", intensities[0])
+            print("alpha[0] = ", alpha[0])
+            print("delta_alpha = ", delta_alpha)
         else:
             pass
 

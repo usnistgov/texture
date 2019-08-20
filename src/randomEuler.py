@@ -57,8 +57,8 @@ class randomEuler:
         elif ngrain == 10000:
             dang = 5.705
         else:
-            print 'Wrongly designated number of grains'
-            print "## Using an optimization scheme can be beneficial"
+            print('Wrongly designated number of grains')
+            print("## Using an optimization scheme can be beneficial")
             raise IOError
         i = 0
         while True:
@@ -70,15 +70,15 @@ class randomEuler:
                     temp = np.array(temp)
                     temp.std();
                     temp.mean()
-                    print i, 'th iteration'
+                    print(i, 'th iteration')
                     if i == 0:
                         pass
                     else:
-                        print 'Standard deviaition: %9.3f' % temp.std()
-                        print 'Mean: %9.3f' % temp.mean()
-                        print 'Variance: %9.3f' % temp.var()
-                        print 'Max Ngr : %9.3f' % temp.max()
-                        print 'Min Ngr : %9.3f' % temp.min()
+                        print('Standard deviaition: %9.3f' % temp.std())
+                        print('Mean: %9.3f' % temp.mean())
+                        print('Variance: %9.3f' % temp.var())
+                        print('Max Ngr : %9.3f' % temp.max())
+                        print('Min Ngr : %9.3f' % temp.min())
                         # raw_input(' press enter ... >>> ')
                     break
                 else:
@@ -116,10 +116,10 @@ class randomEuler:
                                 # self.euler.append([itot,phi1,180./pi*acos(phi),phi,phi2])
         self.ngr = itot
         if echo:
-            print '*********************************'
-            print '* Random Euler angle generator  *'
-            print '* ', self.ngr, ' grains are generated', '  *'
-            print '*********************************'
+            print('*********************************')
+            print('* Random Euler angle generator  *')
+            print('* ', self.ngr, ' grains are generated', '  *')
+            print('*********************************')
             pass
 
     def chg_nomen(self, name):
@@ -130,7 +130,7 @@ class randomEuler:
         *  One may change this either to 'Kocks' or 'Roe  * /n
         *************************************************** /n
         """
-        print '*  the current nomenclature is', name
+        print('*  the current nomenclature is', name)
         self.nomenclature = name
 
     def write(self, filename='random.tex'):
@@ -165,17 +165,17 @@ class randomEuler:
         while True:
             s = f.readline()
             if len(s) < 5:
-                print 'an EOF is reached'
+                print('an EOF is reached')
                 break  # EOF
-            self.data.append(map(float, s.split()))
+            self.data.append(list(map(float, s.split())))
         self.maxdata = []
         self.maxdata.append(self.data[-1][0])  # phi1
         self.maxdata.append(self.data[-1][1])  # phi2
         self.maxdata.append(self.data[-1][2])  # phi
 
-        print 'self.maxdata',
-        print self.maxdata
-        raw_input()
+        print('self.maxdata', end=' ')
+        print(self.maxdata)
+        input()
 
         self.inc = self.data[1][0] - self.data[0][0]
 
@@ -198,7 +198,7 @@ class randomEuler:
             try:
                 self.data[0]
             except:
-                print 'ODF does not exist. Please try odf_reading'
+                print('ODF does not exist. Please try odf_reading')
                 value = -1
             else:
                 inc = self.inc
@@ -224,7 +224,7 @@ class randomEuler:
             try:
                 self.data[0]
             except:
-                print 'ODF does not exist. Please try odf_reading'
+                print('ODF does not exist. Please try odf_reading')
                 value = -1
             else:
                 inc = self.inc
@@ -257,7 +257,7 @@ class randomEuler:
         try:
             self.data[0]
         except:
-            print 'ODF does not exist. Please try odf_reading'
+            print('ODF does not exist. Please try odf_reading')
             return -1
         else:
             """
@@ -269,7 +269,7 @@ class randomEuler:
             temp_.append(int(self.p2))
             temp_.append(int(self.p3))
             """
-            print self.inc
+            print(self.inc)
             e = self.euler
             data = []
             f = open(filename, 'w')
@@ -348,9 +348,9 @@ def sampling(odf=None, p1=360., p2=90., *args):
     >>> randomEuler.sampling('304_surface.TXT', 500,1000,2000,4000,...)
           . . .
     """
-    import upf
+    from . import upf
     files = []
-    print 'p1=', p1, 'p2=', p2
+    print('p1=', p1, 'p2=', p2)
     for i in range(len(args)):
         re = randomEuler(ngrain=args[i], p1=p1, p2=p2)
         re.odf_reading(odf)
@@ -360,7 +360,7 @@ def sampling(odf=None, p1=360., p2=90., *args):
         pass
 
     ## pole figure plotting
-    flag = raw_input('Polefigure? (bcc or fcc)')
+    flag = input('Polefigure? (bcc or fcc)')
     if flag == 'bcc' or 'fcc':
         for i in range(len(files)):
             pf = upf.polefigure(filename=files[i], csym='cubic',
@@ -396,7 +396,7 @@ def __callback__(dang=None):
     # import matplotlib.pyplot as plt
     dang = dang[0]
     # a = randomEuler(dang, echo=False)
-    print 'Incremental angle =', dang
+    print('Incremental angle =', dang)
     # print 'number of grain =', a.ngr
     # ax = plt.gca()
     # ax.plot(dang,'.')
@@ -436,7 +436,7 @@ def sampling_simplex(odf=None, iang=10.,
     # raw_input('press enter to close >>>')
     # plt.close()
 
-    print 'angle =', rst
+    print('angle =', rst)
 
     grains = []
     while True:
@@ -446,10 +446,10 @@ def sampling_simplex(odf=None, iang=10.,
             break
         pass
 
-    print "-----------------------"
-    print "Interation: %i" % len(grains)
-    print "mean number: %6.2f" % np.array(grains).mean()
-    print "-----------------------"
+    print("-----------------------")
+    print("Interation: %i" % len(grains))
+    print("mean number: %6.2f" % np.array(grains).mean())
+    print("-----------------------")
 
     tmp.odf_reading(odf)
     if header is None:
@@ -457,10 +457,10 @@ def sampling_simplex(odf=None, iang=10.,
     else:
         filename = '%s_%s.cmb' % (header, str(ngrain).zfill(5))
     tmp.combine(filename)
-    print "written to '%s'" % filename
+    print("written to '%s'" % filename)
 
     if iplot:
-        import upf
+        from . import upf
         pf = upf.polefigure(filename=filename, csym='cubic',
                             cdim=[1., 1., 1.], cang=[90., 90., 90.])
         pf.pf(pole=[[1, 0, 0], [1, 1, 0], [1, 1, 1]], mode='contourf', ifig=ifig)

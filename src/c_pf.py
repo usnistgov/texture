@@ -14,7 +14,7 @@ def reader(fn='TEX_PH1.OUT', step=100, igr=1):
         lines = blocks[i].split('\n')
         e = float(lines[0].split()[-1])
         eps.append(e)
-        gr = map(float, lines[4 + igr - 1].split())
+        gr = list(map(float, lines[4 + igr - 1].split()))
         grains.append(gr)
 
     return grains[::step], eps
@@ -33,12 +33,12 @@ def readerstep(fn='TEX_PH1.OUT', step=0, mode='texture'):
     lines = blocks[step].split('\n')
     e = float(lines[0].split()[-1])
 
-    print 'strains:', e
+    print('strains:', e)
     lines = lines[4:-1:]
 
     grains = []
     for i in range(len(lines)):
-        gr = map(float, lines[i].split())
+        gr = list(map(float, lines[i].split()))
         grains.append(gr)
     return np.array(grains)
 
@@ -55,14 +55,14 @@ def main(fn='TEX_PH1.OUT', step=100, igr=1, ifig=3):
     igr  = 1
     ifig = 3
     """
-    import upf
+    from . import upf
     grains, eps = reader(fn, step, igr)  # particular grain
     mypf = upf.polefigure(csym='cubic', grains=grains)
     mypf.pf(pole=[[0, 0, 1]], mode='trace', ifig=ifig)
 
 
 def progressive_texture(steps=[0, 1]):
-    import upf
+    from . import upf
     import matplotlib.pyplot as plt
     plt.ioff()
     for i in range(len(steps)):
@@ -72,4 +72,4 @@ def progressive_texture(steps=[0, 1]):
         mypf.pf(pole=[[0, 0, 1]], ifig=i + 1)
         plt.figure(i + 1).savefig('pf_%i.pdf' % (steps[i] + 1))
         plt.close(i + 1)
-        print 'i th pf saved'
+        print('i th pf saved')

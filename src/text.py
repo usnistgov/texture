@@ -13,7 +13,7 @@ Youngung Jeong
 youngung.jeong@gmail.com
 """
 import random,math,os,upf
-from euler import euler as eul
+from .euler import euler as eul
 gauss = random.gauss
 sin = math.sin
 cos = math.cos
@@ -90,10 +90,10 @@ def c2e(component='cube', ngrain=100, w0=10, ifig=1, mode='contour'):
     mode      = 'contour'
     """
     import numpy as np
-    from euler import euler
-    import upf
+    from .euler import euler
+    from . import upf
     comp = component.lower()
-    print comp
+    print(comp)
     if comp=='cube':
         hkl=[1,0,0]
         uvw=[0,1,0]
@@ -107,18 +107,18 @@ def c2e(component='cube', ngrain=100, w0=10, ifig=1, mode='contour'):
         hkl=[-1,1,0]
         uvw=[1,1,1]
 
-    print 'hkl',hkl
-    print 'uvw',uvw,'\n'
+    print('hkl',hkl)
+    print('uvw',uvw,'\n')
 
     # mat0: trasformation matrix that converts
     # sample axes to crystal ones [ca<-sa]
-    mat0 = miller2mat(hkl=map(round, hkl), uvw=map(round, uvw))
+    mat0 = miller2mat(hkl=list(map(round, hkl)), uvw=list(map(round, uvw)))
 
-    print 'mat0'
+    print('mat0')
     for i in range(len(mat0)):
         for j in range(len(mat0[i])):
-            print '%5.1f '%mat0[i][j],
-        print ''
+            print('%5.1f '%mat0[i][j], end=' ')
+        print('')
 
     # Mirror reflection by RD and TD in the sample coordinate system.
     # mat0[ca<-sa]
@@ -126,21 +126,21 @@ def c2e(component='cube', ngrain=100, w0=10, ifig=1, mode='contour'):
     mat1 = np.dot(mat0, RD)
     mat2 = np.dot(mat0, TD)
     mat3 = np.dot(np.dot(mat0, RD), TD)
-    print 'mat1'
+    print('mat1')
     for i in range(len(mat1)):
         for j in range(len(mat1[i])):
-            print '%5.1f '%mat1[i][j],
-        print ''
-    print 'mat2'
+            print('%5.1f '%mat1[i][j], end=' ')
+        print('')
+    print('mat2')
     for i in range(len(mat2)):
         for j in range(len(mat2[i])):
-            print '%5.1f '%mat2[i][j],
-        print ''
-    print 'mat3'
+            print('%5.1f '%mat2[i][j], end=' ')
+        print('')
+    print('mat3')
     for i in range(len(mat3)):
         for j in range(len(mat3[i])):
-            print '%5.1f '%mat3[i][j],
-        print ''
+            print('%5.1f '%mat3[i][j], end=' ')
+        print('')
 
 
     ang0 = euler(a=mat0, echo=False)
@@ -152,8 +152,8 @@ def c2e(component='cube', ngrain=100, w0=10, ifig=1, mode='contour'):
 
     for i in range(len(angs)):
         for j in iter(angs[i]):
-            print '%5.1f '%j,
-        print ''
+            print('%5.1f '%j, end=' ')
+        print('')
 
     xtal = []
     for i in range(4):
@@ -189,7 +189,7 @@ def comp2euler(component='cube'):
     """ Provided (hkl)// ND and [uvw]//RD, """
     import numpy as np
     comp = component.lower()
-    print comp
+    print(comp)
     if comp=='cube':
         hkl=[1,0,0]
         uvw=[0,1,0]
@@ -203,22 +203,22 @@ def comp2euler(component='cube'):
         hkl=[-1,1,0]
         uvw=[1,1,1]
 
-    print 'hkl',hkl
-    print 'uvw',uvw,'\n'
+    print('hkl',hkl)
+    print('uvw',uvw,'\n')
 
     rst = pn(n=hkl, b=uvw)
 
     eul = []
     for i in range(len(rst)):
-        print 'hkl: [%3.1f,%3.1f,%3.1f]'%(
-            rst[i][0][0],rst[i][0][1],rst[i][0][2])
-        print 'uvw: [%3.1f,%3.1f,%3.1f]'%(
-            rst[i][1][0],rst[i][1][1],rst[i][1][2])
+        print('hkl: [%3.1f,%3.1f,%3.1f]'%(
+            rst[i][0][0],rst[i][0][1],rst[i][0][2]))
+        print('uvw: [%3.1f,%3.1f,%3.1f]'%(
+            rst[i][1][0],rst[i][1][1],rst[i][1][2]))
         #hkl = map(int,rst[i][0])
         #uvw = map(int,rst[i][1])
-        p1, phi, p2 = miller2euler(hkl=map(round,rst[i][0]),
-                                   uvw=map(round,rst[i][1]))
-        print 'p1, phi2, p2: %3.1f %3.1f %3.1f'%(p1, phi, p2)
+        p1, phi, p2 = miller2euler(hkl=list(map(round,rst[i][0])),
+                                   uvw=list(map(round,rst[i][1])))
+        print('p1, phi2, p2: %3.1f %3.1f %3.1f'%(p1, phi, p2))
         eul.append([p1, phi, p2])
 
     return np.array(eul)
@@ -233,7 +233,7 @@ def main(component='cube', ngrain=100, w0=10, ifig=1):
     w0        = 10
     ifig      = 1
     """
-    import upf
+    from . import upf
     angs = comp2euler(component)
     xtal = []
     for i in range(len(angs)):
@@ -376,7 +376,7 @@ class text:
              delta*math.pi/180. , phi*math.pi/180. , w*math.pi/180.
         Generates the rotation matrix
         """
-        print 'deprecated def'
+        print('deprecated def')
         w = w * math.pi/180. # to radian
         d1 = sin(delta) * cos(phi)
         d2 = sin(delta) * sin(phi)
@@ -450,7 +450,7 @@ def miller2euler(hkl, uvw):
 
     3 x 1 = 2
     """
-    from euler import euler
+    from .euler import euler
     # mat [ca<-sa]
     mat = miller2mat(hkl, uvw)
     phi1, phi, phi2 = euler(a=mat, echo=False)
@@ -465,9 +465,9 @@ def miller2mat(hkl, uvw):
     3 x 1 = 2
     """
     import numpy as np
-    from euler import euler
-    uvw = map(int, uvw)
-    hkl = map(int, hkl)
+    from .euler import euler
+    uvw = list(map(int, uvw))
+    hkl = list(map(int, hkl))
 
     uvw = np.array(uvw)
     hkl = np.array(hkl)
@@ -493,8 +493,8 @@ def miller2mat_RT(uvw,xyz):
     1 x 2 = 3
     """
     import numpy as np
-    uvw = np.array(map(int,uvw))
-    xyz = np.array(map(int,xyz))
+    uvw = np.array(list(map(int,uvw)))
+    xyz = np.array(list(map(int,xyz)))
 
     # x, y, z bases vectors
     cx = uvw/np.linalg.norm(uvw)

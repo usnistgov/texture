@@ -16,12 +16,12 @@ uniform and intiutive and simple.
 --------
 examples
 --------
- >>> import upf
- >>> mypf = upf.polefigure(ngrain=8000,
+import upf
+mypf = upf.polefigure(ngrain=8000,
                            # or filename ='texture/08000.cmb'
                            csym = 'cubic', cdim=[1.,1.,1.],
                            cang =[90.,90.,90.])
- >>> cnts = mypf.pf(pole=[ [1,0,0],[1,1,0],[1,1,1]],
+cnts = mypf.pf(pole=[ [1,0,0],[1,1,0],[1,1,1]],
                     mode='contourf', ifig=2,
                     dm=7.5, dn=7.5, levels=None, cmode='gray_r')
 
@@ -49,7 +49,7 @@ examples
 
           Let's say it will be something like below:
 
-          >>> m, n = np.shape(data)
+         m, n = np.shape(data)
                # m is the number of grid along theta axis
                # while n is the number of grid along khi
 
@@ -64,12 +64,13 @@ examples
               2. Unknown system at Dr. Steglich's institute
               3. Experimental PF (popLA format)
 
- >>> import upf
- >>> mypf = upf.polefigure(epf='???.epf')
+import upf
+mypf = upf.polefigure(epf='???.epf')
 ..
 ..
- >>> cnts = mypf.pf()
+cnts = mypf.pf()
 """
+
 # print __doc__
 """
 Updates
@@ -104,8 +105,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib  # matplotlib as raw
 import os, glob, math
-from randomEuler import randomEuler as re
-from euler import euler  # in euler module def euler:
+from .randomEuler import randomEuler as re
+from .euler import euler  # in euler module def euler:
 # A-matrix and Euler angles
 import time, random
 import fortranformat as ff
@@ -113,11 +114,11 @@ import fortranformat as ff
 try:
     import MP
 except:
-    print '-' * 50
-    print 'MP was not installed'
-    print 'You may clone it and install via:'
-    print 'git@github.com:youngung/mpl-lib.git'
-    print '-' * 50
+    print('-' * 50)
+    print('MP was not installed')
+    print('You may clone it and install via:')
+    print('git@github.com:youngung/mpl-lib.git')
+    print('-' * 50)
 else:
     from MP import progress_bar
 
@@ -137,18 +138,18 @@ try:
     i_for = True
 except:
     i_for = False
-    print '----------------------------------------------------'
-    print '     pf_for_lib is not available in the system'
-    print '   pf_for_lib is a fortran binary that is loaded'
-    print '   in Python using f2py, which may be helpful to '
-    print '         speed-up calculations in upf.py'
-    print '----------------------------------------------------'
+    print('----------------------------------------------------')
+    print('     pf_for_lib is not available in the system')
+    print('   pf_for_lib is a fortran binary that is loaded')
+    print('   in Python using f2py, which may be helpful to ')
+    print('         speed-up calculations in upf.py')
+    print('----------------------------------------------------')
 
 try:
     import joblib
 except:
     is_joblib = False
-    print '** joblib was not found - will not be used in TX.upf'
+    print('** joblib was not found - will not be used in TX.upf')
     # print '-'*60
     # print 'One might improve the speed by installing joblib'
     # print 'JOBLIB is to run embarrasingly parallel runs for multiple poles'
@@ -213,21 +214,21 @@ def pfnorm(data):
     """
     # All angles are in radian
     if len(data) != 72:
-        print 'number of phi grid:  %i' % len(data)
-        raise IOError, 'Unexpected resolution along phi axis'
+        print('number of phi grid:  %i' % len(data))
+        raise IOError('Unexpected resolution along phi axis')
 
     dphi = 360. / len(data)
     dphi = dphi * np.pi / 180.  # dphi
     dkhi = 5. * np.pi / 180.  # dkhi
-    print 'dkhi, dphi', dphi * 180. / np.pi, dkhi * 180. / np.pi
+    print('dkhi, dphi', dphi * 180. / np.pi, dkhi * 180. / np.pi)
 
     nkhi = len(data[0])
     phi_i = 0.
     phi_f = np.pi * 2.
     khi_i = 0.
     khi_f = dkhi * (nkhi - 1)
-    print 'khi range', khi_i, khi_f * 180. / np.pi
-    print 'phi range', phi_i, phi_f * 180. / np.pi
+    print('khi range', khi_i, khi_f * 180. / np.pi)
+    print('phi range', phi_i, phi_f * 180. / np.pi)
     # spanned area, i.e., the area of incomplete hemisphere:
     # area = (np.cos(khi_f) - np.cos(khi_i)) * (phi_f - phi_i)
 
@@ -236,20 +237,20 @@ def pfnorm(data):
     a = 0.
     b = 0.
     ## below needs vectorization
-    for i in xrange(len(data)):
-        for j in xrange(len(data[0])):
+    for i in range(len(data)):
+        for j in range(len(data[0])):
             a = a + np.sin(dkhi * j)
 
-    for i in xrange(len(data)):
-        for j in xrange(len(data[i])):
+    for i in range(len(data)):
+        for j in range(len(data[i])):
             b = b + data[i, j] * np.sin(dkhi * j)
 
     # for k in xrange(len(data)):
     #     for l in xrange(len(data[k])):
     #         b = b + data[k, l] * np.sin(dkhi*l)
 
-    for i in xrange(len(data)):  # phi
-        for j in xrange(len(data[i])):  # khi
+    for i in range(len(data)):  # phi
+        for j in range(len(data[i])):  # khi
             data[i, j] = data[i, j] * a / b
 
     return data
@@ -301,9 +302,9 @@ def epfformat(mode=None, filename=None):
     if mode == 'steglich':
         # Calculated or raw pole figure
         i = 0
-        print 'filename=', filename
+        print('filename=', filename)
         if not os.path.isfile(filename):
-            raise IOError, 'file is not available'
+            raise IOError('file is not available')
 
         while True:
             try:
@@ -312,9 +313,9 @@ def epfformat(mode=None, filename=None):
             except:
                 i = i + 1
             else:
-                print 'number of skipped rows: %i' % i
+                print('number of skipped rows: %i' % i)
                 break
-            if i > 1000: raise IOError, 'something is wrong'
+            if i > 1000: raise IOError('something is wrong')
 
         ## raw pole figure format
         if i == nskip_raw:
@@ -324,7 +325,7 @@ def epfformat(mode=None, filename=None):
             # upon each axis
             f = open(filename)
             temp = f.readlines()
-            khi = map(float, temp[nskip_raw - 1].split()[1:])
+            khi = list(map(float, temp[nskip_raw - 1].split()[1:]))
             khi = np.array(khi)
             khi = khi * np.pi / 180.
             phi = data[0]  # first column is for phi
@@ -349,30 +350,30 @@ def epfformat(mode=None, filename=None):
             tiny = 0.000001
             isincomplete = False
             if np.pi / 2. - khi[-1] > tiny:
-                print 'Incomplete pole figure'
-                print 'khi range: %3.2f ~%3.2f' % (
-                    khi[0] * 180. / np.pi, khi[-1] * 180. / np.pi)
+                print('Incomplete pole figure')
+                print('khi range: %3.2f ~%3.2f' % (
+                    khi[0] * 180. / np.pi, khi[-1] * 180. / np.pi))
                 isincomplete = True
 
                 ## normalization
-                if raw_input('y(norm), or n(no)>>>') == 'y':
+                if input('y(norm), or n(no)>>>') == 'y':
                     data = pfnorm(data)
 
                 dum = np.zeros((np.pi * 2. / dp, np.pi / 2. / dk + 1))
-                for i in xrange(len(data)):
-                    for j in xrange(len(data[i])):
+                for i in range(len(data)):
+                    for j in range(len(data[i])):
                         dum[i, j] = data[i, j]
                 data = dum.copy()
                 del dum
 
         ## calculated pole figure format
         elif i == nskip_calc:  # He had two formats: raw and calculated.
-            print 'Calculated pole figure format'
+            print('Calculated pole figure format')
             # axes: (phi, khi)
             data = data.T  # (khi, phi)
             f = open(filename)
             temp = f.readlines()
-            khi = map(float, temp[nskip_calc - 1].split()[1:])
+            khi = list(map(float, temp[nskip_calc - 1].split()[1:]))
             khi = np.array(khi)
             khi = khi * np.pi / 180.
             phi = data[0]
@@ -396,14 +397,14 @@ def epfformat(mode=None, filename=None):
         ## make full use of existing uxd.py script
         ## --> normalization is missing...
         ## This must be completed!
-        import uxd
-        print 'You are now in the bruker mode under epfformat'
-        print 'given file name is %s' % filename
+        from . import uxd
+        print('You are now in the bruker mode under epfformat')
+        print('given file name is %s' % filename)
         myuxd = uxd.pf(filename=filename, mode='pf')
         if len(myuxd.polefigures) > 1:
-            print 'multiple pole figures are found'
-            raw_input()
-        for i in xrange(len(myuxd.polefigures)):
+            print('multiple pole figures are found')
+            input()
+        for i in range(len(myuxd.polefigures)):
             pf = myuxd.polefigures[i]
             pf = pfnorm(pf)  ##normalize
 
@@ -414,57 +415,57 @@ def epfformat(mode=None, filename=None):
         ## phi must be 0~355, khi must be 0~90 with 5 as an ang
         resolution
         """
-        print 'You are now reading experimental pole figure(s) :%s' % filename
+        print('You are now reading experimental pole figure(s) :%s' % filename)
         blocks = open(filename, 'rU').read().split('(')[1:]
         if len(blocks) == 0:
             msg1 = 'epf parser in upf assumes that hkl is embraced by paratheses'
             msg2 = ' %s has no paranthesis that embraces hkl was found' % filename
             msg = '%s \n %s' % (msg1, msg2)
-            print '-' * 52
-            print msg
+            print('-' * 52)
+            print(msg)
             # raise IOError, msg
-            print 'upf will keep proceding with using upf.parse_epf method with n_unit=79'
-            print '-' * 52
+            print('upf will keep proceding with using upf.parse_epf method with n_unit=79')
+            print('-' * 52)
             blocks = parse_epf(filename)
 
         npf = len(blocks)
-        if npf == 0: raise IOError, 'No pf block found.'
+        if npf == 0: raise IOError('No pf block found.')
 
         datasets = [];
         max_khi = []
         if npf > 1: hkls = []  ## multiple number of pole figures in a file
-        for i in xrange(npf):
+        for i in range(npf):
             # d = __epffiletrimmer__(blocks[i]) #only for popLA epf format
             ## epffiletrimmer should return a block of intensity grid map
             ## as well as maximum khi.
             ## --> modification (2011 NOV 8)
             hkl = blocks[i][0:3]  # hkl
-            hkl = map(int, [hkl[0], hkl[1], hkl[2]])
+            hkl = list(map(int, [hkl[0], hkl[1], hkl[2]]))
 
             if npf > 1: hkls.append(hkl)
 
             if blocks[i][3] != ')':
-                print 'Caution: unexpected hkl labeling format'
+                print('Caution: unexpected hkl labeling format')
 
             d, mxk = __epffiletrimmer__(blocks[i])
             # only for popLA epf format
             datasets.append(d)
             max_khi.append(mxk)
 
-        print "number of pole figures:", len(datasets)
+        print("number of pole figures:", len(datasets))
 
         ## presumption of using 19x72 should be deprecated...
         data = np.zeros((len(datasets), 19, 72))  # npf, nphi, nkhi
         dum = data.copy()
-        for i in xrange(len(datasets)):
-            for j in xrange(len(datasets[i])):
-                for k in xrange(len(datasets[i][j])):
+        for i in range(len(datasets)):
+            for j in range(len(datasets[i])):
+                for k in range(len(datasets[i][j])):
                     data[i, j, k] = datasets[i][j][k]
         ## Swap the axis
         data = data.swapaxes(1, 2)  # from 72 x 19 to 19 x 72
 
         ## psuedo-normalization
-        for i in xrange(len(data)):
+        for i in range(len(data)):
             data[i] = pfnorm(data[i].copy())
         ## --
         if npf > 1:
@@ -481,18 +482,18 @@ def epfformat(mode=None, filename=None):
         based on ready made popLA epf format parser
         """
         import pandas as pd
-        print 'You are now reading experimental pole figure(s) :%s' % filename
+        print('You are now reading experimental pole figure(s) :%s' % filename)
         blocks = open(filename, 'rU').read().split('\n\n\n\n')[1:]
-        print 'There are %s blocks of data found' % len(blocks)
+        print('There are %s blocks of data found' % len(blocks))
         if len(blocks) == 0:
             msg1 = 'xpc parser in upf assumes that pole figures are separated by 4 new lines'
             msg2 = ' searching %s finds no set of 4 new lines in ' % filename
             msg = '%s \n %s' % (msg1, msg2)
-            raise IOError, msg
+            raise IOError(msg)
             # blocks = parse_epf(filename)
 
         npf = len(blocks)
-        if npf == 0: raise IOError, 'No pf block found.'
+        if npf == 0: raise IOError('No pf block found.')
 
         datasets = [];
         max_khi = []
@@ -553,12 +554,12 @@ def epfformat(mode=None, filename=None):
             # max_khi.append(mxk)
 
         # print hkls
-        print "number of pole figures:", len(datasets)
+        print("number of pole figures:", len(datasets))
 
         ### convert the panda data frame to numpy
         npf = len(datasets)
         datasets_compliant = np.zeros((npf, 72, 19))
-        for i in xrange(npf):
+        for i in range(npf):
             array = datasets[i].values
             arrayt = array.T
             ## ignore the last phi axis as it is repeated (phi360=phi0)
@@ -567,7 +568,7 @@ def epfformat(mode=None, filename=None):
         return datasets_compliant, hkls
 
     else:
-        raise IOError, 'Unexpected mode is given'
+        raise IOError('Unexpected mode is given')
 
 
 def __epffiletrimmer__(block):
@@ -595,7 +596,7 @@ def __epffiletrimmer__(block):
 
     pfdata = pfdata[1:]
     lines = []
-    for i in xrange(len(pfdata)):
+    for i in range(len(pfdata)):
         if len(pfdata[i]) == 72:
             lines.append(pfdata[i][:])
         elif len(pfdata[i]) == 73:
@@ -604,20 +605,20 @@ def __epffiletrimmer__(block):
     pfdata = lines  # (maxkhi/dkhi + 1) * 4
     if len(pfdata) != 76:  # 76 =  ((90 / 5) + 1) * 4
         # (4lines for one khi level)
-        print 'len(pfdata) =', len(pfdata)
-        print pfdata
-        raise IOError, 'Unexpected pfdata format or type'
+        print('len(pfdata) =', len(pfdata))
+        print(pfdata)
+        raise IOError('Unexpected pfdata format or type')
 
     if True:
-        for j in xrange(19):  # 90 / 5 + 1 #number of khi threads
+        for j in range(19):  # 90 / 5 + 1 #number of khi threads
             kh = pfdata[j * 4: (j + 1) * 4]  # along the same kh level
             khline = ''
-            for k in xrange(4):
+            for k in range(4):
                 khline = khline + kh[k]
             # khline  # all data in a thread of
             # string every 4digits corresponds to a datum
             kp = 0  # each point along phi
-            for k in xrange(72):  # 72 = 288 / 4 (4digits) : 0~355 5.0
+            for k in range(72):  # 72 = 288 / 4 (4digits) : 0~355 5.0
                 datum = khline[k * 4:(k + 1) * 4]
                 data[j, k] = int(datum)
 
@@ -638,8 +639,8 @@ def shiftphi(data, dp, phi):
     tiny = 0.0000001
     if abs(phi[0] - 0.) > tiny > abs((dp - phi[0]) - dp / 2.):
         dum = data.copy()
-        for i in xrange(len(data)):  # phi axis
-            for j in xrange(len(data[i])):  # khi axis
+        for i in range(len(data)):  # phi axis
+            for j in range(len(data[i])):  # khi axis
                 dum[i, j] = (data[i - 1, j] + data[i, j]) / 2.
         data = dum.copy()
     return phi, data
@@ -657,42 +658,42 @@ def duplicate0_360(phi, data):
     """
     tiny = 0.00000000001
     isallsame = True
-    for i in xrange(len(data[0])):
-        print data[0, i]
-        print data[-1, i]
-    if any(abs(data[0, i] - data[-1, i]) > tiny for i in xrange(len(data[0]))):
-        print data[0, i]
-        print data[-1, i]
+    for i in range(len(data[0])):
+        print(data[0, i])
+        print(data[-1, i])
+    if any(abs(data[0, i] - data[-1, i]) > tiny for i in range(len(data[0]))):
+        print(data[0, i])
+        print(data[-1, i])
         isallsame = False
 
     isphioverlapped = False
-    print abs(phi[0] - phi[-1] - 2. * np.pi)
+    print(abs(phi[0] - phi[-1] - 2. * np.pi))
     if abs(phi[0] - phi[-1] + 2. * np.pi) < tiny:
         isphioverlapped = True
 
     if isphioverlapped and isallsame:
         newdata = np.zeros((data.shape[0] - 1, data.shape[1]))
-        for i in xrange(len(newdata)):
-            for j in xrange(len(newdata[i])):
+        for i in range(len(newdata)):
+            for j in range(len(newdata[i])):
                 newdata[i, j] = data[i, j]
         return phi[:-1], newdata
     elif isphioverlapped and isallsame == False:
-        print "conflict results!"
-        print "phi=0, and 360 turned out to coexist but"
-        print "Values along these two axes are not equivalent"
+        print("conflict results!")
+        print("phi=0, and 360 turned out to coexist but")
+        print("Values along these two axes are not equivalent")
         raise IOError
     elif not isphioverlapped and isallsame:
-        print "Conflict results!"
-        print "Phi is overlapped but phi[0] and phi[-1] is same"
+        print("Conflict results!")
+        print("Phi is overlapped but phi[0] and phi[-1] is same")
         raise IOError
     else:
-        print "No duplicated axis is found"
+        print("No duplicated axis is found")
         return phi, data
 
 
 def pole2f(poles_sa, poles_wgt, dth, dph, f):
     tiny = 1e-9
-    for i in xrange(len(poles_sa)):
+    for i in range(len(poles_sa)):
         theta, phi = cart2sph(poles_sa[i])
         ix = int((theta * 180. / np.pi + 180) / dth - tiny)
         iy = int((phi * 180. / np.pi) / dph - tiny)
@@ -777,7 +778,7 @@ def trace(thet_f, n, v1, v2):
     # rotate v1 about v3 axis.
 
     trace = []
-    for iang in xrange(n):
+    for iang in range(n):
         th = dthet[iang]
         r = vector_ang(v3, th)
         vnew = np.dot(r, v1)
@@ -791,7 +792,7 @@ def xytrace(thet_f, n, v1, v2):
     """
     poles = trace(thet_f, n, v1, v2)
     X, Y = [], []
-    for i in xrange(len(poles)):
+    for i in range(len(poles)):
         x, y = projection(poles[i], agrain=[0, 0, 0, 1])
         X.append(x)
         Y.append(y)
@@ -812,15 +813,15 @@ def vector_ang(u, th):
     pi = np.pi
     idx = np.zeros((3, 3))
     r = np.zeros((3, 3))
-    for i in xrange(3):
+    for i in range(3):
         idx[i, i] = 1.
 
     ct = np.cos(th)
     st = np.sin(th)
     cm = crossop(u)
 
-    for i in xrange(3):
-        for j in xrange(3):
+    for i in range(3):
+        for j in range(3):
             r[i, j] = idx[i, j] * ct + st * cm[i, j] + \
                       (1 - ct) * u[i] * u[j]
 
@@ -847,7 +848,7 @@ def __isunique__(a, b):
     a
     b
     """
-    for i in xrange(len(b)):
+    for i in range(len(b)):
         ## is a//b[i]? either + or -
         diff0 = abs(b[i][0] - a[0]) + \
                 abs(b[i][1] - a[1]) + abs(b[i][2] - a[2])
@@ -916,7 +917,7 @@ def deco_pf(ax, cnt, miller=[0, 0, 0],
     if iopt == 1:
         pass
     elif iopt == 0:
-        for i in xrange(nlev):
+        for i in range(nlev):
             cc = tcolors[i][0][0:3]
 
             x = [1.30, 1.37]
@@ -945,7 +946,7 @@ def deco_pf(ax, cnt, miller=[0, 0, 0],
 
     ## pole
     s = '('
-    for i in xrange(len(miller)):
+    for i in range(len(miller)):
         if miller[i] < 0:
             h = r'\bar{%s}' % str(-1 * miller[i])
         else:
@@ -1061,9 +1062,9 @@ def agr2pol(agrain=None, miller=None, proj=None):
     proj   = None
     """
     if proj is None:
-        print "argument proj should be given"; raise IOError
+        print("argument proj should be given"); raise IOError
     elif proj != 'pf' and proj != 'ipf':
-        print " proj should be either 'pf' or 'ipf'"
+        print(" proj should be either 'pf' or 'ipf'")
         raise IOError
     if type(miller).__name__ == 'list': miller = np.array(miller)
 
@@ -1095,7 +1096,7 @@ def agr2pol(agrain=None, miller=None, proj=None):
         "A_{ij} * V_{j}"
         return np.dot(amat, miller)  # sa to ca returns the pole in ca
     else:
-        print "projection should be pf or ipf"
+        print("projection should be pf or ipf")
         raise IOError
 
 
@@ -1110,7 +1111,7 @@ def ipfline(center=[0, 0], csym='cubic'):
     """
     xc = [];
     yc = []
-    if csym != 'cubic': print "Only Cubic!"; raise IOError
+    if csym != 'cubic': print("Only Cubic!"); raise IOError
     xc.append(center[0])
     yc.append(center[1])
 
@@ -1175,11 +1176,11 @@ class polefigure:
 
         if type(grains) == type(None) and type(filename) == type(None) \
                 and type(epf) == type(None):
-            print " ****************************** "
-            print " Since no argument is passed,   "
-            print " 1000 random grains are created "
-            print " ****************************** \n"
-            from cmb import random
+            print(" ****************************** ")
+            print(" Since no argument is passed,   ")
+            print(" 1000 random grains are created ")
+            print(" ****************************** \n")
+            from .cmb import random
             self.gr = random(phi1=360, phi2=360, phi=90, ngrain=1000, iplot=False)
 
         self.epf = epf  # global
@@ -1204,29 +1205,28 @@ class polefigure:
                 self.epf_fn = [epf]
             elif type(epf) == type(True):
                 fn = []  # list of file names
-                print 'type the experimental pole figure file names'
-                print "To finish input, press enter"
+                print('type the experimental pole figure file names')
+                print("To finish input, press enter")
                 while True:
-                    dum = raw_input(">>> ")
+                    dum = input(">>> ")
                     if len(dum) == 0: break
                     fn.append(dum)
                 self.epf_fn = fn
             else:
-                raise IOError, 'Unexpected epf type found'
+                raise IOError('Unexpected epf type found')
 
             ## check if the file name is correct ##
-            for i in xrange(len(self.epf_fn)):
+            for i in range(len(self.epf_fn)):
                 if not (os.path.isfile(self.epf_fn[i])):
-                    raise IOError, \
-                        "Could not find %s" % self.epf_fn[i]
+                    raise IOError("Could not find %s" % self.epf_fn[i])
             ## --------------------------------- ##
 
             ## POLE FIGURE MODE --------------------------------------
             if type(epf_mode) == type(None):
-                print "Type the experimental polfe figure mode"
-                print "Available options:",  # continuation
-                print "bruker, steglich, epf, xpc (default: %s)" % 'epf'
-                epf_mode = raw_input(" >>>")
+                print("Type the experimental polfe figure mode")
+                print("Available options:", end=' ')  # continuation
+                print("bruker, steglich, epf, xpc (default: %s)" % 'epf')
+                epf_mode = input(" >>>")
                 if len(epf_mode) == 0: epf_mode = 'epf'  # default
             ##---------------------------------------------------------
 
@@ -1236,13 +1236,13 @@ class polefigure:
             npole_per_file = []
             if epf_mode == 'epf': self.max_khi = []  # Available only for epf_mode yet.
 
-            for i in xrange(len(self.epf_fn)):
+            for i in range(len(self.epf_fn)):
                 if epf_mode == 'epf':
                     data, maxk, hkl = epfformat(
                         mode=epf_mode,
                         filename=self.epf_fn[i])
                     # one file may include multiple poles
-                    for j in xrange(len(data)):
+                    for j in range(len(data)):
                         self.grid.append(data[j])
                         self.max_khi.append(maxk[j])
                         self.hkl.append(hkl[j])
@@ -1251,7 +1251,7 @@ class polefigure:
                     data, hkl = epfformat(
                         mode=epf_mode,
                         filename=self.epf_fn[i])
-                    for j in xrange(len(data)):
+                    for j in range(len(data)):
                         self.grid.append(data[j])
                         # self.max_khi.append(90.)
                         self.hkl.append(hkl[j])
@@ -1328,28 +1328,28 @@ class polefigure:
         iline_khi80
         """
         from matplotlib.colors import LogNorm
-        print 'List of files:'
-        for f in self.epf_fn: print '%s ' % f
-        print 'dimension of self.grid:', self.grid.shape
-        print 'ifig=', ifig
+        print('List of files:')
+        for f in self.epf_fn: print('%s ' % f)
+        print('dimension of self.grid:', self.grid.shape)
+        print('ifig=', ifig)
 
         fact = 2.
         nrow = len(self.grid)
         fig = plt.figure(figsize=(3.3 * nrow, 3.0))
 
-        print 'self.grid.shape:', self.grid.shape
+        print('self.grid.shape:', self.grid.shape)
         mns, mxs, indices_mx = self.calcMXN(self.grid, mx, mn, 'line', 1)
 
         # print 'mns:',mns
         # print 'mxs:',mxs
 
         ## loop over each of pole figures
-        for ip in xrange(len(self.grid)):  # upon each of self.eps_fn
+        for ip in range(len(self.grid)):  # upon each of self.eps_fn
             ax = fig.add_subplot(1, nrow, ip + 1)
             pf = np.zeros((self.grid[ip].shape[0] + 1,
                            self.grid[ip].shape[1]))
-            for i in xrange(len(self.grid[ip])):
-                for j in xrange(len(self.grid[ip][i])):
+            for i in range(len(self.grid[ip])):
+                for j in range(len(self.grid[ip][i])):
                     pf[i, j] = self.grid[ip][i][j]
                     pf[-1, j] = self.grid[ip][0][j]
 
@@ -1382,8 +1382,8 @@ class polefigure:
             x = R * np.cos(PHI);
             y = R * np.sin(PHI)
 
-            print 'levels in epfplot:'
-            print levels
+            print('levels in epfplot:')
+            print(levels)
 
             # cnt=ax.contour(
             cnt = ax.contourf(
@@ -1394,8 +1394,8 @@ class polefigure:
             ## dots like in pf_new.
             xs = [];
             ys = []
-            for j in xrange(len(x) - 1):
-                for k in xrange(len(x[j])):
+            for j in range(len(x) - 1):
+                for k in range(len(x[j])):
                     if pf[j, k] < levels[0]:
                         if k == 0 and j > 1:
                             pass
@@ -1420,10 +1420,10 @@ class polefigure:
         """
         color = ['r', 'b', 'g', 'k', 'gray']
         # marker =['o','x','+','d','.']
-        for ip in xrange(len(pole)):
+        for ip in range(len(pole)):
             cl = color[ip]
             # mk = marker[i]
-            for i in xrange(len(self.gr)):
+            for i in range(len(self.gr)):
                 tm = self.dotplot(proj='pf', agrain=self.gr[i],
                                   npole=len(pole), ipole=ip + 1,
                                   pole=pole[ip], ifig=ifig,
@@ -1442,7 +1442,7 @@ class polefigure:
         """
         f = open(fn, 'w')
         xyzw = []
-        for i in xrange(len(self.gr)):
+        for i in range(len(self.gr)):
             gr = self.gr[i][::]
             phi1, phi, phi2 = gr[:3:]
             phi1 = phi1 - 90.
@@ -1463,7 +1463,7 @@ class polefigure:
             #     xyzw.append([x,y,z,w])
 
 
-            for j in xrange(len(POLE)):
+            for j in range(len(POLE)):
                 xyz = POLE[j]
                 x, y, z = xyz
                 f.write('%4.2f %4.2f %4.2f %11.4e\n' % (x, y, z, w))
@@ -1507,7 +1507,7 @@ class polefigure:
         Blues, Blues_r, Set1_r, Set1 .... '
         """
 
-        print 'pf is deprecated. Considering using pf_new'
+        print('pf is deprecated. Considering using pf_new')
 
         ## PF ploting directly from experimental pole figure
         if type(self.epf) != type(None):
@@ -1525,11 +1525,11 @@ class polefigure:
         if self.csym == 'hexag' or self.csym == 'trigo':
             p__ = pole  ## for later use on pole index indication
             pole_tmp = []
-            for ip in xrange(len(pole)):
+            for ip in range(len(pole)):
                 p_ = pole[ip]
                 p = [0, 0, 0]
                 if len(pole[ip]) != 4:
-                    raw_input('pole must be four digit for hexag')
+                    input('pole must be four digit for hexag')
                     raise IOError
                 p[2] = p_[3]
                 p[0] = p_[0] - p_[2]
@@ -1543,10 +1543,10 @@ class polefigure:
         ## pole figure
         temp = []
         if mode == 'dot':
-            for ip in xrange(len(pole)):
+            for ip in range(len(pole)):
                 color = ['r', 'b', 'g', 'k', 'gray']
                 marker = ['o', 'x', '+', 'd', '.']
-                for i in xrange(len(self.gr)):
+                for i in range(len(self.gr)):
                     if len(self.gr) < 5:
                         cl = color[i]
                         mk = marker[i]
@@ -1562,8 +1562,8 @@ class polefigure:
                         color=cl)
 
         elif mode == 'trace':
-            for ip in xrange(len(pole)):
-                for i in xrange(len(self.gr)):
+            for ip in range(len(pole)):
+                for i in range(len(self.gr)):
                     if i == 0:
                         color = 'red'
                         alpha = 1.0
@@ -1603,7 +1603,7 @@ class polefigure:
             N = []
             start = time.time()
             self.pfnodes = []
-            for ip in xrange(len(pole)):
+            for ip in range(len(pole)):
                 # Polar cell and nodes generation.
                 f, nodes = self.cells(
                     pole=pole[ip], ifig=None, dm=dm, dn=dn,
@@ -1612,11 +1612,11 @@ class polefigure:
                     poles_gr=poles_gr)
 
                 N.append(nodes)
-                print 'node shape:', nodes.shape
+                print('node shape:', nodes.shape)
                 self.pfnodes.append(nodes)
 
-            print "%5.2f seconds elapsed during calling" \
-                  " self.cells\n" % (time.time() - start)
+            print("%5.2f seconds elapsed during calling" \
+                  " self.cells\n" % (time.time() - start))
             del nodes
 
             ## resolution and pole figure plotting preferences
@@ -1644,7 +1644,7 @@ class polefigure:
             ## contours with lines, this manual transform is the only
             ## way. (2011-Sept)
 
-            for ip in xrange(len(pole)):
+            for ip in range(len(pole)):
                 nodes = N[ip]  ## intensity at the current pole (ip)
                 if axes is not None:
                     ax = axes[ip]
@@ -1715,7 +1715,7 @@ class polefigure:
 
                 # misc (decoration of the axes, with information)
                 tcolors = cnt.tcolors
-                for i in xrange(len(tcolors)):
+                for i in range(len(tcolors)):
                     cc = tcolors[i][0][0:3]
                     # if levels==None:
                     if type(levels) == type(None) or ip == len(pole) - 1:
@@ -1765,23 +1765,22 @@ class polefigure:
             fact = 2.  # plot size factor
             figsize = (len(pole) * 2. * fact, 1. * 2. * fact)
 
-            if axes is not None: raise IOError, \
-                "'im' mode does not support imposition of axes"
+            if axes is not None: raise IOError("'im' mode does not support imposition of axes")
             fig = plt.figure(ifig, figsize=figsize)
             fig.clf()  # clear the figure
             nrow = len(pole)
             Zs = []
             start = time.time()
-            print'dm, dn:', dm, dn
-            for ip in xrange(len(pole)):
+            print('dm, dn:', dm, dn)
+            for ip in range(len(pole)):
                 f, Z = self.cells(
                     pole=pole[ip], ifig=None,
                     dm=dm, dn=dn,
                     cdim=self.cdim, cang=self.cang,
                     csym=self.csym)
                 Zs.append(Z)
-            print "%5.2f seconds elapsed during calling self.cells\n" % (
-                time.time() - start)
+            print("%5.2f seconds elapsed during calling self.cells\n" % (
+                time.time() - start))
             del Z
             ## resolution and pole figure plotting preferences
             nm = (360.0 - 0.) / dm;
@@ -1795,10 +1794,10 @@ class polefigure:
 
             # phi, r = np.meshgrid(phi,r)
             zmax = 0.
-            for ip in xrange(len(pole)):
+            for ip in range(len(pole)):
                 if np.max(Zs[ip]) > zmax: zmax = np.max(Zs[ip].copy())
 
-            for ip in xrange(len(pole)):
+            for ip in range(len(pole)):
                 Z = Zs[ip]  ## intensity of the current pole
                 nodes = Z.copy()
                 Z = Z.transpose()
@@ -1819,7 +1818,7 @@ class polefigure:
                 clev = cnt._levels
                 # rx, ry = circle()
                 tcolors = cnt.tcolors
-                for i in xrange(len(tcolors)):
+                for i in range(len(tcolors)):
                     cc = tcolors[i][0][0:3]
                     if levels is None or ip == len(pole) - 1:
                         x0, y0 = 1.3, 0.8 - i * 0.2
@@ -1868,7 +1867,7 @@ class polefigure:
             ## save figures
             fig.savefig('pcm.pdf')
             fig.savefig('pcm.eps')
-            for i in xrange(len(fig.axes)):
+            for i in range(len(fig.axes)):
                 extent = fig.axes[i].get_window_extent()
                 extent = extent.transformed(
                     fig.dpi_scale_trans.inverted())
@@ -1880,8 +1879,8 @@ class polefigure:
                     bbox_inches=extent.expanded(1.1, 1.1))
 
             ##
-            print "A figure's been saved to pcm.pdf and .eps"
-            print 'each_axpcm_00.pdf and .eps'
+            print("A figure's been saved to pcm.pdf and .eps")
+            print('each_axpcm_00.pdf and .eps')
 
             fig.clf()
             # return phi, r, Z
@@ -1903,11 +1902,11 @@ class polefigure:
         **kwargs - key-worded argument passed to plots.
         """
         if type(pole) == type(None):
-            raise IOError, 'miller index of the pole should be given'
+            raise IOError('miller index of the pole should be given')
 
         if mode == 'dot':
             temp = []
-            for i in xrange(len(self.gr)):
+            for i in range(len(self.gr)):
                 if deco == True and i == 0:
                     _deco_ = True
                 else:
@@ -1926,11 +1925,11 @@ class polefigure:
         elif mode == 'contour':
             fig = plt.figure(ifig)
             ipf_ax = fig.add_subplot(111)
-            for i in xrange(len(self.gr)):
+            for i in range(len(self.gr)):
                 pass
             pass
         else:
-            raise IOError, 'Unexpected model for ipf'
+            raise IOError('Unexpected model for ipf')
 
     def core(self, pole=None, proj='pf', csym=None, ssym=None,
              agrain=None, isym=True, cdim=[1, 1, 1],
@@ -1970,17 +1969,17 @@ class polefigure:
         POLE = []
         if csym != 'cubic' and csym != 'hexag' and csym != 'None' \
                 and csym != 'centro':
-            raise IOError, "Other symmetries than cubic" + \
+            raise IOError("Other symmetries than cubic" + \
                            " or hexag or 'None'" + " nor 'centro' is" + \
-                           " not prepared yet"
+                           " not prepared yet")
         if proj != 'pf' and proj != 'ipf':
-            raise IOError, "Other modes of projection than pf and" + \
-                           "ipf is not prepared yet"
+            raise IOError("Other modes of projection than pf and" + \
+                           "ipf is not prepared yet")
 
         if type(agrain) == type(None):
-            raise IOError, "A grains must be given to the method"
+            raise IOError("A grains must be given to the method")
         if type(pole) == type(None):
-            raise IOError, "Pole must be given to core"
+            raise IOError("Pole must be given to core")
 
         if type(pole).__name__ == 'ndarray':
             pass
@@ -1988,7 +1987,7 @@ class polefigure:
             pole = np.array(pole)
 
         else:
-            raise IOError, 'Unexpected type of the pole argument'
+            raise IOError('Unexpected type of the pole argument')
 
         temp = pole.copy()
         del pole;
@@ -2003,12 +2002,12 @@ class polefigure:
                 npeq = [pole]
             nit = len(npeq)
             nppp = []
-            for i in xrange(nit):
+            for i in range(nit):
                 nppp.append(npeq[i])
                 nppp.append(npeq[i] * -1)
             npeq = np.array(nppp)
-            for i in xrange(len(npeq)):
-                for j in xrange(len(npeq[i])):
+            for i in range(len(npeq)):
+                for j in range(len(npeq[i])):
                     if abs(npeq[i, j]) < 1e-9:
                         npeq[i, j] = 0.
 
@@ -2026,13 +2025,13 @@ class polefigure:
             # next for in block
         ## unexpected proj argument
         else:
-            print "It should be either pf or ipf"; raise IOError
+            print("It should be either pf or ipf"); raise IOError
 
         t0 = time.time()
         t_agr2pol = 0.
         t_proj = 0.
 
-        for ip in xrange(len(npeq)):
+        for ip in range(len(npeq)):
             ## 'pf':  converts ca pole to sa pole
             ## 'ipf': converts sa pole to ca pole
             t_1 = time.time()
@@ -2074,7 +2073,7 @@ class polefigure:
                         miller=p, csym=csym,
                         cdim=cdim, cang=cang)
                     temp = []
-                    for i in xrange(len(npoles)):
+                    for i in range(len(npoles)):
                         temp.append(npoles[i])
                         temp.append(npoles[i] * -1)
                     temp = np.array(temp)
@@ -2082,7 +2081,7 @@ class polefigure:
 
                 else:
                     npoles = [p]
-                for npp in xrange(len(npoles)):
+                for npp in range(len(npoles)):
 
                     if i_for:
                         prj_xy = proj_f(npoles[npp][:3])
@@ -2138,13 +2137,13 @@ class polefigure:
             rst = Parallel(n_jobs=3)(delayed(core)(
                 self, pole=pole, proj=proj, csym=csym,
                 cang=cang, cdim=cdim, equivp=npeq,
-                agrain=self.gr[i]) for i in xrange(len(self.gr)))
+                agrain=self.gr[i]) for i in range(len(self.gr)))
 
-            for i in xrange(len(rst)):
+            for i in range(len(rst)):
                 xy, p = rst[i]
                 # p is n equivalent poles
                 p = np.array(p)
-                for j in xrange(len(p)):
+                for j in range(len(p)):
                     # make it postive.
                     if p[j][2] < 0: p[j] = p[j] * - 1
                     ## phi, and theta in radian
@@ -2152,7 +2151,7 @@ class polefigure:
                     pol.append([x, y, self.gr[i][3]])  # phi, theta, intensity
 
         elif not is_joblib:
-            for i in xrange(len(self.gr)):
+            for i in range(len(self.gr)):
                 ## Either systematic representative
                 ## poles or individual pole for
                 ## each and every grain.
@@ -2167,14 +2166,14 @@ class polefigure:
                     cdim=cdim, equivp=npeq)
                 # p is n equivalent poles
                 p = np.array(p)
-                for j in xrange(len(p)):
+                for j in range(len(p)):
                     # make it postive.
                     if p[j][2] < 0: p[j] = p[j] * - 1
                     ## phi, and theta in radian
                     x, y = cart2sph(p[j])
                     pol.append([x, y, self.gr[i][3]])  # phi, theta, intensity
 
-        print 'Elapsed time for self.core:', t2s(time.time() - t0)
+        print('Elapsed time for self.core:', t2s(time.time() - t0))
 
         t0 = time.time()
 
@@ -2212,7 +2211,7 @@ class polefigure:
         phi_angle = np.arange(-pi, pi) / dm + dm / 2
         theta_angle = np.arange(0., pi / 2.) / dn + dn / 2
         f = np.zeros((mgrid, ngrid))
-        for i in xrange(len(pol)):
+        for i in range(len(pol)):
             phi = pol[i][0];
             theta = pol[i][1]
             mi = int((phi + pi) / dmp - 1e-9)  # subtract tiny
@@ -2264,12 +2263,12 @@ class polefigure:
 
         z = np.zeros((ngrid + 1,))
         deltz = (pi / 2.) / float(ngrid)
-        for i in xrange(ngrid + 1):
+        for i in range(ngrid + 1):
             z[i] = deltz * i
 
         deltx = 2. * pi / mgrid
-        for m in xrange(mgrid):
-            for n in xrange(int(ngrid)):
+        for m in range(mgrid):
+            for n in range(int(ngrid)):
                 fnorm = (cos(z[n]) - cos(z[n + 1])) * deltx / (2 * pi)
                 f[m, n] = f[m, n] / fnorm
 
@@ -2283,9 +2282,9 @@ class polefigure:
 
         ## Assigns the same intensity for the first n rings
         n = 1
-        for i in xrange(n):
+        for i in range(n):
             # South-pole : along  n=0 axis ---
-            for m in xrange(len(f) + 1):
+            for m in range(len(f) + 1):
                 nodes[m, i] = f[:, i].sum() / len(f)
         ## ------------------------------
 
@@ -2302,8 +2301,8 @@ class polefigure:
         th = np.linspace(0., pi / 2., ngrid + 1)
 
         regions = np.zeros((mgrid + 1, ngrid + 1, 4, 2))
-        for m in xrange(int(mgrid + 1)):
-            for nn in xrange(int(ngrid)):
+        for m in range(int(mgrid + 1)):
+            for nn in range(int(ngrid)):
                 n = nn + 1
                 # nodes[m, n]  # <--- currently interesting node
                 ## find the nodes' phi and theta
@@ -2319,7 +2318,7 @@ class polefigure:
 
                 reg = [[reg_ph[0], reg_th[0]], [reg_ph[0], reg_th[1]], [reg_ph[1], reg_th[0]], [reg_ph[1], reg_th[1]]]
 
-                for i in xrange(len(reg)):
+                for i in range(len(reg)):
                     p = reg[i][0]
                     t = reg[i][1]
                     if p > pi:
@@ -2327,7 +2326,7 @@ class polefigure:
                     elif p < -pi:
                         p = p + 2. * pi
                     elif p == pi or p == -pi:
-                        print 'Unexpected..';
+                        print('Unexpected..');
                         raise IOError
                     if t > pi / 2.:
                         t = t - (dn * pi / 180.)
@@ -2343,18 +2342,18 @@ class polefigure:
                 ## regions' intensites
                 ## and average them out and assign to the node.
                 inten = 0.
-                for i in xrange(4):
+                for i in range(4):
                     p = reg[i][0]
                     t = reg[i][1]
                     mi = int((p + pi) / (dm * pi / 180.) - 0.1 ** 6)
                     ni = int(t / (dn * pi / 180.) - 0.1 ** 6)
                     if mi < 0 or ni < 0:
-                        raw_input('Negative index')
+                        input('Negative index')
                         raise IOError
                     inten = inten + f[mi, ni]
                 nodes[m, n] = inten / 4.
 
-        print 'Elapsed time in self.core after cells:', t2s(time.time() - t0)
+        print('Elapsed time in self.core after cells:', t2s(time.time() - t0))
         return f, nodes
 
     def define_axes(self):
@@ -2448,13 +2447,13 @@ class polefigure:
 
         ## check mutually exclusive arguments (ifig and axs)
         if type(ifig) != type(None) and type(axs) != type(None):
-            raise IOError, '** Err: ifig and axs are mutually exclusive'
+            raise IOError('** Err: ifig and axs are mutually exclusive')
 
         ##################################################
         ## PF plots for experimental pole figure is
         ## separately conducted by epfplot function
         if type(self.epf).__name__ != 'NoneType':
-            print 'Writing Experimental pole figures'
+            print('Writing Experimental pole figures')
             return self.epfplot(
                 ifig=ifig, cmap=cmap, nlev=nlev, mn=mn, mx=mx,
                 ix=ix, iy=iy, rot=rot, iline_khi80=iline_khi80)
@@ -2468,11 +2467,10 @@ class polefigure:
         ## 4 digits miller indices are used for hexagon and trigo
         if self.csym == 'hexag' or self.csym == 'trigo':
             pole_ = []
-            for i in xrange(len(poles)):
+            for i in range(len(poles)):
                 p = [0, 0, 0]
                 p_ = poles[i]
-                if len(p_) != 4: raise IOError, \
-                    '4 digits should be given'
+                if len(p_) != 4: raise IOError('4 digits should be given')
                 p[2] = p_[3]
                 p[0] = p_[0] - p_[2]
                 p[1] = p_[1] - p_[2]
@@ -2488,12 +2486,11 @@ class polefigure:
                 delayed(cells_pf)(
                     pole_ca=poles[i], dth=dth, dph=dph,
                     csym=self.csym, cang=self.cang, cdim=self.cdim,
-                    grains=self.gr, n_rim=n_rim) \
-                for i in xrange(len(poles)))
-            for i in xrange(len(rst)):
+                    grains=self.gr, n_rim=n_rim) for i in range(len(poles)))
+            for i in range(len(rst)):
                 N.append(rst[i])
         else:
-            for i in xrange(len(poles)):
+            for i in range(len(poles)):
                 N.append(cells_pf(
                     pole_ca=poles[i], dth=dth, dph=dph,
                     csym=self.csym, cang=self.cang,
@@ -2502,7 +2499,7 @@ class polefigure:
 
         et = time.time() - t0
         uet(et, head='Elapsed time for calling cells_pf')
-        print
+        print()
 
         x_node = np.arange(-180., 180. + tiny, dth)
         y_node = np.arange(0., 90. + tiny, dph)
@@ -2538,12 +2535,12 @@ class polefigure:
 
         ##
         axs = []
-        for i in xrange(len(poles)):
+        for i in range(len(poles)):
             _ax_ = fig.add_subplot(1, len(poles), i + 1)
             axs.append(_ax_)
         plt.subplots_adjust(left=0, right=0.8)
 
-        for i in xrange(len(poles)):
+        for i in range(len(poles)):
             if lev_norm_log:
                 ## To prevent log (0) -> np.nan
                 ## hardwire minimum value
@@ -2636,7 +2633,7 @@ class polefigure:
             mxs[:] = mx
             mns[:] = mn
         elif ilev == 1:
-            for ipole in xrange(npole):
+            for ipole in range(npole):
                 if type(mx) == type(None):
                     mx_ = nArray[ipole].flatten().max()
                 else:
@@ -2658,7 +2655,7 @@ class polefigure:
 
         ## Find coordinates of 'maximum' intensity
         indices_mx = []
-        for ipole in xrange(npole):
+        for ipole in range(npole):
             indx_mx = np.unravel_index(nArray[ipole, :, :].argmax(),
                                        nArray[ipole, :, :].shape)
             ## indx_mx = np.argmax(nArray[ipole,:,:],axis=1)
@@ -2700,7 +2697,7 @@ class polefigure:
         **kwargs : matplotlib pyplot key-worded arguments
         """
         if pole is None:
-            print "Pole must be given"
+            print("Pole must be given")
             raise IOError
 
         ## If a grain is assigned,
@@ -2713,7 +2710,7 @@ class polefigure:
             "* dot plotting is performed on a grain"
             agr = np.array([agrain])  # p1,p,p2, inten
         else:
-            print 'Agrain must be asigned'
+            print('Agrain must be asigned')
             raise IOError
         # print "------------------------------------"
         XY = [];
@@ -2755,7 +2752,7 @@ class polefigure:
                 ax.plot(cxy[0], cxy[1], color='grey', alpha=0.1)
 
         ## add poles
-        for i in xrange(len(agr)):
+        for i in range(len(agr)):
             ### crystallographically equivalent poles are calculated.
             agr[i][0] = agr[i][0] - 90.
             npeq = __equiv__(
@@ -2768,7 +2765,7 @@ class polefigure:
 
             ##### POLE FIGURE PROJECTIN #####
             if proj == 'pf':
-                for j in xrange(len(xy)):
+                for j in range(len(xy)):
                     if POLE[j][2] <= 0:  # north pole is [0,0,1]
                         XY.append(
                             [xy[j][0], xy[j][1], agr[i][3]]
@@ -2776,7 +2773,7 @@ class polefigure:
 
             ##### INVERSE POLE FIGURE PROJECTION #####
             elif proj == 'ipf':
-                for j in xrange(len(xy)):
+                for j in range(len(xy)):
                     r = np.sqrt(xy[j][0] ** 2 + xy[j][1] ** 2)
                     if r > 1.0:
                         pass
@@ -2819,7 +2816,7 @@ class polefigure:
                     pass
                     #   print 'Empty XY is returned'
                 else:
-                    raise IOError, "Unexpected Error"
+                    raise IOError("Unexpected Error")
                     # raw_input()
                     # -------------------------------
         return np.array(XY), fig
@@ -2868,12 +2865,12 @@ def cells_pf(
             ngr=len(grains), grains=grains,
             npol=len(poles_ca), poles_ca=poles_ca)  # np.array(poles_ca))
     else:
-        for i in xrange(len(grains)):
+        for i in range(len(grains)):
             phi1, phi, phi2, wgt = grains[i]
             ## arg = euler_f(2,phi1,phi,phi2,np.zeros((3,3))) ## ca<-sa
             ## amat = arg[-1]
             amat = euler(phi1, phi, phi2, a=None, echo=False)
-            for j in xrange(len(poles_ca)):
+            for j in range(len(poles_ca)):
                 poles_sa[i, j, :] = np.dot(amat.T, poles_ca[j])
                 poles_wgt[i, j] = wgt
 
@@ -2898,7 +2895,7 @@ def cells_pf(
     ## Normalization (m.u.r)
     fsum = f[:, :int(ny / 2)].flatten().sum()
     z = np.zeros((ny + 1))
-    for i in xrange(ny + 1): z[i] = np.pi / float(ny) * i
+    for i in range(ny + 1): z[i] = np.pi / float(ny) * i
     dx_ = 2. * np.pi / nx
     dcosz = -np.diff(np.cos(z))
     fnorm = dcosz * dx_ / (2 * np.pi)
@@ -2915,12 +2912,12 @@ def cells_pf(
     f_bounds[:, -1] = f_bounds[:, 1]
 
     ## Use average of the four adjacent neighbouring nodes
-    for i in xrange(len(nodes)):
-        for j in xrange(len(nodes[i])):
+    for i in range(len(nodes)):
+        for j in range(len(nodes[i])):
             nodes[i, j] = (f_bounds[i:i + 2, j:j + 2]).sum() / 4.
 
     ## Centeral region is using an avergage around the rim
-    for i in xrange(n_rim):
+    for i in range(n_rim):
         nodes[:, i] = (nodes[:, i].sum()) / len(nodes[:, i])
 
     XN, YN = np.meshgrid(x_node, y_node)
@@ -2943,14 +2940,13 @@ def __equiv__(miller=None, csym=None,
     cang   = [90,90,90]
     """
     start = time.time()
-    from sym import cv
-    from sym import cubic, hexag
+    from .sym import cv
+    from .sym import cubic, hexag
     # from sym_cy import cubic, hexag
-    import sym  # python compiled
+    from . import sym  # python compiled
     # import sym_cy #cython compiled
     # from sym.py cvec, cubic, and hexgonal modules are brought in
-    if type(miller) == type(None): raise IOError, \
-        "Miller index should be given"
+    if type(miller) == type(None): raise IOError("Miller index should be given")
 
     vect = np.array(miller)
     norm = 0.;
@@ -2960,7 +2956,7 @@ def __equiv__(miller=None, csym=None,
     if csym == 'cubic':
         # H = sym_cy.cubic(1)  #cython compiled
         H = sym.cubic()  # operators
-        for i in xrange(len(H)):
+        for i in range(len(H)):
             sneq.append(np.dot(H[i], vect))
     elif csym == 'hexag':
         # H = sym_cy.hexag(1) #cython compiled
@@ -2975,8 +2971,8 @@ def __equiv__(miller=None, csym=None,
     elif csym == 'centro':
         sneq = [vect, -vect]
     else:
-        print 'Given symmetry, %s is not prepared' % csym
-        raw_input('Enter to raise an error and quits the job')
+        print('Given symmetry, %s is not prepared' % csym)
+        input('Enter to raise an error and quits the job')
         raise IOError
 
     # print 'elapsed time during v calculation: %8.6f'%
@@ -2989,13 +2985,13 @@ def __equiv__(miller=None, csym=None,
     # no : add
 
     ## filtering the sneq under whether or not it is unique
-    for i in xrange(len(sneq)):
+    for i in range(len(sneq)):
         cH = sneq[i].copy()  # current vector
         if __isunique__(a=cH, b=stacked):
             stacked.append(cH)
 
     ## if v[2] is minus, mutiply minus sign to the vector.
-    for i in xrange(len(stacked)):
+    for i in range(len(stacked)):
         if stacked[i][2] < 0:
             stacked[i] = stacked[i] * -1
     # print 'elapsed time during the rest: %8.6f'%
@@ -3031,8 +3027,8 @@ if __name__ == "__main__":
         opts, args = getopt.getopt(
             sys.argv[1:], 'm:i:o:c:s')  # , 'output=', 'csym='])
 
-    except getopt.GetoptError, err:
-        print str(err)
+    except getopt.GetoptError as err:
+        print(str(err))
         sys.exit(2)
 
     ## ----------------------------------------- ##
@@ -3076,13 +3072,13 @@ def parse_epf(fn, n_unit=79):
         lines = string.split('\n')[:-1]
         nl = len(lines)
 
-    print '# of lines : %i' % nl
-    print '# of blocks: %i' % (float(nl) / float(n_unit))
+    print('# of lines : %i' % nl)
+    print('# of blocks: %i' % (float(nl) / float(n_unit)))
 
     nb = int(float(nl) / float(n_unit))
 
     blocks = []
-    for i in xrange(nb):
+    for i in range(nb):
         i0 = n_unit * i + 1
         i1 = n_unit * (i + 1)
 
@@ -3095,7 +3091,7 @@ def parse_epf(fn, n_unit=79):
 
         b = ''
         # print 'number of lines:', len(l)
-        for j in xrange(len(l)):
+        for j in range(len(l)):
             b = '%s%s\n' % (b, l[j])
         blocks.append(b)
 

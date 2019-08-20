@@ -8,7 +8,7 @@ Convert Sectioned OD to LABOTEXT format
 import main(fn='A_steel.cod ', odfn='labo.txt')
 """
 
-print __doc__
+print(__doc__)
 
 
 def reader(fn=None, nomen='b'):
@@ -38,8 +38,8 @@ def reader(fn=None, nomen='b'):
     elif nomen == 'k':
         pass
 
-    print 'maximum phi2', maxphi2
-    print 'phi2 increment:', dphi2
+    print('maximum phi2', maxphi2)
+    print('phi2 increment:', dphi2)
     return blocks, maxphi2
 
 
@@ -69,7 +69,7 @@ def readblock(block, nomen='b'):
     elif phi1mx == 90:
         pass
     else:
-        raise IOError, 'Not expected maximum phi value...'
+        raise IOError('Not expected maximum phi value...')
 
     phi = np.zeros(np.arange(0., phimx + 0.001, dphi).shape)
     phi1 = np.zeros(np.arange(0., phi1mx + 0.001, dphi1).shape)
@@ -143,7 +143,7 @@ def main(fn=None, odfn='labo.txt', fnout='dum', rot=0,
     """
     import numpy as np
     cod, phi1mx, phimx, phi2mx = __cod2labo__(fn=fn)
-    print phi1mx, phimx, phi2mx
+    print(phi1mx, phimx, phi2mx)
 
     f = open(odfn, 'w')
     phi1 = np.linspace(0, phi1mx + 0.001, len(cod))
@@ -155,10 +155,10 @@ def main(fn=None, odfn='labo.txt', fnout='dum', rot=0,
 
     mmm = False
     if phi1mx == 90 and phimx == 90 and phi2mx == 90:
-        print 'mmm sample symmetry must have been applied for cubic crystal'
+        print('mmm sample symmetry must have been applied for cubic crystal')
         mmm = True
 
-    print 'cod.shape', cod.shape
+    print('cod.shape', cod.shape)
 
     f.write('phi1   phi2  phi  COD\n')
     for i in range(len(cod)):  # phi
@@ -195,7 +195,7 @@ def odf2dg(odfn=None, mmm=False, rot=0, fnout=None, ng=None):
     os.sys.path.append('/Users/yj/Dropbox/devel/EVPSC_f2py/pyscripts')
     os.sys.path.append('/Users/yj/Dropbox/devel/EVPSC_f2py/pyscripts/pf')
 
-    import cmb, upf
+    from . import cmb, upf
     if type(ng) != type(None):
         ng = [20000]
 
@@ -229,7 +229,7 @@ def sample_mmm(fn=None):
     mmm contains: 4 operators (itself, m, m, m)
     """
     import numpy as np
-    from euler import euler
+    from .euler import euler
 
     m0 = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
     m1 = [[1, 0, 0], [0, -1, 0], [0, 0, -1]]
@@ -264,7 +264,7 @@ def sample_mmm(fn=None):
 def inplanerot(rot=0, grains=None):
     import numpy as np
     if rot == 0: return grains
-    from euler import euler
+    from .euler import euler
     arot = euler(ph=rot, th=0, tm=0, echo=False)
     for i in range(len(grains)):
         phi1, phi, phi2, wgt = grains[i]
