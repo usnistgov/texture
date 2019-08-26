@@ -163,6 +163,7 @@ pi = math.pi
 cos = math.cos;
 sin = math.sin
 
+warnings.resetwarnings()
 
 # import pp ## parallel
 
