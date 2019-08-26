@@ -164,7 +164,6 @@ cos = math.cos;
 sin = math.sin
 
 warnings.resetwarnings()
-
 # import pp ## parallel
 
 def cub(filename=None, gr=None, ifig=3, **kwargs):
@@ -1174,6 +1173,9 @@ class polefigure:
         # either grains or filename                                #
         # if none of them is given, a 500-grains file is generated #
         # and returns its grains to the global gr variable.        #
+
+        # Turn interactive plotting off
+        plt.ioff()
 
         if type(grains) == type(None) and type(filename) == type(None) \
                 and type(epf) == type(None):
@@ -2445,6 +2447,9 @@ class polefigure:
         fig: matplotlib.figure.Figure
         """
         import MP.lib.mpl_lib
+
+        # Turn interactive plotting off
+        plt.ioff()
 
         ## check mutually exclusive arguments (ifig and axs)
         if type(ifig) != type(None) and type(axs) != type(None):
