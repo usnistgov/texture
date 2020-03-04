@@ -2504,8 +2504,8 @@ class polefigure:
                     n_rim=n_rim))
 
         et = time.time() - t0
-        uet(et, head='Elapsed time for calling cells_pf')
-        logging.debug()
+        # uet(et, head='Elapsed time for calling cells_pf')
+        # logging.debug()
 
         x_node = np.arange(-180., 180. + tiny, dth)
         y_node = np.arange(0., 90. + tiny, dph)
